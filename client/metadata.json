@@ -1,0 +1,8 @@
+{
+  "name": "BlueTech Retail & Repair",
+  "description": "E-commerce and repair booking platform for BlueTech technology products and repair services.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

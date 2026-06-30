@@ -1,0 +1,13 @@
+{
+  "name": "bluetech-setup",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "csv-parse": "^5.6.0",
+    "postgres": "^3.4.4"
+  }
+}
