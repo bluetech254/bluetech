@@ -1,0 +1,15 @@
+# Backend API URL
+VITE_API_URL=https://bluetechnology-y1f8.onrender.com/api/v1
+
+# Supabase
+VITE_SUPABASE_URL=https://ureebvpesbkbholidlrn.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyZWVidnBlc2JrYmhvbGlkbHJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MjM4MjcsImV4cCI6MjA5ODI5OTgyN30.AngVW8RLlK6b8MeWHWYz0z2Pi0qVB65bsXjwA1pcdgc
+
+# Admin Credentials (CHANGE THESE IN PRODUCTION!)
+VITE_ADMIN_USERNAME=admin
+VITE_ADMIN_PASSWORD=BlueTech@2026!
+
+# Image Upload Services (Optional - for image hosting)
+# Get free API key from: https://imgbb.com/api
+VITE_IMGBB_API_KEY=
+
