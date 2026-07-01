@@ -3,11 +3,14 @@ import Hero from '../components/home/Hero';
 import FeaturedProducts from '../components/home/FeaturedProducts';
 import ServiceCategories from '../components/home/ServiceCategories';
 import Testimonials from '../components/home/Testimonials';
+import WelcomeOverlay from '../components/home/WelcomeOverlay';
 import { Truck, ShieldCheck, Headphones, MapPin, Star } from 'lucide-react';
 
 export const HomePage = () => {
   return (
-    <div className="space-y-16 py-8 animate-fade-in text-left">
+    <>
+      <WelcomeOverlay />
+      <div className="space-y-16 py-8 animate-fade-in text-left">
       {/* 1. Hero Promo */}
       <Hero />
 
@@ -73,6 +76,7 @@ export const HomePage = () => {
       {/* 5. Testimonials Review Loop */}
       <Testimonials />
     </div>
+    </>
   );
 };
 
