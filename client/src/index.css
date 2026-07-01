@@ -116,25 +116,27 @@
 }
 
 /* Smooth transitions */
-.transition-smooth {
-  @apply transition-all duration-300 ease-in-out;
-}
+@layer components {
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
 
-.hover-lift {
-  @apply hover:shadow-lg hover:-translate-y-1 transition-smooth;
-}
+  .hover-lift {
+    @apply hover:shadow-lg hover:-translate-y-1 transition-smooth;
+  }
 
-.hover-scale {
-  @apply hover:scale-105 transition-smooth;
-}
+  .hover-scale {
+    @apply hover:scale-105 transition-smooth;
+  }
 
-/* Glass morphism effect */
-.glass {
-  @apply backdrop-blur-md bg-white/30 border border-white/20;
-}
+  /* Glass morphism effect */
+  .glass {
+    @apply backdrop-blur-md bg-white/30 border border-white/20;
+  }
 
-/* Gradient text */
-.gradient-text {
-  @apply bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent;
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent;
+  }
 }
 
