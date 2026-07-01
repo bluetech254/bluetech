@@ -1,0 +1,11 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#blueGrad)" rx="20"/>
+  <text x="100" y="120" font-size="80" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">BT</text>
+  <text x="100" y="160" font-size="24" fill="white" text-anchor="middle" font-family="Arial">BlueTech</text>
+</svg>
