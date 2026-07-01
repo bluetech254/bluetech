@@ -4,8 +4,8 @@ export const ADMIN_CREDENTIALS = {
   username: import.meta.env.VITE_ADMIN_USERNAME || 'admin',
   // Password hash (bcrypt-like format for demo)
   passwordHash: import.meta.env.VITE_ADMIN_PASSWORD_HASH || '$2a$10$encrypted_password_hash',
-  // Actual password for demo (remove in production)
-  password: import.meta.env.VITE_ADMIN_PASSWORD || 'admin123',
+  // Actual password from environment variable
+  password: import.meta.env.VITE_ADMIN_PASSWORD || 'BlueTech@2026!',
 };
 
 // Session management
