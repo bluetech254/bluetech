@@ -18,6 +18,7 @@
 
   * {
     @apply transition-colors duration-200;
+    border-radius: 0 !important;
   }
 }
 
@@ -62,9 +63,29 @@
   100% { background-position: 1000px 0; }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+@keyframes swipeLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes swipeRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @keyframes glow {
@@ -111,6 +132,30 @@
   animation: float 3s ease-in-out infinite;
 }
 
+.animate-swipe-left {
+  animation: swipeLeft 1s ease-in-out forwards;
+}
+
+.animate-swipe-right {
+  animation: swipeRight 1s ease-in-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 1s ease-in-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 1s ease-in-out forwards;
+}
+
+.animate-zoom-out {
+  animation: zoomOut 1s ease-in-out forwards;
+}
+
+.animate-fade-out {
+  animation: fadeOut 1s ease-in-out forwards;
+}
+
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
 }
@@ -122,11 +167,11 @@
   }
 
   .hover-lift {
-    @apply hover:shadow-lg hover:-translate-y-1 transition-smooth;
+    @apply hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out;
   }
 
   .hover-scale {
-    @apply hover:scale-105 transition-smooth;
+    @apply hover:scale-105 transition-all duration-300 ease-in-out;
   }
 
   /* Glass morphism effect */
@@ -137,6 +182,15 @@
   /* Gradient text */
   .gradient-text {
     @apply bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent;
+  }
+
+  /* Hand cursor on all buttons */
+  button {
+    @apply cursor-pointer;
+  }
+
+  button:hover {
+    @apply cursor-pointer;
   }
 }
 

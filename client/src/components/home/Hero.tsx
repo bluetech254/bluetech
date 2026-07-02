@@ -1,65 +1,97 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Settings, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
-import Button from '../common/Button';
+import { ShoppingCart, Settings } from 'lucide-react';
+import { getProducts } from '../../api/products';
+import { Product } from '../../types';
+
+const transitions = ['swipeLeft', 'swipeRight', 'slideUp', 'slideDown', 'fadeOut', 'zoomOut'];
 
 export const Hero = () => {
   const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
+  const [transition, setTransition] = useState('fadeOut');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await getProducts({ limit: 10 });
+        setProducts(response.products || []);
+      } catch (err) {
+        console.error('Failed to load products:', err);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    if (products.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setTransition(transitions[Math.floor(Math.random() * transitions.length)]);
+      setIsTransitioning(true);
+      
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % products.length);
+        setNextIndex((prev) => (prev + 1) % products.length);
+        setIsTransitioning(false);
+      }, 1000);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [products.length]);
+
+  const currentProduct = products[currentIndex];
+  const imageUrl = currentProduct?.images?.[0] || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=400&fit=crop';
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-blue-600 to-purple-600 text-white py-16 sm:py-24 lg:py-32 rounded-3xl shadow-xl shadow-blue-100 animate-fade-in text-left px-6 sm:px-12 md:px-16 lg:px-20">
-      {/* Decorative radial gradients */}
-      <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative z-10 max-w-2xl space-y-6 sm:space-y-8">
-        <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-xs px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase border border-white/10">
-          <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse-custom" />
-          <span>Professional Tech Hub in Kenya</span>
-        </div>
-
-        <div className="space-y-3 sm:space-y-4">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-            Welcome to <span className="text-yellow-300">BlueTech</span>
+    <div className="relative overflow-hidden animate-fade-in w-full h-96 sm:h-[500px] md:h-[600px] lg:h-[700px] bg-slate-100 -mt-8">
+      <img
+        src={imageUrl}
+        alt="BlueTech Hero"
+        className={`w-full h-full object-cover transition-all duration-1000 ${
+          isTransitioning ? (
+            transition === 'swipeLeft' ? 'animate-swipe-left' :
+            transition === 'swipeRight' ? 'animate-swipe-right' :
+            transition === 'slideUp' ? 'animate-slide-up' :
+            transition === 'slideDown' ? 'animate-slide-down' :
+            transition === 'fadeOut' ? 'animate-fade-out' :
+            'animate-zoom-out'
+          ) : ''
+        }`}
+      />
+      
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40" />
+      
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col items-start justify-center px-4 sm:px-12 md:px-16 lg:px-20 text-white">
+        <div className="max-w-2xl space-y-2 sm:space-y-4">
+          <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+            Latest Tech Gadgets & Accessories
           </h1>
-          <p className="text-lg sm:text-xl text-white/90 font-medium max-w-xl leading-relaxed">
-            Your Premium Technology Partner. Explore high-performance hardware or book certified expert repair services with full warranties.
+          <p className="hidden sm:block text-sm sm:text-lg md:text-xl text-white/90 font-medium max-w-xl leading-relaxed">
+            Discover premium electronics and expert repair services. Shop genuine products or book certified technicians for professional support.
           </p>
-        </div>
-
-        {/* Action CTAs */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/products')}
-            leftIcon={<ShoppingCart className="w-5 h-5" />}
-            className="bg-white hover:bg-slate-50 text-blue-700 hover:shadow-lg py-4 font-bold rounded-xl transition-all"
-          >
-            Shop Products
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => navigate('/services')}
-            leftIcon={<Settings className="w-5 h-5 text-current" />}
-            className="bg-blue-800/80 hover:bg-blue-900 text-white border border-white/10 py-4 font-bold rounded-xl transition-all"
-          >
-            Book Repair Service
-          </Button>
-        </div>
-
-        {/* Short bullet values */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 border-t border-white/10 text-xs sm:text-sm font-semibold text-white/80">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-4.5 h-4.5 text-yellow-300 flex-shrink-0" />
-            <span>Certified Mechanics</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-4.5 h-4.5 text-yellow-300 flex-shrink-0" />
-            <span>Genuine Spares Only</span>
-          </div>
-          <div className="flex items-center space-x-2 col-span-2 sm:col-span-1">
-            <ShieldCheck className="w-4.5 h-4.5 text-yellow-300 flex-shrink-0" />
-            <span>Up to 90 Days Warranty</span>
+          
+          {/* Buttons */}
+          <div className="flex items-center gap-3 sm:gap-4 pt-4 w-full sm:w-auto">
+            <button
+              onClick={() => navigate('/products')}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/95 hover:bg-white text-slate-900 font-semibold py-2.5 px-6 rounded-lg transition-all backdrop-blur-sm border border-white/20 cursor-pointer hover:cursor-pointer"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Shop Now
+            </button>
+            <button
+              onClick={() => navigate('/services')}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 px-6 rounded-lg transition-all backdrop-blur-sm border border-white/30 cursor-pointer hover:cursor-pointer"
+            >
+              <Settings className="w-4 h-4" />
+              Book Now
+            </button>
           </div>
         </div>
       </div>

@@ -45,11 +45,25 @@ export const ProductGrid = ({ products, isLoading, emptyMessage }: ProductGridPr
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fade-in">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
+    <>
+      {/* Mobile: Horizontal Scroll */}
+      <div className="md:hidden overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory">
+        <div className="flex gap-3 w-max">
+          {products.map((product) => (
+            <div key={product.id} className="w-40 flex-shrink-0 snap-start">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop: Grid 2 columns */}
+      <div className="hidden md:grid grid-cols-2 gap-4 animate-fade-in">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </>
   );
 };
 
