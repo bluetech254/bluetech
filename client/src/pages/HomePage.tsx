@@ -8,44 +8,40 @@ import ServiceCategoriesScroll from '../components/home/ServiceCategoriesScroll'
 import MarketingPosters from '../components/home/MarketingPosters';
 import NewArrivals from '../components/home/NewArrivals';
 import HowItWorks from '../components/home/HowItWorks';
-import WelcomeOverlay from '../components/home/WelcomeOverlay';
 
 export const HomePage = () => {
   return (
-    <>
-      <WelcomeOverlay />
-      <div className="space-y-8 pt-0 pb-8 animate-fade-in text-left">
-        {/* 1. Hero Promo */}
-        <Hero />
+    <div className="space-y-8 pt-0 pb-8 animate-fade-in text-left">
+      {/* 1. Hero Promo */}
+      <Hero />
 
-        {/* 2. Products & Services Balance Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Featured Products */}
-          <FeaturedProducts />
-          
-          {/* Featured Services */}
-          <ServiceCategories />
-        </div>
-
-        {/* 3. Services Carousel */}
-        <ServicesCarousel />
-
-        {/* 4. Shop by Category */}
-        <ShopByCategory />
-
-        {/* 5. Service Categories Scroll */}
-        <ServiceCategoriesScroll />
-
-        {/* 6. Marketing Posters */}
-        <MarketingPosters />
-
-        {/* 7. New Arrivals */}
-        <NewArrivals />
-
-        {/* 8. How It Works */}
-        <HowItWorks />
+      {/* 2. Products & Services Balance Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Featured Products */}
+        <FeaturedProducts />
+        
+        {/* Featured Services */}
+        <ServiceCategories />
       </div>
-    </>
+
+      {/* 3. Services Carousel */}
+      <ServicesCarousel />
+
+      {/* 4. Shop by Category */}
+      <ShopByCategory />
+
+      {/* 5. Service Categories Scroll */}
+      <ServiceCategoriesScroll />
+
+      {/* 6. Marketing Posters */}
+      <MarketingPosters />
+
+      {/* 7. New Arrivals */}
+      <NewArrivals />
+
+      {/* 8. How It Works */}
+      <HowItWorks />
+    </div>
   );
 };
 
