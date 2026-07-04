@@ -1,0 +1,28 @@
+import React, { useState, useEffect } from 'react';
+
+export const SideCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const images = [
+    '/posters/side-poster.png',
+    '/posters/side-poster-2.png'
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex-1 -mt-8 rounded-lg shadow-lg overflow-hidden">
+      <img 
+        src={images[currentIndex]} 
+        alt="Promotion" 
+        className="w-full h-[700px] object-cover transition-opacity duration-1000"
+      />
+    </div>
+  );
+};
+
+export default SideCarousel;

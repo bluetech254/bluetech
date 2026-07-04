@@ -32,9 +32,9 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 shadow-sm h-[72px]">
-      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="h-full px-4 sm:px-6 lg:max-w-none lg:px-[100px] lg:mx-0 flex items-center justify-between">
         {/* Left Side: Mobile Menu Button & Brand */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 lg:space-x-6">
           <button
             type="button"
             className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-md focus:outline-none cursor-pointer"
@@ -43,11 +43,11 @@ export const Header = () => {
             <Menu className="h-6 w-6" />
           </button>
           
-          <Link to="/" className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-200">
-              <Wrench className="w-4.5 h-4.5" />
+          <Link to="/" className="flex items-center space-x-2.5 lg:space-x-3">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-200">
+              <Wrench className="w-4.5 h-4.5 lg:w-5 lg:h-5" />
             </div>
-            <span className="text-xl font-black tracking-tight text-slate-900">
+            <span className="text-xl lg:text-2xl font-black tracking-tight text-slate-900">
               Blue<span className="text-blue-600">Tech</span>
             </span>
           </Link>

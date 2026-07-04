@@ -86,7 +86,7 @@ export const MarketingPosters = () => {
             <p className="text-sm sm:text-base text-white/90 max-w-xs">
               Professional repairs with certified technicians and warranty
             </p>
-            <button className="bg-white hover:bg-slate-50 text-slate-900 font-bold py-2 px-4 rounded-lg transition-all text-sm">
+            <button className="bg-slate-300 hover:bg-slate-400 text-slate-700 font-bold py-2 px-4 rounded-lg transition-all text-sm">
               Book Now
             </button>
           </div>

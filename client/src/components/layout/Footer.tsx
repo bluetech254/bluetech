@@ -18,7 +18,7 @@ export const Footer = () => {
 
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="px-4 sm:px-6 lg:max-w-none lg:px-[100px] lg:mx-0 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Column 1: About */}
           <div className="space-y-4">
@@ -126,7 +126,7 @@ export const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-slate-800 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 space-y-4 sm:space-y-0">
           <p>© {new Date().getFullYear()} BlueTech. All rights reserved.</p>
-          <div className="flex space-x-6">
+          <div className="flex space-x-6 lg:space-x-8">
             <a href="#" className="hover:text-slate-300">Terms of Service</a>
             <a href="#" className="hover:text-slate-300">Privacy Policy</a>
             <a href="#" className="hover:text-slate-300">Cookie Preferences</a>

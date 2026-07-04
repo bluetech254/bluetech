@@ -1,44 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+interface Service {
+  id: string;
+  service_name: string;
+  long_description: string;
+  short_description: string;
+  service_category: string;
+  image_url: string;
+}
+
 export const ServiceCategories = () => {
   const navigate = useNavigate();
-  
-  const services = [
-    {
-      image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=443&fit=crop',
-      title: 'Phone Repair',
-      description: 'Screen replacements, battery retrofits, and charging solutions',
-      category: 'Phones'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1516321318423-f06f70504504?w=800&h=443&fit=crop',
-      title: 'Laptop Repair',
-      description: 'Keyboard fixes, motherboard repairs, and diagnostics',
-      category: 'Laptops'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=443&fit=crop',
-      title: 'Tablet Repair',
-      description: 'Screen replacement, battery upgrades, and charging fixes',
-      category: 'Tablets'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=443&fit=crop',
-      title: 'Audio Devices',
-      description: 'Speaker replacement, Bluetooth fixes, and audio restoration',
-      category: 'Audio'
-    },
-  ];
-
+  const [services, setServices] = useState<Service[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await fetch('https://bluetechnology-y1f8.onrender.com/api/v1/repair-services?limit=10');
+        const data = await response.json();
+        setServices(data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch services:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchServices();
+  }, []);
+
+  useEffect(() => {
+    if (services.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % services.length);
     }, 5000);
     return () => clearInterval(interval);
   }, [services.length]);
+
+  if (loading || services.length === 0) return null;
 
   const current = services[currentIndex];
 
@@ -50,29 +51,22 @@ export const ServiceCategories = () => {
         </h2>
       </div>
 
-      <div className="relative overflow-hidden border border-slate-100 h-[493px] group">
-        <img
-          key={currentIndex}
-          src={current.image}
-          alt={current.title}
-          className="w-full h-full object-cover transition-all duration-1000 animate-fade-in"
-        />
-        
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/40" />
-        
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col items-start justify-center px-6 sm:px-12 text-white">
-          <div className="max-w-md space-y-4">
-            <h3 className="text-3xl sm:text-4xl font-bold">
-              {current.title}
-            </h3>
-            <p className="text-base sm:text-lg text-white/90">
-              {current.description}
-            </p>
+      <div className="relative overflow-hidden border border-slate-100 p-8 sm:p-12 rounded-lg group min-h-[491px] flex items-center" style={{backgroundImage: 'url(/posters/service-carousel-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="relative max-w-2xl space-y-6">
+          <h3 className="text-3xl sm:text-4xl font-bold text-white">
+            {current.service_name}
+          </h3>
+          <p className="text-base sm:text-lg text-white/90">
+            {current.long_description || current.short_description}
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="inline-block bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur">
+              {current.service_category}
+            </span>
             <button
-              onClick={() => navigate(`/services?category=${current.category}`)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg transition-all inline-block"
+              onClick={() => navigate(`/services?category=${current.service_category}`)}
+              className="bg-slate-300 hover:bg-slate-400 text-slate-700 font-bold py-2.5 px-6 rounded-lg transition-all inline-block"
             >
               Book Now
             </button>

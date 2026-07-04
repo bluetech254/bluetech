@@ -38,7 +38,7 @@ export default function App() {
                 <Header />
 
                 {/* Main page stage */}
-                <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+                <main className="flex-1 w-full px-[100px] py-8 md:py-12">
                   <AppRoutes />
                 </main>
 

@@ -13,7 +13,7 @@ export const ServicesCarousel = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const data = await getRepairServices({ limit: 8 });
+        const data = await getRepairServices({ limit: 10 });
         setServices(data || []);
       } catch (err) {
         console.error('Failed to load services:', err);
@@ -69,8 +69,8 @@ export const ServicesCarousel = () => {
         </div>
       </div>
 
-      {/* Desktop: Grid 4 columns, 2 rows */}
-      <div className="hidden md:grid grid-cols-4 gap-4">
+      {/* Desktop: Grid 5 columns, 2 rows */}
+      <div className="hidden md:grid grid-cols-5 gap-4">
         {services.map((service, idx) => (
           <ServiceCard key={idx} service={service} />
         ))}
@@ -108,7 +108,7 @@ const ServiceCard = ({ service }: { service: RepairService }) => {
         </div>
         <button
           onClick={() => navigate('/services')}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 rounded-lg transition-all"
+          className="w-full bg-slate-300 hover:bg-slate-400 text-slate-700 font-semibold text-xs py-2 rounded-lg transition-all"
         >
           Book Now
         </button>

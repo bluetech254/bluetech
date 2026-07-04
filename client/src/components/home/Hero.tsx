@@ -87,7 +87,7 @@ export const Hero = () => {
             </button>
             <button
               onClick={() => navigate('/services')}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 px-6 rounded-lg transition-all backdrop-blur-sm border border-white/30 cursor-pointer hover:cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-300/40 hover:bg-slate-300/60 text-slate-700 font-semibold py-2.5 px-6 rounded-lg transition-all backdrop-blur-sm border border-slate-300/50 cursor-pointer hover:cursor-pointer"
             >
               <Settings className="w-4 h-4" />
               Book Now

@@ -1,5 +1,7 @@
 import React from 'react';
 import Hero from '../components/home/Hero';
+import SideCarousel from '../components/home/SideCarousel';
+import PromotionalDealsCarousel from '../components/home/PromotionalDealsCarousel';
 import FeaturedProducts from '../components/home/FeaturedProducts';
 import ServiceCategories from '../components/home/ServiceCategories';
 import ServicesCarousel from '../components/home/ServicesCarousel';
@@ -12,8 +14,23 @@ import HowItWorks from '../components/home/HowItWorks';
 export const HomePage = () => {
   return (
     <div className="space-y-8 pt-0 pb-8 animate-fade-in text-left">
-      {/* 1. Hero Promo */}
-      <Hero />
+      {/* 1. Hero Promo - 66% width with side poster */}
+      <div className="hidden lg:flex gap-[25px]">
+        {/* Hero - 2/3 width */}
+        <div className="flex-[2]">
+          <div className="w-full">
+            <Hero />
+          </div>
+        </div>
+        
+        {/* Side Poster Carousel */}
+        <SideCarousel />
+      </div>
+
+      {/* Mobile Hero */}
+      <div className="lg:hidden">
+        <Hero />
+      </div>
 
       {/* 2. Products & Services Balance Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -26,6 +43,9 @@ export const HomePage = () => {
 
       {/* 3. Services Carousel */}
       <ServicesCarousel />
+
+      {/* 4. Promotional Deals Carousel */}
+      <PromotionalDealsCarousel />
 
       {/* 4. Shop by Category */}
       <ShopByCategory />

@@ -57,8 +57,8 @@ export const ProductGrid = ({ products, isLoading, emptyMessage }: ProductGridPr
         </div>
       </div>
 
-      {/* Desktop: Grid 2 columns */}
-      <div className="hidden md:grid grid-cols-2 gap-4 animate-fade-in">
+      {/* Desktop: Grid 3 columns */}
+      <div className="hidden md:grid grid-cols-3 gap-4 animate-fade-in">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
