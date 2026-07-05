@@ -37,7 +37,7 @@ export const MarketingPosters = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Products Poster */}
       <div
-        className="relative overflow-hidden rounded-lg h-64 group cursor-pointer"
+        className="relative overflow-hidden rounded-lg h-80 group cursor-pointer"
         onClick={() => navigate('/products')}
       >
         <img
@@ -66,7 +66,7 @@ export const MarketingPosters = () => {
 
       {/* Services Poster */}
       <div
-        className="relative overflow-hidden rounded-lg h-64 group cursor-pointer"
+        className="relative overflow-hidden rounded-lg h-80 group cursor-pointer"
         onClick={() => navigate('/services')}
       >
         <img
