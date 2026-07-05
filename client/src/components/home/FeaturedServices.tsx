@@ -5,7 +5,7 @@ import { getRepairServices } from '../../api/services';
 import { RepairService } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
-export const ServicesCarousel = () => {
+export const FeaturedServices = () => {
   const [services, setServices] = useState<RepairService[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -117,4 +117,4 @@ const ServiceCard = ({ service }: { service: RepairService }) => {
   );
 };
 
-export default ServicesCarousel;
+export default FeaturedServices;

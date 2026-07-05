@@ -33,7 +33,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div className="flex flex-col">
-      <Link to={`/products/${id}`} className="block overflow-hidden relative bg-slate-50 border border-slate-100 group mb-3 h-40">
+      <Link to={`/products/${id}`} className="block overflow-hidden relative bg-slate-50 border border-slate-100 group mb-1 h-40">
         <img
           src={imageUrl}
           alt={name}
@@ -52,14 +52,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </Link>
       
       {/* Price and Cart Below */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900 line-clamp-1 flex-1">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-1">
+          <h3 className="text-xs font-semibold text-slate-900 line-clamp-1 flex-1">
             <Link to={`/products/${id}`} className="hover:text-blue-600 transition-colors">
               {name.split(' ').slice(0, 2).join(' ')}
             </Link>
           </h3>
-          <div className="text-lg font-bold text-blue-600 whitespace-nowrap">
+          <div className="text-base font-bold text-blue-600 whitespace-nowrap">
             {formatCurrency(price)}
           </div>
         </div>
@@ -68,10 +68,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           type="button"
           disabled={stock_quantity === 0}
           onClick={handleAddToCart}
-          className="w-full py-2 px-3 font-semibold text-xs tracking-wider uppercase flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-100 disabled:text-slate-400"
+          className="w-full py-1.5 px-2 font-semibold text-[10px] tracking-wider uppercase flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-100 disabled:text-slate-400"
         >
-          <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-          <span>Cart</span>
+          <ShoppingCart className="w-3 h-3 mr-0.5" />
+          <span>Add</span>
         </button>
       </div>
     </div>

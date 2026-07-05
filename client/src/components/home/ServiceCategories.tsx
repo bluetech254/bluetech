@@ -44,7 +44,7 @@ export const ServiceCategories = () => {
   const current = services[currentIndex];
 
   return (
-    <div className="space-y-8 text-left">
+    <div className="space-y-6 text-left">
       <div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           Repair Services

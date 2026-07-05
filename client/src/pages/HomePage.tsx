@@ -4,7 +4,7 @@ import SideCarousel from '../components/home/SideCarousel';
 import PromotionalDealsCarousel from '../components/home/PromotionalDealsCarousel';
 import FeaturedProducts from '../components/home/FeaturedProducts';
 import ServiceCategories from '../components/home/ServiceCategories';
-import ServicesCarousel from '../components/home/ServicesCarousel';
+import FeaturedServices from '../components/home/FeaturedServices';
 import ShopByCategory from '../components/home/ShopByCategory';
 import ServiceCategoriesScroll from '../components/home/ServiceCategoriesScroll';
 import MarketingPosters from '../components/home/MarketingPosters';
@@ -33,16 +33,25 @@ export const HomePage = () => {
       </div>
 
       {/* 2. Products & Services Balance Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 -mb-2">
         {/* Featured Products */}
         <FeaturedProducts />
         
-        {/* Featured Services */}
-        <ServiceCategories />
+        {/* Featured Services - Desktop Only */}
+        <div className="hidden lg:block">
+          <ServiceCategories />
+        </div>
       </div>
 
-      {/* 3. Services Carousel */}
-      <ServicesCarousel />
+      {/* Mobile: Repair Services */}
+      <div className="lg:hidden mt-8">
+        <FeaturedServices />
+      </div>
+
+      {/* 3. Services Carousel - Desktop Only */}
+      <div className="hidden lg:block">
+        <FeaturedServices />
+      </div>
 
       {/* 4. Promotional Deals Carousel */}
       <PromotionalDealsCarousel />
