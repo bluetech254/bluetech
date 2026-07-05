@@ -22,7 +22,7 @@ export const MobileNav = ({ isOpen, onClose }: MobileNavProps) => {
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-white shadow-2xl flex flex-col justify-between animate-fade-in transition-all">
+      <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white shadow-2xl flex flex-col justify-between animate-slide-in-right transition-all">
         <div>
           {/* Top Header */}
           <div className="flex items-center justify-between px-5 py-5 border-b border-slate-100">
@@ -46,65 +46,80 @@ export const MobileNav = ({ isOpen, onClose }: MobileNavProps) => {
               to="/"
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
+                `flex items-center justify-between px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
                   isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'
                 }`
               }
             >
-              <Home className="w-5 h-5 mr-3 text-current" />
-              <span>Home</span>
+              <div className="flex items-center">
+                <Home className="w-5 h-5 mr-3 text-current" />
+                <span>Home</span>
+              </div>
+              <ArrowRight className="w-4 h-4" />
             </NavLink>
             
             <NavLink
               to="/products"
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
+                `flex items-center justify-between px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
                   isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'
                 }`
               }
             >
-              <ShoppingBag className="w-5 h-5 mr-3 text-current" />
-              <span>Products Catalog</span>
+              <div className="flex items-center">
+                <ShoppingBag className="w-5 h-5 mr-3 text-current" />
+                <span>Products Catalog</span>
+              </div>
+              <ArrowRight className="w-4 h-4" />
             </NavLink>
             
             <NavLink
               to="/services"
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
+                `flex items-center justify-between px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
                   isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'
                 }`
               }
             >
-              <Settings className="w-5 h-5 mr-3 text-current" />
-              <span>Repair Services</span>
+              <div className="flex items-center">
+                <Settings className="w-5 h-5 mr-3 text-current" />
+                <span>Repair Services</span>
+              </div>
+              <ArrowRight className="w-4 h-4" />
             </NavLink>
             
             <NavLink
               to="/contact"
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
+                `flex items-center justify-between px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
                   isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'
                 }`
               }
             >
-              <Phone className="w-5 h-5 mr-3 text-current" />
-              <span>Contact Us</span>
+              <div className="flex items-center">
+                <Phone className="w-5 h-5 mr-3 text-current" />
+                <span>Contact Us</span>
+              </div>
+              <ArrowRight className="w-4 h-4" />
             </NavLink>
 
             <NavLink
               to="/track-order"
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
+                `flex items-center justify-between px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
                   isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'
                 }`
               }
             >
-              <ShieldAlert className="w-5 h-5 mr-3 text-current" />
-              <span>Track Orders & Repairs</span>
+              <div className="flex items-center">
+                <ShieldAlert className="w-5 h-5 mr-3 text-current" />
+                <span>Track Orders & Repairs</span>
+              </div>
+              <ArrowRight className="w-4 h-4" />
             </NavLink>
           </nav>
         </div>
