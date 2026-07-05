@@ -33,8 +33,15 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 shadow-sm h-[72px]">
       <div className="h-full px-4 sm:px-6 lg:max-w-none lg:px-[100px] lg:mx-0 flex items-center justify-between">
-        {/* Left Side: Mobile Menu Button & Brand */}
-        <div className="flex items-center space-x-4 lg:space-x-6">
+        {/* Mobile: Left Side - BlueTech Name */}
+        <div className="lg:hidden">
+          <span className="text-lg font-black tracking-tight text-slate-900">
+            Blue<span className="text-blue-600">Tech</span>
+          </span>
+        </div>
+
+        {/* Desktop: Left Side - Menu Button & Brand */}
+        <div className="hidden lg:flex items-center space-x-6">
           <button
             type="button"
             className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-md focus:outline-none cursor-pointer"
@@ -43,11 +50,11 @@ export const Header = () => {
             <Menu className="h-6 w-6" />
           </button>
           
-          <Link to="/" className="flex items-center space-x-2.5 lg:space-x-3">
-            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-200">
-              <Wrench className="w-4.5 h-4.5 lg:w-5 lg:h-5" />
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-200">
+              <Wrench className="w-5 h-5" />
             </div>
-            <span className="text-xl lg:text-2xl font-black tracking-tight text-slate-900">
+            <span className="text-2xl font-black tracking-tight text-slate-900">
               Blue<span className="text-blue-600">Tech</span>
             </span>
           </Link>
@@ -99,11 +106,11 @@ export const Header = () => {
 
         {/* Right Side: Search, Cart, Auth Dropdown */}
         <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* Search Trigger */}
+          {/* Search Trigger - Desktop Only */}
           <button
             type="button"
             onClick={() => setIsSearchOpen(true)}
-            className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+            className="hidden lg:block p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
             aria-label="Search"
           >
             <Search className="h-5.5 w-5.5" />
@@ -124,9 +131,18 @@ export const Header = () => {
             )}
           </button>
 
-          {/* Auth Controls */}
+          {/* Mobile Hamburger Menu */}
+          <button
+            type="button"
+            className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-md focus:outline-none cursor-pointer"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+
+          {/* Auth Controls - Desktop Only */}
           {isAuthenticated && user ? (
-            <div className="relative">
+            <div className="hidden lg:block relative">
               <button
                 type="button"
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
@@ -178,7 +194,7 @@ export const Header = () => {
           ) : (
             <Link
               to="/login"
-              className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition-all"
+              className="hidden lg:inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition-all"
             >
               Sign In
             </Link>
