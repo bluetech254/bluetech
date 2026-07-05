@@ -38,8 +38,10 @@ export default function App() {
                 <Header />
 
                 {/* Main page stage */}
-                <main className="flex-1 w-full px-[100px] py-8 md:py-12">
-                  <AppRoutes />
+                <main className="flex-1 w-full py-8 md:py-12">
+                  <div className="px-4 sm:px-6 lg:px-[100px]">
+                    <AppRoutes />
+                  </div>
                 </main>
 
                 {/* Main Footer */}

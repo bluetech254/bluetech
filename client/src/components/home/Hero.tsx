@@ -67,7 +67,7 @@ export const Hero = () => {
       <div className="absolute inset-0 bg-black/40" />
       
       {/* Content */}
-      <div className="absolute inset-0 flex flex-col items-start justify-center px-4 sm:px-12 md:px-16 lg:px-20 text-white">
+      <div className="absolute inset-0 flex flex-col items-start justify-end px-4 sm:px-12 md:px-16 lg:px-20 pb-8 sm:pb-12 md:pb-16 lg:pb-20 text-white">
         <div className="max-w-2xl space-y-2 sm:space-y-4">
           <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
             Latest Tech Gadgets & Accessories

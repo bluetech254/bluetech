@@ -28,7 +28,7 @@ export const HomePage = () => {
       </div>
 
       {/* Mobile Hero */}
-      <div className="lg:hidden">
+      <div className="lg:hidden -mx-4 sm:-mx-6">
         <Hero />
       </div>
 
