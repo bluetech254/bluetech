@@ -91,7 +91,7 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
       />
 
       <div className="flex min-h-screen items-start justify-center p-4 pt-10 sm:p-6 md:pt-20">
-        <div className="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 transition-all animate-scale-in">
+        <div className="relative w-full max-w-sm sm:max-w-2xl transform overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 transition-all animate-scale-in">
           {/* Input Bar */}
           <div className="relative flex items-center border-b border-slate-100 p-4">
             <Search className="h-6 w-6 text-slate-400 mr-3.5 flex-shrink-0" />
