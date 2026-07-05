@@ -43,16 +43,8 @@ export const Header = () => {
           </span>
         </Link>
 
-        {/* Desktop: Left Side - Menu Button & Brand */}
+        {/* Desktop: Left Side - Brand */}
         <div className="hidden lg:flex items-center space-x-6">
-          <button
-            type="button"
-            className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-md focus:outline-none cursor-pointer"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          
           <Link to="/" className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-200">
               <Wrench className="w-5 h-5" />
