@@ -43,7 +43,12 @@ export const HomePage = () => {
         </div>
       </div>
 
-      {/* Mobile: Repair Services */}
+      {/* Mobile: Marketing Posters */}
+      <div className="lg:hidden -mx-4 sm:-mx-6">
+        <MarketingPosters />
+      </div>
+
+      {/* Mobile: Featured Services */}
       <div className="lg:hidden mt-8">
         <FeaturedServices />
       </div>
@@ -62,8 +67,10 @@ export const HomePage = () => {
       {/* 5. Service Categories Scroll */}
       <ServiceCategoriesScroll />
 
-      {/* 6. Marketing Posters */}
-      <MarketingPosters />
+      {/* 6. Marketing Posters - Desktop Only */}
+      <div className="hidden lg:block">
+        <MarketingPosters />
+      </div>
 
       {/* 7. New Arrivals */}
       <NewArrivals />
