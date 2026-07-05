@@ -19,7 +19,7 @@ export const SideCarousel = () => {
       <img 
         src={images[currentIndex]} 
         alt="Promotion" 
-        className="w-full h-[700px] object-cover transition-opacity duration-1000"
+        className="w-full h-[600px] object-cover transition-opacity duration-1000"
       />
     </div>
   );

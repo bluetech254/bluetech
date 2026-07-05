@@ -100,11 +100,11 @@ export const PromotionalDealsCarousel = () => {
         {/* Carousel Container */}
         <div className="overflow-hidden rounded-lg">
           <div className="flex gap-4 transition-transform duration-500" style={{
-            transform: `translateX(-${scrollPosition * 296}px)`
+            transform: `translateX(-${scrollPosition * 176}px)`
           }}>
             {deals.map((deal) => (
-              <div key={deal.id} className="flex-shrink-0 w-72 group/card">
-                <div className="relative h-48 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+              <div key={deal.id} className="flex-shrink-0 w-40 group/card">
+                <div className="relative h-40 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                   <img src={deal.image} alt={deal.title} className="w-full h-full object-cover" />
                   
                   {/* Discount Badge */}

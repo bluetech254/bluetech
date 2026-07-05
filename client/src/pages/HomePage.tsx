@@ -8,6 +8,8 @@ import FeaturedServices from '../components/home/FeaturedServices';
 import ShopByCategory from '../components/home/ShopByCategory';
 import ServiceCategoriesScroll from '../components/home/ServiceCategoriesScroll';
 import MarketingPosters from '../components/home/MarketingPosters';
+import PremiumProductsPoster from '../components/home/PremiumProductsPoster';
+import ExpertServicesPoster from '../components/home/ExpertServicesPoster';
 import NewArrivals from '../components/home/NewArrivals';
 import HowItWorks from '../components/home/HowItWorks';
 
@@ -43,14 +45,19 @@ export const HomePage = () => {
         </div>
       </div>
 
-      {/* Mobile: Marketing Posters */}
-      <div className="lg:hidden -mx-4 sm:-mx-6">
-        <MarketingPosters />
+      {/* Mobile: Premium Products Poster */}
+      <div className="md:hidden -mx-4 sm:-mx-6">
+        <PremiumProductsPoster />
       </div>
 
       {/* Mobile: Featured Services */}
       <div className="lg:hidden mt-8">
         <FeaturedServices />
+      </div>
+
+      {/* Mobile: Expert Services Poster */}
+      <div className="md:hidden -mx-4 sm:-mx-6">
+        <ExpertServicesPoster />
       </div>
 
       {/* 3. Services Carousel - Desktop Only */}

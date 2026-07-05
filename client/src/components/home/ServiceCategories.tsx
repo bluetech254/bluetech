@@ -51,7 +51,7 @@ export const ServiceCategories = () => {
         </h2>
       </div>
 
-      <div className="relative overflow-hidden border border-slate-100 p-8 sm:p-12 rounded-lg group min-h-[491px] flex items-center" style={{backgroundImage: 'url(/posters/service-carousel-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+      <div className="relative overflow-hidden border border-slate-100 p-8 sm:p-12 rounded-lg group min-h-[453px] flex items-center" style={{backgroundImage: 'url(/posters/service-carousel-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <div className="absolute inset-0 bg-black/20" />
         <div className="relative max-w-2xl space-y-6">
           <h3 className="text-3xl sm:text-4xl font-bold text-white">

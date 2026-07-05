@@ -44,7 +44,7 @@ export const ShopByCategory = () => {
   const categories = Object.keys(categoryProducts);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 -mt-12">
       <div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           Shop Our Product Categories
