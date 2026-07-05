@@ -33,12 +33,15 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 shadow-sm h-[72px]">
       <div className="h-full px-4 sm:px-6 lg:max-w-none lg:px-[100px] lg:mx-0 flex items-center justify-between">
-        {/* Mobile: Left Side - BlueTech Name */}
-        <div className="lg:hidden">
+        {/* Mobile: Left Side - Logo Icon & BlueTech Name */}
+        <Link to="/" className="lg:hidden flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black shadow-md">
+            <Wrench className="w-4 h-4" />
+          </div>
           <span className="text-lg font-black tracking-tight text-slate-900">
             Blue<span className="text-blue-600">Tech</span>
           </span>
-        </div>
+        </Link>
 
         {/* Desktop: Left Side - Menu Button & Brand */}
         <div className="hidden lg:flex items-center space-x-6">
