@@ -31,7 +31,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 shadow-sm h-[72px]">
+    <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 shadow-sm h-14">
       <div className="h-full px-4 sm:px-6 lg:max-w-none lg:px-[100px] lg:mx-0 flex items-center justify-between">
         {/* Mobile: Left Side - Logo Icon & BlueTech Name */}
         <Link to="/" className="lg:hidden flex items-center space-x-2">
@@ -205,7 +205,7 @@ export const Header = () => {
         <button
           type="button"
           onClick={() => setIsSearchOpen(true)}
-          className="w-full flex items-center gap-3 bg-slate-200 hover:bg-slate-300 text-slate-600 px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
+          className="w-full flex items-center gap-3 bg-slate-200 hover:bg-slate-300 text-slate-600 px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
         >
           <Search className="h-5 w-5" />
           <span className="text-sm">Search products, repairs...</span>
