@@ -109,11 +109,11 @@ export const Header = () => {
 
         {/* Right Side: Search, Cart, Auth Dropdown */}
         <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* Search Trigger - Desktop Only */}
+          {/* Search Trigger */}
           <button
             type="button"
             onClick={() => setIsSearchOpen(true)}
-            className="hidden lg:block p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+            className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
             aria-label="Search"
           >
             <Search className="h-5.5 w-5.5" />
