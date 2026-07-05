@@ -99,13 +99,13 @@ export const Header = () => {
           </NavLink>
         </nav>
 
-        {/* Right Side: Search, Cart, Auth Dropdown */}
+        {/* Right Side: Cart, Auth Dropdown */}
         <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* Search Trigger */}
+          {/* Search Trigger - Desktop Only */}
           <button
             type="button"
             onClick={() => setIsSearchOpen(true)}
-            className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+            className="hidden lg:block p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
             aria-label="Search"
           >
             <Search className="h-5.5 w-5.5" />
@@ -199,6 +199,18 @@ export const Header = () => {
 
       {/* Global Search Modal */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* Mobile Search Bar */}
+      <div className="lg:hidden w-full bg-white border-b border-slate-100 px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className="w-full flex items-center gap-3 bg-slate-50 hover:bg-slate-100 text-slate-500 px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
+        >
+          <Search className="h-5 w-5" />
+          <span className="text-sm">Search products, repairs...</span>
+        </button>
+      </div>
 
       {/* Mobile Navigation Drawer */}
       <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
