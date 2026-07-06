@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ShoppingBag, User as UserIcon, Menu, LogOut, ChevronDown, Wrench } from 'lucide-react';
+import { Search, ShoppingBag, User as UserIcon, Menu, LogOut, ChevronDown } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
@@ -35,9 +35,7 @@ export const Header = () => {
       <div className="h-full px-4 sm:px-6 lg:max-w-none lg:px-[100px] lg:mx-0 flex items-center justify-between">
         {/* Mobile: Left Side - Logo Icon & BlueTech Name */}
         <Link to="/" className="lg:hidden flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black shadow-md">
-            <Wrench className="w-4 h-4" />
-          </div>
+          <img src="/logo.png" alt="BlueTech" className="h-8 w-auto object-contain logo-wobble" />
           <span className="text-lg font-black tracking-tight text-slate-900">
             Blue<span className="text-blue-600">Tech</span>
           </span>
@@ -46,9 +44,7 @@ export const Header = () => {
         {/* Desktop: Left Side - Brand */}
         <div className="hidden lg:flex items-center space-x-6">
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-200">
-              <Wrench className="w-5 h-5" />
-            </div>
+            <img src="/logo.png" alt="BlueTech" className="h-10 w-auto object-contain logo-wobble" />
             <span className="text-2xl font-black tracking-tight text-slate-900">
               Blue<span className="text-blue-600">Tech</span>
             </span>

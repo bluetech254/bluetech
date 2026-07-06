@@ -80,14 +80,14 @@ export const Hero = () => {
           <div className="flex items-center gap-3 sm:gap-4 pt-4 w-full sm:w-auto">
             <button
               onClick={() => navigate('/products')}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/95 hover:bg-white text-slate-900 font-semibold py-2.5 px-6 rounded-lg transition-all backdrop-blur-sm border border-white/20 cursor-pointer hover:cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 bg-white/95 hover:bg-white text-slate-900 font-semibold py-1.5 px-4 sm:py-2.5 sm:px-6 text-sm sm:text-base rounded-lg transition-all backdrop-blur-sm border border-white/20 cursor-pointer hover:cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4" />
               Shop Now
             </button>
             <button
               onClick={() => navigate('/services')}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-300/40 hover:bg-slate-300/60 text-slate-700 font-semibold py-2.5 px-6 rounded-lg transition-all backdrop-blur-sm border border-slate-300/50 cursor-pointer hover:cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 bg-slate-300/40 hover:bg-slate-300/60 text-slate-700 font-semibold py-1.5 px-4 sm:py-2.5 sm:px-6 text-sm sm:text-base rounded-lg transition-all backdrop-blur-sm border border-slate-300/50 cursor-pointer hover:cursor-pointer"
             >
               <Settings className="w-4 h-4" />
               Book Now

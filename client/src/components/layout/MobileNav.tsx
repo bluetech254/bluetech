@@ -27,6 +27,7 @@ export const MobileNav = ({ isOpen, onClose }: MobileNavProps) => {
           {/* Top Header */}
           <div className="flex items-center justify-between px-5 py-5 border-b border-slate-100">
             <Link to="/" onClick={onClose} className="flex items-center space-x-2">
+              <img src="/logo.png" alt="BlueTech" className="h-8 w-auto object-contain logo-wobble" />
               <span className="text-xl font-black tracking-tight text-slate-900">
                 Blue<span className="text-blue-600">Tech</span>
               </span>

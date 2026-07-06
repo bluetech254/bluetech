@@ -15,11 +15,11 @@ export const SideCarousel = () => {
   }, []);
 
   return (
-    <div className="flex-1 -mt-8 rounded-lg shadow-lg overflow-hidden">
+    <div className="flex-1 -mt-8 overflow-hidden bg-white flex items-stretch">
       <img 
         src={images[currentIndex]} 
         alt="Promotion" 
-        className="w-full h-[600px] object-cover transition-opacity duration-1000"
+        className="w-full h-[600px] object-contain transition-opacity duration-1000"
       />
     </div>
   );

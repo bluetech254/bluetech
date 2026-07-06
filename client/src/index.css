@@ -160,7 +160,55 @@
   animation: glow 2s ease-in-out infinite;
 }
 
-/* Smooth transitions */
+@keyframes wobble {
+  0%   { transform: rotate(0deg) rotateX(0deg) rotateY(0deg); }
+  10%  { transform: rotate(-8deg) rotateX(15deg) rotateY(-10deg); }
+  20%  { transform: rotate(6deg) rotateX(-10deg) rotateY(15deg); }
+  30%  { transform: rotate(-5deg) rotateX(20deg) rotateY(8deg); }
+  40%  { transform: rotate(7deg) rotateX(-8deg) rotateY(-18deg); }
+  50%  { transform: rotate(-4deg) rotateX(12deg) rotateY(12deg); }
+  60%  { transform: rotate(5deg) rotateX(-15deg) rotateY(-8deg); }
+  70%  { transform: rotate(-6deg) rotateX(8deg) rotateY(20deg); }
+  80%  { transform: rotate(3deg) rotateX(-12deg) rotateY(-10deg); }
+  90%  { transform: rotate(-2deg) rotateX(6deg) rotateY(6deg); }
+  100% { transform: rotate(0deg) rotateX(0deg) rotateY(0deg); }
+}
+
+.logo-wobble {
+  animation: wobble 3s ease-in-out infinite;
+  transform-origin: center;
+  transform-style: preserve-3d;
+}
+
+.brand-fixit {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #1a0a00 0%, #b45309 55%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.brand-sub {
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.2em;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #92400e;
+  text-transform: uppercase;
+  opacity: 0.9;
+  margin-top: 2px;
+  border-top: 1px solid #fcd34d;
+  padding-top: 2px;
+}
+
+@media (min-width: 1024px) {
+  .brand-sub {
+    font-size: 0.6rem;
+  }
+}
 @layer components {
   .transition-smooth {
     @apply transition-all duration-300 ease-in-out;
