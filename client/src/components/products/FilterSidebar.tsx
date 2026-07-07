@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Star } from 'lucide-react';
-import { getProductCategories, ProductFilters } from '../../api/products';
+import { ProductFilters } from '../../api/products';
 import { useDebounce } from '../../hooks/useDebounce';
 
 interface FilterSidebarProps {
@@ -27,9 +27,6 @@ export const FilterSidebar = ({ filters, onChange, onReset, categories = [] }: F
   const [selectedBrand, setSelectedBrand] = useState('');
   const [minRating, setMinRating] = useState(0);
 
-  useEffect(() => {
-    getProductCategories().catch(() => {});
-  }, []);
 
   const handleApply = () => {
     onChange({

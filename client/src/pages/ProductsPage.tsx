@@ -77,7 +77,7 @@ export const ProductsPage = () => {
     <div className="animate-fade-in">
 
       {/* Category ticker — full width */}
-      <div className="overflow-hidden bg-blue-600 py-2.5 -mx-4 sm:-mx-6 lg:-mx-[100px] mb-6 whitespace-nowrap -mt-[30px]">
+      <div className="overflow-hidden bg-blue-600 py-2.5 -mx-4 sm:-mx-6 lg:-mx-[100px] mb-6 whitespace-nowrap">
         <div className="animate-marquee ticker-pause-on-hover">
           {[...categories, ...categories, ...categories].map((cat, i) => (
             <button
@@ -102,7 +102,7 @@ export const ProductsPage = () => {
           <FilterSidebar filters={filters} onChange={updateFilters} onReset={resetFilters} categories={categories.filter(c => c !== 'All')} />
         </div>
 
-        <div className="flex-1 min-w-0 space-y-6 pb-8">
+        <div className="flex-1 min-w-0 space-y-6 pb-8 max-w-[calc(100%-20px)] md:max-w-full">
 
           {/* Section Carousels */}
           {!loading && allProducts.length > 0 && !category && (
@@ -124,7 +124,7 @@ export const ProductsPage = () => {
           )}
 
           {loading && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 animate-pulse">
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4 animate-pulse">
               {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-xl border border-slate-100 p-4 space-y-3">
                   <div className="bg-slate-100 aspect-square w-full rounded-lg" />
@@ -153,7 +153,7 @@ export const ProductsPage = () => {
           )}
 
           {!loading && !error && paginated.length > 0 && (
-            <div id="products-grid" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div id="products-grid" className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
               {paginated.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
