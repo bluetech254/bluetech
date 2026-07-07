@@ -77,7 +77,7 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
                   key={idx}
                   onClick={() => setSelectedImageIndex(idx)}
                   className={`
-                    w-20 h-20 rounded-xl border-2 overflow-hidden bg-white flex-shrink-0 transition-all cursor-pointer
+                    w-20 h-20 lg:w-24 lg:h-24 rounded-xl border-2 overflow-hidden bg-white flex-shrink-0 transition-all cursor-pointer
                     ${selectedImageIndex === idx ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-100 hover:border-slate-300'}
                   `}
                 >

@@ -160,6 +160,22 @@
   animation: glow 2s ease-in-out infinite;
 }
 
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 120s linear infinite;
+  display: flex;
+  width: max-content;
+}
+.ticker-pause-on-hover:hover {
+  animation-play-state: paused;
+}
+
 @keyframes wobble {
   0%   { transform: rotate(0deg) rotateX(0deg) rotateY(0deg); }
   10%  { transform: rotate(-8deg) rotateX(15deg) rotateY(-10deg); }
@@ -175,7 +191,7 @@
 }
 
 .logo-wobble {
-  animation: wobble 3s ease-in-out infinite;
+  animation: wobble 30s ease-in-out infinite;
   transform-origin: center;
   transform-style: preserve-3d;
 }

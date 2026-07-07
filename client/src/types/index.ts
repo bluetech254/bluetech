@@ -1,20 +1,35 @@
 // Product
 export interface Product {
   id: string;
-  title?: string;  // Backend uses 'title'
-  name?: string;   // Frontend uses 'name'
+  title?: string;
+  name?: string;
   description: string;
   price: number;
   category?: string;
   brand?: string;
-  image_url?: string;  // Backend field
-  images?: string[];   // Frontend field
+  image_url?: string;
+  images?: string[];
   stock_quantity: number;
-  is_featured?: boolean;
   is_active?: boolean;
   specifications?: Record<string, string> | string;
   created_at: string;
   updated_at?: string;
+  // Section flags
+  is_featured?: boolean;
+  is_discounted?: boolean;
+  discount_percent?: number;
+  is_flash_sale?: boolean;
+  flash_sale_ends_at?: string;
+  is_new_arrival?: boolean;
+  is_best_seller?: boolean;
+  is_trending?: boolean;
+  is_clearance?: boolean;
+  is_refurbished?: boolean;
+  is_pre_order?: boolean;
+  is_back_in_stock?: boolean;
+  is_editors_choice?: boolean;
+  is_weekly_deal?: boolean;
+  is_coming_soon?: boolean;
 }
 
 // Service

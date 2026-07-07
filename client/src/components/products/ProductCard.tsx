@@ -33,7 +33,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div className="flex flex-col">
-      <Link to={`/products/${id}`} className="block overflow-hidden relative bg-slate-50 border border-slate-100 group mb-1 h-40">
+      <Link to={`/products/${id}`} className="block overflow-hidden relative bg-slate-50 border border-slate-100 group mb-1 h-40 lg:h-52">
         <img
           src={imageUrl}
           alt={name}
@@ -56,7 +56,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <div className="flex items-center justify-between gap-1">
           <h3 className="text-xs font-semibold text-slate-900 line-clamp-1 flex-1">
             <Link to={`/products/${id}`} className="hover:text-blue-600 transition-colors">
-              {name.split(' ').slice(0, 2).join(' ')}
+              {name.split(' ').slice(0, 4).join(' ')}
             </Link>
           </h3>
           <div className="text-base font-bold text-blue-600 whitespace-nowrap">
