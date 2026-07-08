@@ -62,7 +62,7 @@ export const ContactPage = () => {
           
           {/* Information coordinates */}
           <Card className="p-6 space-y-6">
-            <h3 className="font-extrabold text-slate-950 text-base border-b border-slate-50 pb-3 uppercase tracking-wider text-xs text-slate-400">
+            <h3 className="font-extrabold text-slate-950 text-base border-b border-slate-50 pb-3 text-xs text-slate-400">
               Direct Coordinates
             </h3>
 
@@ -73,9 +73,9 @@ export const ContactPage = () => {
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-xs uppercase tracking-wider">Phone Calls</p>
-                  <p className="font-semibold text-slate-700 mt-0.5">+254 700 123 456</p>
-                  <p className="font-semibold text-slate-700">+254 711 987 654</p>
+                  <p className="font-bold text-slate-900 text-xs">Phone Calls</p>
+                  <p className="font-semibold text-slate-700 mt-0.5 text-xs sm:text-sm">+254 700 123 456</p>
+                  <p className="font-semibold text-slate-700 text-xs sm:text-sm">+254 711 987 654</p>
                 </div>
               </div>
 
@@ -85,9 +85,9 @@ export const ContactPage = () => {
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-xs uppercase tracking-wider">Email Inquiry</p>
-                  <p className="font-semibold text-slate-700 mt-0.5">support@bluetech.co.ke</p>
-                  <p className="font-semibold text-slate-700">info@bluetech.co.ke</p>
+                  <p className="font-bold text-slate-900 text-xs">Email Inquiry</p>
+                  <p className="font-semibold text-slate-700 mt-0.5 text-xs sm:text-sm">support@bluetech.co.ke</p>
+                  <p className="font-semibold text-slate-700 text-xs sm:text-sm">info@bluetech.co.ke</p>
                 </div>
               </div>
 
@@ -97,8 +97,8 @@ export const ContactPage = () => {
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-xs uppercase tracking-wider">Storefront Location</p>
-                  <p className="font-semibold text-slate-700 leading-relaxed mt-0.5">
+                  <p className="font-bold text-slate-900 text-xs">Storefront Location</p>
+                  <p className="font-semibold text-slate-700 leading-relaxed mt-0.5 text-xs sm:text-sm">
                     BlueTech Plaza, 2nd Floor Shop #24,<br />
                     Moi Avenue, Nairobi CBD,<br />
                     Kenya
@@ -110,7 +110,7 @@ export const ContactPage = () => {
 
           {/* Opening hours table */}
           <Card className="p-6 space-y-4">
-            <h3 className="font-extrabold text-slate-950 text-base border-b border-slate-50 pb-3 uppercase tracking-wider text-xs text-slate-400 flex items-center">
+            <h3 className="font-extrabold text-slate-950 text-base border-b border-slate-50 pb-3 text-xs text-slate-400 flex items-center">
               <Clock className="w-4 h-4 mr-1.5 text-blue-600" />
               Opening Hours
             </h3>

@@ -172,6 +172,10 @@ export const RegisterPage = () => {
               Access Account
             </Link>
           </p>
+          <p className="text-[11px] text-slate-400 mt-2">
+            By registering, you agree to our{' '}
+            <Link to="/privacy-policy" className="hover:text-blue-600 hover:underline">Privacy Policy</Link>.
+          </p>
         </div>
 
       </Card>

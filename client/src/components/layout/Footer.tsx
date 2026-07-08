@@ -25,7 +25,7 @@ export const Footer = () => {
             <div>
               <h4 className="text-white font-bold text-sm mb-3">Quick Links</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/" className="hover:text-blue-400">About Us</Link></li>
+                <li><Link to="/about" className="hover:text-blue-400">About Us</Link></li>
                 <li><Link to="/products" className="hover:text-blue-400">Products</Link></li>
                 <li><Link to="/services" className="hover:text-blue-400">Services</Link></li>
                 <li><a href="#" className="hover:text-blue-400">Hot Deals</a></li>
@@ -37,9 +37,9 @@ export const Footer = () => {
               <h4 className="text-white font-bold text-sm mb-3">Support</h4>
               <ul className="space-y-2 text-sm">
                 <li><Link to="/track-order" className="hover:text-blue-400">Track Order</Link></li>
-                <li><a href="#" className="hover:text-blue-400">Returns & Refunds</a></li>
-                <li><a href="#" className="hover:text-blue-400">Warranty</a></li>
-                <li><a href="#" className="hover:text-blue-400">FAQs</a></li>
+                <li><Link to="/returns" className="hover:text-blue-400">Returns & Refunds</Link></li>
+                <li><Link to="/warranty" className="hover:text-blue-400">Warranty</Link></li>
+                <li><Link to="/faqs" className="hover:text-blue-400">FAQs</Link></li>
                 <li><Link to="/contact" className="hover:text-blue-400">Contact Us</Link></li>
               </ul>
             </div>
@@ -50,7 +50,7 @@ export const Footer = () => {
         <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 space-y-3 sm:space-y-0">
           <p>© 2024 BlueTech Electronics. All rights reserved.</p>
           <div className="flex space-x-6">
-            <a href="#" className="hover:text-slate-300">Privacy Policy</a>
+            <Link to="/privacy-policy" className="hover:text-slate-300">Privacy Policy</Link>
             <a href="#" className="hover:text-slate-300">Terms of Service</a>
             <a href="#" className="hover:text-slate-300">Cookie Policy</a>
           </div>

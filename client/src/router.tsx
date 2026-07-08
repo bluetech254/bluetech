@@ -16,6 +16,11 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import ContactPage from './pages/ContactPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import AboutPage from './pages/AboutPage';
+import ReturnsPage from './pages/ReturnsPage';
+import WarrantyPage from './pages/WarrantyPage';
+import FAQsPage from './pages/FAQsPage';
 
 export const AppRoutes = () => {
   return (
@@ -34,6 +39,11 @@ export const AppRoutes = () => {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/returns" element={<ReturnsPage />} />
+      <Route path="/warranty" element={<WarrantyPage />} />
+      <Route path="/faqs" element={<FAQsPage />} />
       
       {/* Catch-all fallback redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
