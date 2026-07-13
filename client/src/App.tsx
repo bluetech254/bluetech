@@ -28,10 +28,10 @@ const ScrollToTop = () => {
 export default function App() {
   return (
     <ErrorBoundary>
-      <NotificationProvider>
-        <AuthProvider>
-          <CartProvider>
-            <BrowserRouter>
+      <BrowserRouter>
+        <NotificationProvider>
+          <AuthProvider>
+            <CartProvider>
               <ScrollToTop />
               <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
                 {/* Header Navigation */}
@@ -50,10 +50,10 @@ export default function App() {
                 {/* Cart Drawer */}
                 <CartDrawer />
               </div>
-            </BrowserRouter>
-          </CartProvider>
-        </AuthProvider>
-      </NotificationProvider>
+            </CartProvider>
+          </AuthProvider>
+        </NotificationProvider>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }
