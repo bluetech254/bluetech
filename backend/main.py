@@ -1,11 +1,14 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+from starlette.authentication import AuthCredentials
 from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
+import jwt
 
 load_dotenv()
 
@@ -30,6 +33,20 @@ supabase: Client = create_client(
     os.getenv("SUPABASE_URL"),
     os.getenv("SUPABASE_ANON_KEY")
 )
+
+# Auth
+security = HTTPBearer()
+
+def verify_token(credentials = Depends(security)) -> str:
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, os.getenv("SUPABASE_ANON_KEY"), algorithms=["HS256"])
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 # ==================== SCHEMAS ====================
 
@@ -126,7 +143,7 @@ def delete_product(product_id: str):
 # ==================== ORDERS ====================
 
 @app.post("/api/v1/orders")
-def create_order(order: OrderCreate):
+def create_order(order: OrderCreate, user_id: str = Depends(verify_token)):
     """Create new order with items"""
     # Get products to calculate prices
     product_ids = [item.product_id for item in order.items]
@@ -178,9 +195,9 @@ def create_order(order: OrderCreate):
     return order_response.data[0]
 
 @app.get("/api/v1/orders")
-def get_orders(status: Optional[str] = None):
-    """Get all orders (Admin)"""
-    query = supabase.table("orders").select("*, order_items(*)")
+def get_orders(status: Optional[str] = None, user_id: str = Depends(verify_token)):
+    """Get user's orders"""
+    query = supabase.table("orders").select("*, order_items(*)").eq("user_id", user_id)
     
     if status:
         query = query.eq("status", status)
@@ -211,7 +228,7 @@ def update_order_status(order_id: str, status_update: StatusUpdate):
 # ==================== BOOKINGS ====================
 
 @app.post("/api/v1/bookings")
-def create_booking(booking: BookingCreate):
+def create_booking(booking: BookingCreate, user_id: str = Depends(verify_token)):
     """Create new repair booking"""
     booking_data = booking.dict()
     booking_data["status"] = "pending"
@@ -220,9 +237,9 @@ def create_booking(booking: BookingCreate):
     return response.data[0]
 
 @app.get("/api/v1/bookings")
-def get_bookings(status: Optional[str] = None):
-    """Get all bookings (Admin)"""
-    query = supabase.table("bookings").select("*")
+def get_bookings(status: Optional[str] = None, user_id: str = Depends(verify_token)):
+    """Get user's bookings"""
+    query = supabase.table("bookings").select("*").eq("user_id", user_id)
     
     if status:
         query = query.eq("status", status)

@@ -43,11 +43,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           style: {
             background: '#fff',
             color: '#0f172a',
-            padding: window.innerWidth < 640 ? '8px 10px' : '16px',
+            padding: '16px',
             borderRadius: '10px',
             boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-            fontSize: window.innerWidth < 640 ? '11px' : '14px',
-            maxWidth: window.innerWidth < 640 ? '220px' : '356px',
+            fontSize: '14px',
+            maxWidth: '356px',
           },
           success: {
             iconTheme: { primary: '#10b981', secondary: '#fff' },

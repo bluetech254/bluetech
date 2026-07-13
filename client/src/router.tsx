@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
 
 // Import Pages
 import HomePage from './pages/HomePage';
@@ -29,15 +30,15 @@ export const AppRoutes = () => {
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/services" element={<ServicesPage />} />
-      <Route path="/book-repair/:serviceId" element={<BookRepairPage />} />
+      <Route path="/book-repair/:serviceId" element={<ProtectedRoute><BookRepairPage /></ProtectedRoute>} />
       <Route path="/cart" element={<CartPage />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
-      <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
-      <Route path="/booking-success/:bookingId" element={<BookingSuccessPage />} />
-      <Route path="/track-order" element={<TrackOrderPage />} />
+      <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+      <Route path="/order-success/:orderId" element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>} />
+      <Route path="/booking-success/:bookingId" element={<ProtectedRoute><BookingSuccessPage /></ProtectedRoute>} />
+      <Route path="/track-order" element={<ProtectedRoute><TrackOrderPage /></ProtectedRoute>} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/about" element={<AboutPage />} />
