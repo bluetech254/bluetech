@@ -51,8 +51,8 @@ export const Footer = () => {
           <p>© 2024 BlueTech Electronics. All rights reserved.</p>
           <div className="flex space-x-6">
             <Link to="/privacy-policy" className="hover:text-slate-300">Privacy Policy</Link>
-            <a href="#" className="hover:text-slate-300">Terms of Service</a>
-            <a href="#" className="hover:text-slate-300">Cookie Policy</a>
+            <Link to="/terms-of-service" className="hover:text-slate-300">Terms of Service</Link>
+            <Link to="/cookie-policy" className="hover:text-slate-300">Cookie Policy</Link>
           </div>
         </div>
       </div>
