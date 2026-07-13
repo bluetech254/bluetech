@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, ShoppingBag, User as UserIcon, Menu, LogOut, ChevronDown } from 'lucide-react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import SearchModal from './SearchModal';
@@ -13,6 +13,9 @@ export const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const showSearch = ['/', '/products', '/services'].includes(location.pathname);
 
   const handleLogout = () => {
     logout();
@@ -78,14 +81,16 @@ export const Header = () => {
         {/* Right Side: Cart, Auth Dropdown */}
         <div className="flex items-center space-x-3 sm:space-x-4">
           {/* Search Trigger - Desktop Only */}
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen(true)}
-            className="hidden lg:block p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
-            aria-label="Search"
-          >
-            <Search className="h-5.5 w-5.5" />
-          </button>
+          {showSearch && (
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className="hidden lg:block p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+              aria-label="Search"
+            >
+              <Search className="h-5.5 w-5.5" />
+            </button>
+          )}
 
           {/* Cart Trigger */}
           <button
@@ -177,16 +182,18 @@ export const Header = () => {
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* Mobile Search Bar */}
-      <div className="lg:hidden w-full bg-white border-b border-slate-100 px-1 py-1 -mt-1">
-        <button
-          type="button"
-          onClick={() => setIsSearchOpen(true)}
-          className="w-full flex items-center gap-3 bg-slate-200 hover:bg-slate-300 text-slate-600 px-2 lg:px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
-        >
-          <Search className="h-5 w-5" />
-          <span className="text-sm">Search products, repairs...</span>
-        </button>
-      </div>
+      {showSearch && (
+        <div className="lg:hidden w-full bg-white border-b border-slate-100 px-1 py-1 -mt-1">
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full flex items-center gap-3 bg-slate-200 hover:bg-slate-300 text-slate-600 px-2 lg:px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
+          >
+            <Search className="h-5 w-5" />
+            <span className="text-sm">Search products, repairs...</span>
+          </button>
+        </div>
+      )}
 
       {/* Mobile Navigation Drawer */}
       <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
