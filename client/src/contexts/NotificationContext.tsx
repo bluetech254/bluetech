@@ -39,24 +39,21 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         position="top-right"
         toastOptions={{
           duration: 4000,
+          loading: { duration: 8000 },
           style: {
             background: '#fff',
             color: '#0f172a',
-            padding: '16px',
-            borderRadius: '12px',
+            padding: window.innerWidth < 640 ? '8px 10px' : '16px',
+            borderRadius: '10px',
             boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+            fontSize: window.innerWidth < 640 ? '11px' : '14px',
+            maxWidth: window.innerWidth < 640 ? '220px' : '356px',
           },
           success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
+            iconTheme: { primary: '#10b981', secondary: '#fff' },
           },
           error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
+            iconTheme: { primary: '#ef4444', secondary: '#fff' },
           },
         }}
       />

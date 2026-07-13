@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getProductById, getProducts } from '../api/products';
 import { Product } from '../types';
 import ProductDetail from '../components/products/ProductDetail';
-import ProductGrid from '../components/products/ProductGrid';
+import SectionCarousel from '../components/products/SectionCarousel';
 import Loading from '../components/common/Loading';
 import { ChevronLeft } from 'lucide-react';
 
@@ -26,8 +26,8 @@ export const ProductDetailPage = () => {
         
         // Fetch related products of the same category
         if (item.category) {
-          const relatedRes = await getProducts({ category: item.category, limit: 5 });
-          const itemsFiltered = (relatedRes.products || []).filter(p => p.id !== id).slice(0, 4);
+          const allRes = await getProducts({ limit: 200 });
+          const itemsFiltered = (allRes.products || []).filter(p => p.id !== id && p.category === item.category);
           setRelatedProducts(itemsFiltered);
         }
       } catch (err: any) {
@@ -83,19 +83,14 @@ export const ProductDetailPage = () => {
       {/* Main product display card */}
       <ProductDetail product={product} />
 
-      {/* Related Products Section */}
+      {/* More Like This */}
       {relatedProducts.length > 0 && (
-        <div className="space-y-6 pt-10 border-t border-slate-100">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              You May Also Like
-            </h2>
-            <p className="text-sm text-slate-500 mt-1">
-              Browse other hardware options inside the same {product.category} category.
-            </p>
-          </div>
-          
-          <ProductGrid products={relatedProducts} isLoading={false} />
+        <div className="pt-6 border-t border-slate-100">
+          <SectionCarousel
+            title={`More ${product.category} Products`}
+            emoji="🛍️"
+            products={relatedProducts}
+          />
         </div>
       )}
     </div>

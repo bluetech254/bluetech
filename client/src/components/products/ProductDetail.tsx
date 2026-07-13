@@ -115,7 +115,7 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
               {name}
             </h1>
 
@@ -125,7 +125,7 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
             </p>
 
             {/* Price */}
-            <div className="text-3xl font-black text-blue-600 pt-1">
+            <div className="text-2xl font-black text-blue-600 pt-1">
               {formatCurrency(price)}
             </div>
 
@@ -144,26 +144,16 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
           <div className="space-y-5 pt-4 border-t border-slate-100">
             {/* Quantity Picker & Add to Cart */}
             {stock_quantity > 0 && (
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+              <div className="flex items-center gap-3">
                 {/* Picker */}
-                <div className="flex items-center justify-between border-2 border-slate-200 rounded-lg p-1.5 bg-white sm:w-36">
-                  <button
-                    type="button"
-                    onClick={handleDecrement}
-                    disabled={quantity <= 1}
-                    className="p-1.5 rounded-md hover:bg-slate-50 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                  >
+                <div className="flex items-center border-2 border-slate-200 rounded-lg p-1 bg-white shrink-0">
+                  <button type="button" onClick={handleDecrement} disabled={quantity <= 1}
+                    className="p-1.5 rounded-md hover:bg-slate-50 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
                     <Minus className="w-4 h-4" />
                   </button>
-                  <span className="text-sm font-bold text-slate-900 min-w-8 text-center select-none">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleIncrement}
-                    disabled={quantity >= stock_quantity}
-                    className="p-1.5 rounded-md hover:bg-slate-50 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                  >
+                  <span className="text-sm font-bold text-slate-900 w-7 text-center select-none">{quantity}</span>
+                  <button type="button" onClick={handleIncrement} disabled={quantity >= stock_quantity}
+                    className="p-1.5 rounded-md hover:bg-slate-50 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
@@ -173,10 +163,11 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
                   variant={added ? 'secondary' : 'primary'}
                   onClick={handleAddToCart}
                   disabled={isAdding}
-                  leftIcon={added ? <Check className="w-5 h-5 text-green-600" /> : <ShoppingCart className="w-5 h-5" />}
-                  className="flex-1 py-4 font-bold text-sm tracking-wider uppercase"
+                  leftIcon={added ? <Check className="w-4 h-4 text-green-600" /> : <ShoppingCart className="w-4 h-4" />}
+                  className="flex-1 py-2 sm:py-2.5 text-xs sm:text-sm font-bold"
                 >
-                  {isAdding ? 'Processing...' : added ? 'Added to Cart' : 'Add to Cart'}
+                  <span className="hidden sm:inline">{isAdding ? 'Adding...' : added ? 'Added to Cart' : 'Add to Cart'}</span>
+                  <span className="sm:hidden">{isAdding ? '...' : added ? 'Added!' : 'Add'}</span>
                 </Button>
               </div>
             )}
@@ -189,7 +180,7 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
             )}
 
             {/* Values / Benefits list */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 text-left">
+            <div className="grid grid-cols-3 gap-2 pt-2 text-left">
               <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <span className="text-xs font-bold text-slate-700">100% Genuine</span>
@@ -208,21 +199,29 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
       </div>
 
       {/* Specifications Grid */}
-      {specifications && Object.keys(specifications).length > 0 && (
-        <div className="bg-slate-50 rounded-2xl border border-slate-100 p-6 md:p-8 space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2.5">
-            Technical Specifications
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3 text-sm">
-            {Object.entries(specifications).map(([key, val]) => (
-              <div key={key} className="flex justify-between py-2 border-b border-slate-150 last:border-0 md:last:border-b">
-                <span className="font-semibold text-slate-500 capitalize">{key.replace(/_/g, ' ')}</span>
-                <span className="font-bold text-slate-900">{String(val)}</span>
-              </div>
-            ))}
+      {(() => {
+        let specs: Record<string, any> = {};
+        try {
+          specs = typeof specifications === 'string' ? JSON.parse(specifications) : (specifications || {});
+        } catch { specs = {}; }
+        const entries = Object.entries(specs).filter(([key]) => !['brand', 'category'].includes(key));
+        if (!entries.length) return null;
+        return (
+          <div className="bg-slate-50 rounded-2xl border border-slate-100 p-6 md:p-8 space-y-4">
+            <h3 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2.5">
+              Technical Specifications
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-0 text-sm">
+              {entries.map(([key, val]) => (
+                <div key={key} className="flex justify-between py-2.5 border-b border-slate-200 last:border-0">
+                  <span className="font-semibold text-slate-500 capitalize">{key.replace(/_/g, ' ')}</span>
+                  <span className="font-bold text-slate-900 text-right ml-4">{String(val)}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Zoom Image Modal */}
       {isZoomOpen && (

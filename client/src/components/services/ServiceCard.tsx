@@ -32,42 +32,42 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
   };
 
   return (
-    <Card variant="hover" className="flex flex-col h-full justify-between p-2 text-center border border-slate-100 bg-white">
+    <Card variant="hover" className="flex flex-col h-full justify-between p-2 md:p-3 lg:p-4 text-center border border-slate-100 bg-white">
       {/* Icon / Brand Circle */}
-      <div className="flex justify-center mb-1.5">
-        <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+      <div className="flex justify-center mb-1.5 md:mb-2">
+        <div className="w-8 md:w-9 lg:w-10 h-8 md:h-9 lg:h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
           {getCategoryIcon(category)}
         </div>
       </div>
 
       {/* Title & Badge */}
-      <div className="space-y-1">
-        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+      <div className="space-y-1 md:space-y-1.5">
+        <h3 className="text-xs md:text-sm lg:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
           {name}
         </h3>
         <span className="inline-block">
-          <Badge variant="info" className="capitalize text-[10px] px-1.5 py-0.5">
+          <Badge variant="info" className="capitalize text-[10px] md:text-xs lg:text-sm px-1.5 md:px-2 py-0.5 md:py-1">
             {category}
           </Badge>
         </span>
       </div>
 
       {/* Price section */}
-      <div className="my-1.5">
-        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Price</p>
-        <div className="text-sm font-black text-blue-600">
+      <div className="my-1.5 md:my-2">
+        <p className="text-[8px] md:text-[9px] lg:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Price</p>
+        <div className="text-sm md:text-base lg:text-lg font-black text-blue-600">
           {formatCurrency(price)}
         </div>
       </div>
 
       {/* Badges / metadata */}
-      <div className="border-t border-b border-slate-50 py-1.5 my-0.5 grid grid-cols-2 gap-1 text-[9px] text-slate-500 text-left font-medium">
+      <div className="border-t border-b border-slate-50 py-1.5 md:py-2 my-0.5 grid grid-cols-2 gap-1 md:gap-1.5 text-[9px] md:text-xs lg:text-sm text-slate-500 text-left font-medium">
         <div className="flex items-center space-x-0.5">
-          <Clock className="w-2.5 h-2.5 text-slate-400 flex-shrink-0" />
+          <Clock className="w-2.5 md:w-3 h-2.5 md:h-3 text-slate-400 flex-shrink-0" />
           <span className="truncate">{estimated_duration}</span>
         </div>
         <div className="flex items-center space-x-0.5">
-          <Shield className="w-2.5 h-2.5 text-slate-400 flex-shrink-0" />
+          <Shield className="w-2.5 md:w-3 h-2.5 md:h-3 text-slate-400 flex-shrink-0" />
           <span className="truncate">{warranty_period || '30 Days'}</span>
         </div>
       </div>
@@ -76,10 +76,10 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
       <button
         type="button"
         onClick={handleBookNow}
-        className="w-full mt-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-2 rounded-md flex items-center justify-center space-x-1 text-[10px] uppercase tracking-wider cursor-pointer shadow-sm hover:shadow-md transition-all"
+        className="w-full mt-1.5 md:mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 md:py-2 lg:py-2.5 px-2 md:px-3 rounded-md flex items-center justify-center space-x-1 text-[10px] md:text-xs lg:text-sm uppercase tracking-wider cursor-pointer shadow-sm hover:shadow-md transition-all"
       >
         <span>Book</span>
-        <ArrowRight className="w-3 h-3" />
+        <ArrowRight className="w-3 md:w-3.5 h-3 md:h-3.5" />
       </button>
     </Card>
   );
