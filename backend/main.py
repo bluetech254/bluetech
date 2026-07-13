@@ -8,6 +8,11 @@ import os
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
+from passlib.context import CryptContext
+import jwt
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 import jwt
 
 load_dotenv()
@@ -348,20 +353,23 @@ def register_user(request: RegisterRequest):
     if existing.data:
         raise HTTPException(status_code=400, detail="User with this email or phone already exists")
     
-    # Create user (in production, hash the password!)
+    # Hash password
+    hashed_password = pwd_context.hash(request.password)
+    
+    # Create user
     user_data = {
         "full_name": request.full_name,
         "email": request.email,
         "phone_number": request.phone_number,
-        "password_hash": request.password,  # In production: use bcrypt/argon2
+        "password_hash": hashed_password,
         "is_active": True
     }
     
     response = supabase.table("customers").insert(user_data).execute()
     user = response.data[0]
     
-    # Generate simple token (in production: use JWT)
-    token = f"token_{user['id']}"
+    # Generate JWT token
+    token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
     
     return {
         "user": {
@@ -371,7 +379,8 @@ def register_user(request: RegisterRequest):
             "phone_number": user["phone_number"],
             "created_at": user["created_at"]
         },
-        "token": token
+        "access_token": token,
+        "token_type": "bearer"
     }
 
 @app.post("/api/v1/auth/login")
@@ -385,12 +394,12 @@ def login_user(request: LoginRequest):
     
     user = response.data[0]
     
-    # Check password (in production: use bcrypt.verify)
-    if user["password_hash"] != request.password:
+    # Verify password with bcrypt
+    if not pwd_context.verify(request.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Generate simple token (in production: use JWT)
-    token = f"token_{user['id']}"
+    # Generate JWT token
+    token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
     
     return {
         "user": {
@@ -400,7 +409,8 @@ def login_user(request: LoginRequest):
             "phone_number": user["phone_number"],
             "created_at": user["created_at"]
         },
-        "token": token
+        "access_token": token,
+        "token_type": "bearer"
     }
 
 @app.post("/api/v1/auth/logout")
