@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { X, Home, ShoppingBag, ShieldAlert, Phone, User, Settings, ArrowRight } from 'lucide-react';
+import { X, Home, ShoppingBag, ShieldAlert, Phone, User, Settings, ArrowRight, Info } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 interface MobileNavProps {
@@ -87,6 +87,38 @@ export const MobileNav = ({ isOpen, onClose }: MobileNavProps) => {
               <div className="flex items-center">
                 <Settings className="w-5 h-5 mr-3 text-current" />
                 <span>Repair Services</span>
+              </div>
+              <ArrowRight className="w-4 h-4" />
+            </NavLink>
+
+            <NavLink
+              to="/about"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center justify-between px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
+                  isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'
+                }`
+              }
+            >
+              <div className="flex items-center">
+                <Info className="w-5 h-5 mr-3 text-current" />
+                <span>About Us</span>
+              </div>
+              <ArrowRight className="w-4 h-4" />
+            </NavLink>
+
+            <NavLink
+              to="/contact"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center justify-between px-4 py-3 text-base font-semibold rounded-xl transition-colors ${
+                  isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'
+                }`
+              }
+            >
+              <div className="flex items-center">
+                <Phone className="w-5 h-5 mr-3 text-current" />
+                <span>Contact Us</span>
               </div>
               <ArrowRight className="w-4 h-4" />
             </NavLink>

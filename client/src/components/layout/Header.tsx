@@ -57,6 +57,16 @@ export const Header = () => {
         {/* Center: Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center space-x-8">
           <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `text-sm font-semibold tracking-wide transition-colors duration-200 ${
+                isActive ? 'text-blue-600' : 'text-slate-600 hover:text-blue-600'
+              }`
+            }
+          >
+            Home
+          </NavLink>
+          <NavLink
             to="/products"
             className={({ isActive }) =>
               `text-sm font-semibold tracking-wide transition-colors duration-200 ${
@@ -75,6 +85,26 @@ export const Header = () => {
             }
           >
             Services
+          </NavLink>
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              `text-sm font-semibold tracking-wide transition-colors duration-200 ${
+                isActive ? 'text-blue-600' : 'text-slate-600 hover:text-blue-600'
+              }`
+            }
+          >
+            About
+          </NavLink>
+          <NavLink
+            to="/contact"
+            className={({ isActive }) =>
+              `text-sm font-semibold tracking-wide transition-colors duration-200 ${
+                isActive ? 'text-blue-600' : 'text-slate-600 hover:text-blue-600'
+              }`
+            }
+          >
+            Contact
           </NavLink>
         </nav>
 
