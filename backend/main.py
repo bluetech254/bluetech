@@ -13,6 +13,11 @@ import jwt
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 import re
+import logging
+
+# Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -104,6 +109,26 @@ class RegisterRequest(BaseModel):
     email: str
     phone_number: str
     password: str
+    
+    @validator('full_name')
+    def validate_full_name(cls, v):
+        if len(v) < 2 or len(v) > 100:
+            raise ValueError('Full name must be 2-100 characters')
+        if not re.match(r'^[a-zA-Z\s\-\']+$', v):
+            raise ValueError('Full name contains invalid characters')
+        return v.strip()
+    
+    @validator('email')
+    def validate_email(cls, v):
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', v):
+            raise ValueError('Invalid email format')
+        return v.lower().strip()
+    
+    @validator('phone_number')
+    def validate_phone(cls, v):
+        if not re.match(r'^\+?[0-9]{10,15}$', v):
+            raise ValueError('Invalid phone number format')
+        return v.strip()
     
     @validator('password')
     def validate_password(cls, v):
@@ -368,93 +393,110 @@ def get_repair_service(service_id: str):
 @limiter.limit("5/minute")
 def register_user(request: RegisterRequest, response: Response):
     """Register new user"""
-    # Check if user already exists
-    existing = supabase.table("customers").select("*").or_(f"email.eq.{request.email},phone_number.eq.{request.phone_number}").execute()
-    
-    if existing.data:
-        raise HTTPException(status_code=400, detail="User with this email or phone already exists")
-    
-    # Hash password
-    hashed_password = pwd_context.hash(request.password)
-    
-    # Create user
-    user_data = {
-        "full_name": request.full_name,
-        "email": request.email,
-        "phone_number": request.phone_number,
-        "password_hash": hashed_password,
-        "is_active": True,
-        "email_verified": False
-    }
-    
-    resp = supabase.table("customers").insert(user_data).execute()
-    user = resp.data[0]
-    
-    # Generate JWT token
-    token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
-    
-    # Set httpOnly cookie
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        max_age=86400
-    )
-    
-    return {
-        "user": {
-            "id": user["id"],
-            "full_name": user["full_name"],
-            "email": user["email"],
-            "phone_number": user["phone_number"],
-            "created_at": user["created_at"]
-        },
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    try:
+        # Check if user already exists
+        existing = supabase.table("customers").select("*").or_(f"email.eq.{request.email},phone_number.eq.{request.phone_number}").execute()
+        
+        if existing.data:
+            logger.warning(f"Registration attempt with existing email/phone: {request.email}")
+            raise HTTPException(status_code=400, detail="User with this email or phone already exists")
+        
+        # Hash password
+        hashed_password = pwd_context.hash(request.password)
+        
+        # Create user
+        user_data = {
+            "full_name": request.full_name,
+            "email": request.email,
+            "phone_number": request.phone_number,
+            "password_hash": hashed_password,
+            "is_active": True,
+            "email_verified": False
+        }
+        
+        resp = supabase.table("customers").insert(user_data).execute()
+        user = resp.data[0]
+        
+        # Generate JWT token
+        token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
+        
+        # Audit log
+        logger.info(f"User registered: {user['id']} ({request.email})")
+        
+        # Set httpOnly cookie
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=86400
+        )
+        
+        return {
+            "user": {
+                "id": user["id"],
+                "full_name": user["full_name"],
+                "email": user["email"],
+                "phone_number": user["phone_number"],
+                "created_at": user["created_at"]
+            },
+            "access_token": token,
+            "token_type": "bearer"
+        }
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        raise
 
 @app.post("/api/v1/auth/login")
 @limiter.limit("5/minute")
 def login_user(request: LoginRequest, response: Response):
     """Login user"""
-    # Find user by email or phone
-    resp = supabase.table("customers").select("*").or_(f"email.eq.{request.username},phone_number.eq.{request.username}").execute()
-    
-    if not resp.data:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    user = resp.data[0]
-    
-    # Verify password with bcrypt
-    if not pwd_context.verify(request.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    # Generate JWT token
-    token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
-    
-    # Set httpOnly cookie
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        max_age=86400
-    )
-    
-    return {
-        "user": {
-            "id": user["id"],
-            "full_name": user["full_name"],
-            "email": user["email"],
-            "phone_number": user["phone_number"],
-            "created_at": user["created_at"]
-        },
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    try:
+        # Find user by email or phone
+        resp = supabase.table("customers").select("*").or_(f"email.eq.{request.username},phone_number.eq.{request.username}").execute()
+        
+        if not resp.data:
+            logger.warning(f"Login attempt with non-existent user: {request.username}")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        user = resp.data[0]
+        
+        # Verify password with bcrypt
+        if not pwd_context.verify(request.password, user["password_hash"]):
+            logger.warning(f"Failed login attempt for user: {user['id']}")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        # Generate JWT token
+        token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
+        
+        # Audit log
+        logger.info(f"User logged in: {user['id']} ({user['email']})")
+        
+        # Set httpOnly cookie
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=86400
+        )
+        
+        return {
+            "user": {
+                "id": user["id"],
+                "full_name": user["full_name"],
+                "email": user["email"],
+                "phone_number": user["phone_number"],
+                "created_at": user["created_at"]
+            },
+            "access_token": token,
+            "token_type": "bearer"
+        }
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise
 
 @app.post("/api/v1/auth/logout")
 def logout_user(response: Response):
@@ -500,6 +542,47 @@ def reset_password(reset_token: str, new_password: str):
         return {"message": "Password reset successfully"}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=400, detail="Reset token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+@app.post("/api/v1/auth/send-verification")
+@limiter.limit("3/minute")
+def send_verification_email(email: str):
+    """Send email verification link"""
+    resp = supabase.table("customers").select("*").eq("email", email).execute()
+    
+    if not resp.data:
+        return {"message": "If email exists, verification link sent"}
+    
+    user = resp.data[0]
+    
+    if user.get("email_verified"):
+        return {"message": "Email already verified"}
+    
+    # Generate verification token (valid for 24 hours)
+    verify_token = jwt.encode(
+        {"sub": user["id"], "type": "verify", "exp": datetime.utcnow() + timedelta(hours=24)},
+        os.getenv("SUPABASE_ANON_KEY"),
+        algorithm="HS256"
+    )
+    
+    # In production: send email with verification link
+    return {"message": "If email exists, verification link sent", "verify_token": verify_token}
+
+@app.post("/api/v1/auth/verify-email")
+def verify_email(verify_token: str):
+    """Verify email with token"""
+    try:
+        payload = jwt.decode(verify_token, os.getenv("SUPABASE_ANON_KEY"), algorithms=["HS256"])
+        if payload.get("type") != "verify":
+            raise HTTPException(status_code=400, detail="Invalid token")
+        
+        user_id = payload.get("sub")
+        supabase.table("customers").update({"email_verified": True}).eq("id", user_id).execute()
+        
+        return {"message": "Email verified successfully"}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Verification token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=400, detail="Invalid token")
 
