@@ -40,7 +40,6 @@ export const Footer = () => {
                 <li><Link to="/returns" className="hover:text-blue-400">Returns & Refunds</Link></li>
                 <li><Link to="/warranty" className="hover:text-blue-400">Warranty</Link></li>
                 <li><Link to="/faqs" className="hover:text-blue-400">FAQs</Link></li>
-                <li><Link to="/contact" className="hover:text-blue-400">Contact Us</Link></li>
               </ul>
             </div>
           </div>

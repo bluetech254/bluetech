@@ -65,8 +65,6 @@ export const ProductDetailPage = () => {
       {/* Breadcrumbs & Navigation */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-          <Link to="/" className="hover:text-blue-600">Home</Link>
-          <span>/</span>
           <Link to="/products" className="hover:text-blue-600">Products</Link>
           <span>/</span>
           <span className="hover:text-blue-600 capitalize">{product.category}</span>
