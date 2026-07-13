@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from starlette.authentication import AuthCredentials
@@ -6,14 +6,19 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
 from typing import List, Optional
-from pydantic import BaseModel
-from datetime import datetime
+from pydantic import BaseModel, EmailStr, validator
+from datetime import datetime, timedelta
 from passlib.context import CryptContext
 import jwt
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+import re
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-import jwt
+
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address)
 
 load_dotenv()
 
@@ -23,6 +28,7 @@ app = FastAPI(
     description="Backend API for electronics repair booking and e-commerce platform",
     version="1.0.0"
 )
+app.state.limiter = limiter
 
 # CORS
 app.add_middleware(
@@ -98,6 +104,20 @@ class RegisterRequest(BaseModel):
     email: str
     phone_number: str
     password: str
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain lowercase letter')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('Password must contain number')
+        if not re.search(r'[!@#$%^&*]', v):
+            raise ValueError('Password must contain special character (!@#$%^&*)')
+        return v
 
 # ==================== PRODUCTS ====================
 
@@ -345,7 +365,8 @@ def get_repair_service(service_id: str):
 # ==================== AUTHENTICATION ====================
 
 @app.post("/api/v1/auth/register")
-def register_user(request: RegisterRequest):
+@limiter.limit("5/minute")
+def register_user(request: RegisterRequest, response: Response):
     """Register new user"""
     # Check if user already exists
     existing = supabase.table("customers").select("*").or_(f"email.eq.{request.email},phone_number.eq.{request.phone_number}").execute()
@@ -362,14 +383,25 @@ def register_user(request: RegisterRequest):
         "email": request.email,
         "phone_number": request.phone_number,
         "password_hash": hashed_password,
-        "is_active": True
+        "is_active": True,
+        "email_verified": False
     }
     
-    response = supabase.table("customers").insert(user_data).execute()
-    user = response.data[0]
+    resp = supabase.table("customers").insert(user_data).execute()
+    user = resp.data[0]
     
     # Generate JWT token
     token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
+    
+    # Set httpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=86400
+    )
     
     return {
         "user": {
@@ -384,15 +416,16 @@ def register_user(request: RegisterRequest):
     }
 
 @app.post("/api/v1/auth/login")
-def login_user(request: LoginRequest):
+@limiter.limit("5/minute")
+def login_user(request: LoginRequest, response: Response):
     """Login user"""
     # Find user by email or phone
-    response = supabase.table("customers").select("*").or_(f"email.eq.{request.username},phone_number.eq.{request.username}").execute()
+    resp = supabase.table("customers").select("*").or_(f"email.eq.{request.username},phone_number.eq.{request.username}").execute()
     
-    if not response.data:
+    if not resp.data:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    user = response.data[0]
+    user = resp.data[0]
     
     # Verify password with bcrypt
     if not pwd_context.verify(request.password, user["password_hash"]):
@@ -400,6 +433,16 @@ def login_user(request: LoginRequest):
     
     # Generate JWT token
     token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
+    
+    # Set httpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=86400
+    )
     
     return {
         "user": {
@@ -414,9 +457,51 @@ def login_user(request: LoginRequest):
     }
 
 @app.post("/api/v1/auth/logout")
-def logout_user():
+def logout_user(response: Response):
     """Logout user"""
+    response.delete_cookie("access_token")
     return {"message": "Logged out successfully"}
+
+@app.post("/api/v1/auth/password-reset")
+@limiter.limit("3/minute")
+def request_password_reset(email: str):
+    """Request password reset"""
+    resp = supabase.table("customers").select("*").eq("email", email).execute()
+    
+    if not resp.data:
+        return {"message": "If email exists, reset link sent"}
+    
+    user = resp.data[0]
+    
+    # Generate reset token (valid for 1 hour)
+    reset_token = jwt.encode(
+        {"sub": user["id"], "type": "reset", "exp": datetime.utcnow() + timedelta(hours=1)},
+        os.getenv("SUPABASE_ANON_KEY"),
+        algorithm="HS256"
+    )
+    
+    # In production: send email with reset link
+    # For now: return token (client should handle securely)
+    return {"message": "If email exists, reset link sent", "reset_token": reset_token}
+
+@app.post("/api/v1/auth/reset-password")
+def reset_password(reset_token: str, new_password: str):
+    """Reset password with token"""
+    try:
+        payload = jwt.decode(reset_token, os.getenv("SUPABASE_ANON_KEY"), algorithms=["HS256"])
+        if payload.get("type") != "reset":
+            raise HTTPException(status_code=400, detail="Invalid token")
+        
+        user_id = payload.get("sub")
+        hashed_password = pwd_context.hash(new_password)
+        
+        supabase.table("customers").update({"password_hash": hashed_password}).eq("id", user_id).execute()
+        
+        return {"message": "Password reset successfully"}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Reset token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=400, detail="Invalid token")
 
 # ==================== USER ENDPOINTS ====================
 
