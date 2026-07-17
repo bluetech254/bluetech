@@ -12,6 +12,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
+import BottomTabBar from './components/layout/BottomTabBar';
 import AppRoutes from './router';
 
 // Scroll to Top helper on route changes
@@ -38,7 +39,7 @@ export default function App() {
                 <Header />
 
                 {/* Main page stage */}
-                <main className="flex-1 w-full py-8 md:py-12">
+                <main className="flex-1 w-full py-8 md:py-12 pb-20 lg:pb-12">
                   <div className="px-4 sm:px-6 lg:px-[100px]">
                     <AppRoutes />
                   </div>
@@ -49,6 +50,9 @@ export default function App() {
 
                 {/* Cart Drawer */}
                 <CartDrawer />
+
+                {/* Mobile Bottom Tab Bar */}
+                <BottomTabBar />
               </div>
             </CartProvider>
           </AuthProvider>

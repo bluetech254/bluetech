@@ -54,6 +54,11 @@ export const LoginPage = () => {
       await login(phoneNumber, formData.password);
       toast.success('Successfully logged in!', { id: toastId });
     } catch (err: any) {
+      if (err.message === 'unverified') {
+        toast.dismiss(toastId);
+        navigate('/verify-phone', { state: { phone: err.phone } });
+        return;
+      }
       console.error('Failed login submit:', err);
       const msg = err.response?.data?.detail || err.response?.data?.message || 'Invalid phone number or password. Please verify and try again.';
       toast.error(msg, { id: toastId });
@@ -99,7 +104,7 @@ export const LoginPage = () => {
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label htmlFor="password" className="text-xs font-semibold text-slate-700">Password</label>
-              <span className="text-[11px] text-slate-400 font-semibold hover:text-blue-600 hover:underline cursor-pointer">Forgot?</span>
+              <Link to="/forgot-password" className="text-[11px] text-slate-400 font-semibold hover:text-blue-600 hover:underline">Forgot?</Link>
             </div>
             <div className="relative">
               <Input

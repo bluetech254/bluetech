@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -67,9 +67,11 @@ export const CheckoutPage = () => {
     fetchZones();
   }, []);
 
+  const orderPlaced = useRef(false);
+
   // Guard Clause: No items in cart -> go back to cart
   useEffect(() => {
-    if (!loadingZones && items.length === 0) {
+    if (!loadingZones && items.length === 0 && !orderPlaced.current) {
       toast.error('Your cart is empty. Please add items before checking out.');
       navigate('/cart');
     }
@@ -120,7 +122,8 @@ export const CheckoutPage = () => {
       const response = await createOrder(orderPayload);
 
       toast.success('Order placed successfully!', { id: toastId });
-      clearCart(); // Clean up client cart on order placement
+      orderPlaced.current = true;
+      clearCart();
       sessionStorage.removeItem('bluetech_delivery_zone_id');
       navigate(`/order-success/${response.id}`);
     } catch (err: any) {

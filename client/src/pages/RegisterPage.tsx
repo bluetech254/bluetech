@@ -52,8 +52,8 @@ export const RegisterPage = () => {
         password: formData.password,
       });
 
-      toast.success('Account created successfully! Please sign in.', { id: toastId });
-      navigate('/login');
+      toast.success('Account created! Check your phone for a verification code.', { id: toastId });
+      navigate('/verify-phone', { state: { phone: phoneNumber } });
     } catch (err: any) {
       console.error('Failed registration submit:', err);
       const msg = err.response?.data?.message || 'Failed to complete registration. Email or Phone might be already registered.';

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Response
+from fastapi import FastAPI, HTTPException, Depends, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from starlette.authentication import AuthCredentials
@@ -38,7 +38,7 @@ app.state.limiter = limiter
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3001", "http://localhost:5173", "https://bluetechadmin.vercel.app", "https://bluetech-client.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,15 +52,24 @@ supabase: Client = create_client(
 
 # Auth
 security = HTTPBearer()
+JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_EXPIRE_MINUTES", 60))
+
+def create_access_token(user_id: str) -> str:
+    exp = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    return jwt.encode({"sub": user_id, "exp": exp, "iat": datetime.utcnow()}, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 def verify_token(credentials = Depends(security)) -> str:
     token = credentials.credentials
     try:
-        payload = jwt.decode(token, os.getenv("SUPABASE_ANON_KEY"), algorithms=["HS256"])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
         return user_id
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -241,7 +250,26 @@ def create_order(order: OrderCreate, user_id: str = Depends(verify_token)):
         })
     
     supabase.table("order_items").insert(order_items).execute()
-    
+
+    # SMS confirmation
+    try:
+        from app.utils.sms_service import send_sms
+        short_id = order_id[:8].upper()
+        items_summary = ", ".join(f"{item.quantity}x {products[item.product_id]['title']}" for item in order.items)
+        msg = (
+            f"BlueTech Order Confirmed!\n"
+            f"Order ID: {short_id}\n"
+            f"Items: {items_summary}\n"
+            f"Subtotal: KES {subtotal:,.0f}\n"
+            f"Delivery: KES {delivery_fee:,.0f}\n"
+            f"Total: KES {total_amount:,.0f}\n"
+            f"Delivery to: {order.delivery_address}\n"
+            f"We'll contact you to confirm delivery. Thank you!"
+        )
+        send_sms(order.phone_number, msg)
+    except Exception as e:
+        logger.warning(f"Order SMS failed: {e}")
+
     return order_response.data[0]
 
 @app.get("/api/v1/orders")
@@ -284,7 +312,26 @@ def create_booking(booking: BookingCreate, user_id: str = Depends(verify_token))
     booking_data["status"] = "pending"
     
     response = supabase.table("bookings").insert(booking_data).execute()
-    return response.data[0]
+    created = response.data[0]
+
+    # SMS confirmation
+    try:
+        from app.utils.sms_service import send_sms
+        short_id = created["id"][:8].upper()
+        location = f"Pickup from: {booking.pickup_address}" if booking.fulfillment_type == "pickup" else "Drop-off at our shop"
+        msg = (
+            f"BlueTech Repair Booked!\n"
+            f"Booking ID: {short_id}\n"
+            f"Device: {booking.device_type}{' - ' + booking.device_model if booking.device_model else ''}\n"
+            f"Issue: {booking.issue_description[:60]}\n"
+            f"Type: {booking.fulfillment_type.capitalize()} | {location}\n"
+            f"Our team will reach out to confirm your appointment. Thank you!"
+        )
+        send_sms(booking.phone_number, msg)
+    except Exception as e:
+        logger.warning(f"Booking SMS failed: {e}")
+
+    return created
 
 @app.get("/api/v1/bookings")
 def get_bookings(status: Optional[str] = None, user_id: str = Depends(verify_token)):
@@ -351,10 +398,10 @@ def get_repair_service_categories():
 @app.get("/api/v1/repair-services/{service_id}")
 def get_repair_service(service_id: str):
     """Get single repair service by ID"""
-    response = supabase.table("repair_services").select("*").eq("service_id", service_id).single().execute()
+    response = supabase.table("repair_services").select("*").eq("id", service_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Service not found")
-    return response.data
+    return response.data[0]
 
 # ==================== REPAIR SERVICES ====================
 
@@ -380,58 +427,49 @@ def get_repair_service_categories():
     return {"data": categories, "count": len(categories)}
 
 @app.get("/api/v1/repair-services/{service_id}")
-def get_repair_service(service_id: str):
+def get_repair_service_2(service_id: str):
     """Get single repair service by ID"""
-    response = supabase.table("repair_services").select("*").eq("service_id", service_id).single().execute()
+    response = supabase.table("repair_services").select("*").eq("id", service_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Service not found")
-    return response.data
+    return response.data[0]
 
 # ==================== AUTHENTICATION ====================
 
 @app.post("/api/v1/auth/register")
 @limiter.limit("5/minute")
-def register_user(request: RegisterRequest, response: Response):
+def register_user(request: Request, body: RegisterRequest, response: Response):
     """Register new user"""
     try:
+        from app.utils.sms_service import send_sms
+        from app.utils.auth import generate_verification_code
+
         # Check if user already exists
-        existing = supabase.table("customers").select("*").or_(f"email.eq.{request.email},phone_number.eq.{request.phone_number}").execute()
+        existing = supabase.table("users").select("*").or_(f"email.eq.{body.email},phone_number.eq.{body.phone_number}").execute()
         
         if existing.data:
-            logger.warning(f"Registration attempt with existing email/phone: {request.email}")
             raise HTTPException(status_code=400, detail="User with this email or phone already exists")
         
-        # Hash password
-        hashed_password = pwd_context.hash(request.password)
-        
-        # Create user
+        hashed_password = pwd_context.hash(body.password)
+        verification_code = generate_verification_code()
+
         user_data = {
-            "full_name": request.full_name,
-            "email": request.email,
-            "phone_number": request.phone_number,
-            "password_hash": hashed_password,
-            "is_active": True,
-            "email_verified": False
+            "full_name": body.full_name,
+            "email": body.email,
+            "phone_number": body.phone_number,
+            "password": hashed_password,
+            "phone_verified": False,
+            "verification_code": verification_code,
         }
         
-        resp = supabase.table("customers").insert(user_data).execute()
+        resp = supabase.table("users").insert(user_data).execute()
         user = resp.data[0]
+
+        send_sms(body.phone_number, f"Your BlueTech verification code is: {verification_code}")
         
-        # Generate JWT token
-        token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
+        token = create_access_token(user["id"])
         
-        # Audit log
-        logger.info(f"User registered: {user['id']} ({request.email})")
-        
-        # Set httpOnly cookie
-        response.set_cookie(
-            key="access_token",
-            value=token,
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=86400
-        )
+        response.set_cookie(key="access_token", value=token, httponly=True, secure=True, samesite="strict", max_age=86400)
         
         return {
             "user": {
@@ -439,36 +477,51 @@ def register_user(request: RegisterRequest, response: Response):
                 "full_name": user["full_name"],
                 "email": user["email"],
                 "phone_number": user["phone_number"],
-                "created_at": user["created_at"]
+                "phone_verified": False,
             },
             "access_token": token,
-            "token_type": "bearer"
+            "token_type": "bearer", "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "message": "Registration successful. Please verify your phone number."
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
         raise
 
 @app.post("/api/v1/auth/login")
 @limiter.limit("5/minute")
-def login_user(request: LoginRequest, response: Response):
+def login_user(request: Request, body: LoginRequest, response: Response):
     """Login user"""
     try:
         # Find user by email or phone
-        resp = supabase.table("customers").select("*").or_(f"email.eq.{request.username},phone_number.eq.{request.username}").execute()
+        resp = supabase.table("users").select("*").or_(f"email.eq.{body.username},phone_number.eq.{body.username}").execute()
         
         if not resp.data:
-            logger.warning(f"Login attempt with non-existent user: {request.username}")
+            logger.warning(f"Login attempt with non-existent user: {body.username}")
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
         user = resp.data[0]
         
         # Verify password with bcrypt
-        if not pwd_context.verify(request.password, user["password_hash"]):
+        if not pwd_context.verify(body.password, user["password"]):
             logger.warning(f"Failed login attempt for user: {user['id']}")
             raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Block unverified users and resend OTP
+        if not user.get("phone_verified"):
+            from app.utils.sms_service import send_sms
+            from app.utils.auth import generate_verification_code
+            new_code = generate_verification_code()
+            supabase.table("users").update({"verification_code": new_code}).eq("id", user["id"]).execute()
+            send_sms(user["phone_number"], f"Your BlueTech verification code is: {new_code}")
+            raise HTTPException(
+                status_code=403,
+                detail={"message": "Phone not verified. A new code has been sent.", "phone_number": user["phone_number"]}
+            )
         
         # Generate JWT token
-        token = jwt.encode({"sub": user["id"]}, os.getenv("SUPABASE_ANON_KEY"), algorithm="HS256")
+        token = create_access_token(user["id"])
         
         # Audit log
         logger.info(f"User logged in: {user['id']} ({user['email']})")
@@ -478,9 +531,9 @@ def login_user(request: LoginRequest, response: Response):
             key="access_token",
             value=token,
             httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=86400
+            secure=False,  # set True in production (HTTPS)
+            samesite="lax",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
         
         return {
@@ -492,11 +545,14 @@ def login_user(request: LoginRequest, response: Response):
                 "created_at": user["created_at"]
             },
             "access_token": token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Login error: {str(e)}")
-        raise
+        raise HTTPException(status_code=500, detail="Login failed")
 
 @app.post("/api/v1/auth/logout")
 def logout_user(response: Response):
@@ -504,52 +560,106 @@ def logout_user(response: Response):
     response.delete_cookie("access_token")
     return {"message": "Logged out successfully"}
 
-@app.post("/api/v1/auth/password-reset")
-@limiter.limit("3/minute")
-def request_password_reset(email: str):
-    """Request password reset"""
-    resp = supabase.table("customers").select("*").eq("email", email).execute()
-    
+@app.post("/api/v1/auth/resend-verification")
+def resend_verification(phone_number: str):
+    """Resend phone verification OTP"""
+    from app.utils.sms_service import send_sms
+    from app.utils.auth import generate_verification_code
+    resp = supabase.table("users").select("id, phone_verified").eq("phone_number", phone_number).execute()
     if not resp.data:
-        return {"message": "If email exists, reset link sent"}
+        raise HTTPException(status_code=404, detail="User not found")
+    if resp.data[0].get("phone_verified"):
+        raise HTTPException(status_code=400, detail="Phone already verified")
+    code = generate_verification_code()
+    supabase.table("users").update({"verification_code": code}).eq("id", resp.data[0]["id"]).execute()
+    send_sms(phone_number, f"Your BlueTech verification code is: {code}")
+    return {"message": "Verification code resent"}
+
+@app.post("/api/v1/auth/verify-phone")
+def verify_phone_endpoint(phone_number: str, verification_code: str):
+    """Verify phone number with OTP"""
+    resp = supabase.table("users").select("*").eq("phone_number", phone_number).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="User not found")
     
     user = resp.data[0]
+    if user.get("verification_code") != verification_code:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
     
-    # Generate reset token (valid for 1 hour)
-    reset_token = jwt.encode(
-        {"sub": user["id"], "type": "reset", "exp": datetime.utcnow() + timedelta(hours=1)},
-        os.getenv("SUPABASE_ANON_KEY"),
-        algorithm="HS256"
-    )
+    supabase.table("users").update({
+        "phone_verified": True,
+        "verification_code": None
+    }).eq("id", user["id"]).execute()
+
+    token = create_access_token(user["id"])
+    return {
+        "message": "Phone verified successfully",
+        "access_token": token,
+        "token_type": "bearer", "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "user": {
+            "id": user["id"],
+            "full_name": user["full_name"],
+            "email": user["email"],
+            "phone_number": user["phone_number"],
+            "phone_verified": True,
+        }
+    }
+
+@app.post("/api/v1/auth/password-reset")
+@limiter.limit("3/minute")
+def request_password_reset(request: Request, phone_number: str):
+    """Request password reset via SMS OTP"""
+    from app.utils.sms_service import send_sms
+    from app.utils.auth import generate_verification_code
+
+    resp = supabase.table("users").select("id, phone_number").eq("phone_number", phone_number).execute()
+    if not resp.data:
+        return {"message": "If this number exists, a reset code has been sent"}
     
-    # In production: send email with reset link
-    # For now: return token (client should handle securely)
-    return {"message": "If email exists, reset link sent", "reset_token": reset_token}
+    user = resp.data[0]
+    reset_code = generate_verification_code()
+    expires = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+
+    supabase.table("users").update({
+        "reset_code": reset_code,
+        "reset_code_expires": expires
+    }).eq("id", user["id"]).execute()
+
+    send_sms(phone_number, f"Your BlueTech password reset code is: {reset_code}")
+
+    return {"message": "If this number exists, a reset code has been sent"}
 
 @app.post("/api/v1/auth/reset-password")
-def reset_password(reset_token: str, new_password: str):
-    """Reset password with token"""
-    try:
-        payload = jwt.decode(reset_token, os.getenv("SUPABASE_ANON_KEY"), algorithms=["HS256"])
-        if payload.get("type") != "reset":
-            raise HTTPException(status_code=400, detail="Invalid token")
-        
-        user_id = payload.get("sub")
-        hashed_password = pwd_context.hash(new_password)
-        
-        supabase.table("customers").update({"password_hash": hashed_password}).eq("id", user_id).execute()
-        
-        return {"message": "Password reset successfully"}
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=400, detail="Reset token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=400, detail="Invalid token")
+def reset_password(phone_number: str, reset_code: str, new_password: str):
+    """Reset password with SMS OTP code"""
+    resp = supabase.table("users").select("*").eq("phone_number", phone_number).execute()
+    if not resp.data:
+        raise HTTPException(status_code=400, detail="Invalid phone number or code")
+    
+    user = resp.data[0]
+
+    if user.get("reset_code") != reset_code:
+        raise HTTPException(status_code=400, detail="Invalid reset code")
+
+    if user.get("reset_code_expires"):
+        expires = datetime.fromisoformat(user["reset_code_expires"].replace("Z", "+00:00"))
+        if datetime.utcnow() > expires.replace(tzinfo=None):
+            raise HTTPException(status_code=400, detail="Reset code expired")
+
+    hashed_password = pwd_context.hash(new_password)
+    supabase.table("users").update({
+        "password_hash": hashed_password,
+        "reset_code": None,
+        "reset_code_expires": None
+    }).eq("id", user["id"]).execute()
+
+    return {"message": "Password reset successfully"}
 
 @app.post("/api/v1/auth/send-verification")
 @limiter.limit("3/minute")
-def send_verification_email(email: str):
+def send_verification_email(request: Request, email: str):
     """Send email verification link"""
-    resp = supabase.table("customers").select("*").eq("email", email).execute()
+    resp = supabase.table("users").select("*").eq("email", email).execute()
     
     if not resp.data:
         return {"message": "If email exists, verification link sent"}
@@ -562,8 +672,8 @@ def send_verification_email(email: str):
     # Generate verification token (valid for 24 hours)
     verify_token = jwt.encode(
         {"sub": user["id"], "type": "verify", "exp": datetime.utcnow() + timedelta(hours=24)},
-        os.getenv("SUPABASE_ANON_KEY"),
-        algorithm="HS256"
+        JWT_SECRET,
+        algorithm=JWT_ALGORITHM
     )
     
     # In production: send email with verification link
@@ -573,12 +683,12 @@ def send_verification_email(email: str):
 def verify_email(verify_token: str):
     """Verify email with token"""
     try:
-        payload = jwt.decode(verify_token, os.getenv("SUPABASE_ANON_KEY"), algorithms=["HS256"])
+        payload = jwt.decode(verify_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "verify":
             raise HTTPException(status_code=400, detail="Invalid token")
         
         user_id = payload.get("sub")
-        supabase.table("customers").update({"email_verified": True}).eq("id", user_id).execute()
+        supabase.table("users").update({"email_verified": True}).eq("id", user_id).execute()
         
         return {"message": "Email verified successfully"}
     except jwt.ExpiredSignatureError:
@@ -597,7 +707,7 @@ def get_current_user(authorization: Optional[str] = None):
     token = authorization.replace("Bearer ", "")
     user_id = token.replace("token_", "")
     
-    response = supabase.table("customers").select("*").eq("id", user_id).single().execute()
+    response = supabase.table("users").select("*").eq("id", user_id).single().execute()
     
     if not response.data:
         raise HTTPException(status_code=404, detail="User not found")

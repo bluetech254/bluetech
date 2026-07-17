@@ -16,6 +16,8 @@ import TrackOrderPage from './pages/TrackOrderPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
+import VerifyPhonePage from './pages/VerifyPhonePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ContactPage from './pages/ContactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -40,6 +42,8 @@ export const AppRoutes = () => {
       <Route path="/track-order" element={<ProtectedRoute><TrackOrderPage /></ProtectedRoute>} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-phone" element={<VerifyPhonePage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

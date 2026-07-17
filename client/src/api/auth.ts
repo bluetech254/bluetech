@@ -17,18 +17,50 @@ export interface AuthResponse {
   user: User;
   access_token: string;
   token_type: string;
+  message?: string;
+  expires_in?: number;
 }
 
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  const response = await api.post('/auth/login', credentials);
+  // Backend expects `username` field (accepts email or phone)
+  const response = await api.post('/auth/login', {
+    username: credentials.phone_number,
+    password: credentials.password,
+  });
   return response.data;
 };
 
 export const registerUser = async (credentials: RegisterCredentials): Promise<AuthResponse> => {
-  const response = await api.post('/auth/signup', credentials);
+  const response = await api.post('/auth/register', credentials);
+  return response.data;
+};
+
+export const resendVerification = async (phone_number: string) => {
+  const response = await api.post('/auth/resend-verification', null, { params: { phone_number } });
+  return response.data;
+};
+
+export const verifyPhone = async (phone_number: string, verification_code: string): Promise<AuthResponse> => {
+  const response = await api.post('/auth/verify-phone', null, {
+    params: { phone_number, verification_code },
+  });
+  return response.data;
+};
+
+export const requestPasswordReset = async (phone_number: string) => {
+  const response = await api.post('/auth/password-reset', null, {
+    params: { phone_number },
+  });
+  return response.data;
+};
+
+export const resetPassword = async (phone_number: string, reset_code: string, new_password: string) => {
+  const response = await api.post('/auth/reset-password', null, {
+    params: { phone_number, reset_code, new_password },
+  });
   return response.data;
 };
 
 export const logoutUser = async (): Promise<void> => {
-  await api.post('/auth/logout');
+  await api.post('/auth/logout').catch(() => {});
 };

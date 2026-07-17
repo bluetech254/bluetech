@@ -49,7 +49,7 @@ export const HowItWorks = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="hidden lg:block space-y-8">
       {/* Product Ordering */}
       <div className="space-y-4">
         <div>

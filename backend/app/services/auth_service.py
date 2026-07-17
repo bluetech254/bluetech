@@ -2,6 +2,7 @@ from app.database import supabase, supabase_admin
 from app.models.auth import UserSignup, UserLogin, AdminLogin, ForgotPassword, ResetPassword, VerifyPhone, VerifyEmail
 from app.utils.auth import hash_password, verify_password, create_access_token, generate_verification_code
 from app.utils.email_service import email_service
+from app.utils.sms_service import send_sms
 from app.utils.exceptions import BlueTechException
 from datetime import datetime, timedelta
 
@@ -23,27 +24,29 @@ def signup_user(signup_data: UserSignup) -> dict:
     
     # Hash password
     hashed_password = hash_password(signup_data.password)
-    
-    # Create user - directly verified
+    verification_code = generate_verification_code()
+
     user_data = {
         "full_name": signup_data.full_name,
         "phone_number": signup_data.phone_number,
         "email": signup_data.email,
         "password": hashed_password,
-        "is_verified": True,  # Auto-verified for now
-        "phone_verified": True,  # Auto-verified for now
-        "email_verified": True if signup_data.email else False
+        "is_verified": False,
+        "phone_verified": False,
+        "email_verified": False,
+        "verification_code": verification_code,
     }
-    
+
     response = supabase.table("users").insert(user_data).execute()
     user = response.data[0]
-    
-    # Remove sensitive data
+
+    send_sms(signup_data.phone_number, f"Your BlueTech verification code is: {verification_code}")
+
     user.pop("password", None)
-    
-    # Create token
+    user.pop("verification_code", None)
+
     token = create_access_token({"user_id": user["id"], "phone": user["phone_number"]})
-    
+
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -115,11 +118,10 @@ def forgot_password(data: ForgotPassword) -> dict:
         "reset_code": reset_code,
         "reset_code_expires": expires
     }).eq("id", user["id"]).execute()
-    
-    return {
-        "message": "Reset code sent to your phone",
-        "code": reset_code  # In production, send via SMS
-    }
+
+    send_sms(user["phone_number"], f"Your BlueTech password reset code is: {reset_code}")
+
+    return {"message": "Reset code sent to your phone"}
 
 def reset_password(data: ResetPassword) -> dict:
     """Reset password with code"""
@@ -202,8 +204,7 @@ def resend_verification_code(phone_number: str) -> dict:
     new_code = generate_verification_code()
     
     supabase_admin.table("users").update({"verification_code": new_code}).eq("id", user["id"]).execute()
-    
-    return {
-        "message": "Verification code sent",
-        "code": new_code  # In production, send via SMS
-    }
+
+    send_sms(phone_number, f"Your BlueTech verification code is: {new_code}")
+
+    return {"message": "Verification code sent"}
