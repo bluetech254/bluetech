@@ -12,10 +12,21 @@ export interface CreateOrderData {
     quantity: number;
   }>;
   notes?: string;
+  payment_method?: string;
 }
 
 export const createOrder = async (orderData: CreateOrderData): Promise<Order> => {
   const response = await api.post('/orders', orderData);
+  return response.data;
+};
+
+export const initiateMpesaPayment = async (orderId: string): Promise<{ checkout_request_id: string; message: string }> => {
+  const response = await api.post(`/payments/mpesa/initiate?order_id=${orderId}`);
+  return response.data;
+};
+
+export const getMpesaPaymentStatus = async (orderId: string): Promise<{ payment_status: string; mpesa_receipt?: string }> => {
+  const response = await api.get(`/payments/mpesa/status/${orderId}`);
   return response.data;
 };
 
@@ -26,7 +37,6 @@ export const getOrderById = async (id: string): Promise<Order> => {
 
 export const trackOrdersByPhone = async (phoneNumber: string): Promise<Order[]> => {
   const response = await api.get(`/orders/track/${phoneNumber}`);
-  // Backend returns {data: [...], count: number}
   if (response.data && response.data.data && Array.isArray(response.data.data)) {
     return response.data.data;
   }

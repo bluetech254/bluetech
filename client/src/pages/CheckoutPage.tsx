@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCart } from '../hooks/useCart';
 import { getDeliveryZones } from '../api/zones';
-import { createOrder } from '../api/orders';
+import { createOrder, initiateMpesaPayment } from '../api/orders';
 import { DeliveryZone } from '../types';
 import { orderSchema } from '../utils/validation';
 import { formatCurrency } from '../utils/formatters';
@@ -15,6 +15,7 @@ import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
+import MpesaWaitingModal from '../components/cart/MpesaWaitingModal';
 import { ChevronLeft, CreditCard, DollarSign, Loader2, ClipboardCheck, AlertCircle, Phone, MapPin, Sparkles, CheckCircle, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -25,6 +26,7 @@ export const CheckoutPage = () => {
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [loadingZones, setLoadingZones] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [mpesaOrder, setMpesaOrder] = useState<{ orderId: string; phone: string; amount: string } | null>(null);
 
   // Restore pre-selected zone from sessionStorage
   const defaultZoneId = sessionStorage.getItem('bluetech_delivery_zone_id') || '';
@@ -115,17 +117,32 @@ export const CheckoutPage = () => {
         delivery_zone: finalZone.zone_name,
         items: orderItems,
         notes: formData.notes || undefined,
+        payment_method: formData.payment_method,
       };
 
       console.log('Sending order:', orderPayload);
 
       const response = await createOrder(orderPayload);
 
-      toast.success('Order placed successfully!', { id: toastId });
-      orderPlaced.current = true;
-      clearCart();
-      sessionStorage.removeItem('bluetech_delivery_zone_id');
-      navigate(`/order-success/${response.id}`);
+      if (formData.payment_method === 'mpesa') {
+        // Initiate STK push then show waiting modal
+        try {
+          await initiateMpesaPayment(response.id);
+          orderPlaced.current = true;
+          clearCart();
+          sessionStorage.removeItem('bluetech_delivery_zone_id');
+          toast.dismiss(toastId);
+          setMpesaOrder({ orderId: response.id, phone: phoneNumber, amount: formatCurrency(grandTotal) });
+        } catch {
+          toast.error('Order created but M-Pesa prompt failed. Please retry payment.', { id: toastId });
+        }
+      } else {
+        toast.success('Order placed successfully!', { id: toastId });
+        orderPlaced.current = true;
+        clearCart();
+        sessionStorage.removeItem('bluetech_delivery_zone_id');
+        navigate(`/order-success/${response.id}`);
+      }
     } catch (err: any) {
       console.error('Failed to place order:', err);
       console.error('Error response:', err.response?.data);
@@ -142,6 +159,14 @@ export const CheckoutPage = () => {
 
   return (
     <div className="space-y-8 py-6 animate-fade-in text-left">
+      {mpesaOrder && (
+        <MpesaWaitingModal
+          orderId={mpesaOrder.orderId}
+          phone={mpesaOrder.phone}
+          amount={mpesaOrder.amount}
+          onCancel={() => setMpesaOrder(null)}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div>

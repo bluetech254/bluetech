@@ -96,6 +96,7 @@ class OrderCreate(BaseModel):
     delivery_zone: str
     items: List[OrderItemCreate]
     notes: Optional[str] = None
+    payment_method: str = "cash_on_delivery"
 
 class BookingCreate(BaseModel):
     full_name: str
@@ -229,6 +230,7 @@ def create_order(order: OrderCreate, user_id: str = Depends(verify_token)):
         "subtotal": subtotal,
         "total_amount": total_amount,
         "status": "pending",
+        "payment_method": order.payment_method,
         "payment_status": "unpaid",
         "notes": order.notes
     }
@@ -302,6 +304,73 @@ def update_order_status(order_id: str, status_update: StatusUpdate):
     """Update order status (Admin)"""
     response = supabase.table("orders").update({"status": status_update.status}).eq("id", order_id).execute()
     return response.data[0]
+
+# ==================== PAYMENTS ====================
+
+@app.post("/api/v1/payments/mpesa/initiate")
+def mpesa_initiate(order_id: str, user_id: str = Depends(verify_token)):
+    """Initiate M-Pesa STK push for an order"""
+    from app.utils.mpesa import stk_push
+    order_resp = supabase.table("orders").select("*").eq("id", order_id).single().execute()
+    if not order_resp.data:
+        raise HTTPException(status_code=404, detail="Order not found")
+    order = order_resp.data
+    if order["payment_status"] == "paid":
+        raise HTTPException(status_code=400, detail="Order already paid")
+    try:
+        result = stk_push(
+            phone=order["phone_number"],
+            amount=int(order["total_amount"]),
+            order_id=order_id,
+        )
+        checkout_request_id = result.get("CheckoutRequestID")
+        # Store checkout request id for callback matching
+        supabase.table("orders").update({"checkout_request_id": checkout_request_id}).eq("id", order_id).execute()
+        return {"checkout_request_id": checkout_request_id, "message": "STK push sent. Check your phone."}
+    except Exception as e:
+        logger.error(f"STK push failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to initiate M-Pesa payment. Try again.")
+
+
+@app.post("/api/v1/payments/mpesa/callback")
+def mpesa_callback(payload: dict):
+    """Safaricom callback after customer pays or cancels"""
+    try:
+        stk = payload.get("Body", {}).get("stkCallback", {})
+        checkout_request_id = stk.get("CheckoutRequestID")
+        result_code = stk.get("ResultCode")
+
+        if not checkout_request_id:
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+        if result_code == 0:
+            # Payment successful
+            items = stk.get("CallbackMetadata", {}).get("Item", [])
+            meta = {i["Name"]: i.get("Value") for i in items}
+            mpesa_receipt = meta.get("MpesaReceiptNumber", "")
+            supabase.table("orders").update({
+                "payment_status": "paid",
+                "mpesa_receipt": mpesa_receipt,
+            }).eq("checkout_request_id", checkout_request_id).execute()
+        else:
+            # Payment failed/cancelled
+            supabase.table("orders").update({
+                "payment_status": "failed",
+            }).eq("checkout_request_id", checkout_request_id).execute()
+    except Exception as e:
+        logger.error(f"Callback processing error: {e}")
+
+    return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+
+@app.get("/api/v1/payments/mpesa/status/{order_id}")
+def mpesa_payment_status(order_id: str):
+    """Poll payment status for an order"""
+    resp = supabase.table("orders").select("payment_status, mpesa_receipt").eq("id", order_id).single().execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return resp.data
+
 
 # ==================== BOOKINGS ====================
 
