@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.utils.mpesa import stk_push
-from app.database import supabase
+from app.database import supabase_admin as supabase
 import logging
 
 logger = logging.getLogger(__name__)
