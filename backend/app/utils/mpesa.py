@@ -1,7 +1,6 @@
 import base64
 import requests
 from datetime import datetime
-from functools import lru_cache
 import os
 
 CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY")
@@ -23,16 +22,13 @@ def get_access_token() -> str:
 
 def get_password_and_timestamp():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    raw = f"{SHORTCODE}{PASSKEY}{timestamp}"
-    password = base64.b64encode(raw.encode()).decode()
+    password = base64.b64encode(f"{SHORTCODE}{PASSKEY}{timestamp}".encode()).decode()
     return password, timestamp
 
 
 def stk_push(phone: str, amount: int, order_id: str) -> dict:
-    """Initiate STK push. Phone must be in format 2547XXXXXXXX"""
     token = get_access_token()
     password, timestamp = get_password_and_timestamp()
-
     payload = {
         "BusinessShortCode": SHORTCODE,
         "Password": password,
@@ -46,7 +42,6 @@ def stk_push(phone: str, amount: int, order_id: str) -> dict:
         "AccountReference": order_id[:12],
         "TransactionDesc": f"BlueTech Order {order_id[:8].upper()}",
     }
-
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     resp = requests.post(f"{BASE_URL}/mpesa/stkpush/v1/processrequest", json=payload, headers=headers, timeout=15)
     resp.raise_for_status()

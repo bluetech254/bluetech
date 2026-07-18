@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api import products, orders, bookings, tracking, delivery_zones, services, auth
+from app.api import products, orders, bookings, tracking, delivery_zones, services, auth, payments
 
 # Create FastAPI app
 app = FastAPI(
@@ -29,6 +29,7 @@ app.include_router(bookings.router)
 app.include_router(tracking.router)
 app.include_router(delivery_zones.router)
 app.include_router(services.router)
+app.include_router(payments.router)
 
 @app.get("/")
 def root():
