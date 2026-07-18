@@ -63,7 +63,7 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto w-full animate-fade-in">
+    <div className="max-w-md mx-auto w-full -mt-12 animate-fade-in">
       <div className="space-y-3 text-left">
 
         {/* Header Title */}

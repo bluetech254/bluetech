@@ -51,7 +51,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-12 px-4 animate-fade-in">
+    <div className="max-w-md mx-auto py-12 px-4 -mt-12 animate-fade-in">
       <div className="space-y-6 text-left">
 
         {/* Title */}
