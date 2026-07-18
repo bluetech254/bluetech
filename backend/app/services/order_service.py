@@ -86,6 +86,7 @@ def create_order(order_data: OrderCreate) -> dict:
         "subtotal": float(calc["subtotal"]),
         "total_amount": float(total_amount),
         "status": "pending",
+        "payment_method": order_data.payment_method,
         "payment_status": "unpaid",
         "notes": order_data.notes
     }

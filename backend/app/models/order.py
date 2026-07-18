@@ -42,6 +42,7 @@ class OrderCreate(BaseModel):
     delivery_zone: str
     items: List[OrderItemCreate] = Field(..., min_length=1)
     notes: Optional[str] = None
+    payment_method: str = "cash_on_delivery"
 
 class OrderResponse(BaseModel):
     id: UUID
