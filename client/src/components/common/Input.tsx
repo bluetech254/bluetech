@@ -12,7 +12,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full text-left">
         {label && (
-          <label htmlFor={id} className="block text-sm font-semibold text-slate-700 mb-1.5">
+          <label htmlFor={id} className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">
             {label}
           </label>
         )}
@@ -29,7 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled}
             ref={ref}
             className={`
-              w-full py-3 px-4 border-2 rounded-lg outline-none transition-all duration-200
+              w-full py-2 sm:py-3 px-4 text-sm border-2 rounded-lg outline-none transition-all duration-200
               ${leftIcon ? 'pl-11' : 'pl-4'}
               ${disabled ? 'bg-slate-50 border-slate-100 cursor-not-allowed text-slate-400' : 'bg-white border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'}
               ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : ''}

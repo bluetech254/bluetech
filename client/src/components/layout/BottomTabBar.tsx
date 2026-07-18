@@ -14,7 +14,7 @@ export const BottomTabBar = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 flex items-stretch h-16 shadow-[0_-2px_12px_rgba(0,0,0,0.07)]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 flex items-stretch h-12 shadow-[0_-2px_12px_rgba(0,0,0,0.07)]">
       {tabs.map(({ to, icon: Icon, label, exact }) => (
         <NavLink
           key={to}
