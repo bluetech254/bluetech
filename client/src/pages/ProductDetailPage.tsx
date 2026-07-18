@@ -62,21 +62,6 @@ export const ProductDetailPage = () => {
 
   return (
     <div className="space-y-12 py-6 animate-fade-in text-left">
-      {/* Breadcrumbs & Navigation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-          <Link to="/products" className="hover:text-blue-600">Products</Link>
-          <span>/</span>
-          <span className="hover:text-blue-600 capitalize">{product.category}</span>
-          <span>/</span>
-          <span className="text-slate-600 truncate max-w-40 inline-block align-bottom">{product.name}</span>
-        </div>
-        
-        <Link to="/products" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center">
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          Back to Products Catalog
-        </Link>
-      </div>
 
       {/* Main product display card */}
       <ProductDetail product={product} />
