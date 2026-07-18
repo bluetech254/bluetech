@@ -30,19 +30,17 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
 };
 
 export const registerUser = async (credentials: RegisterCredentials): Promise<AuthResponse> => {
-  const response = await api.post('/auth/register', credentials);
+  const response = await api.post('/auth/signup', credentials);
   return response.data;
 };
 
 export const resendVerification = async (phone_number: string) => {
-  const response = await api.post('/auth/resend-verification', null, { params: { phone_number } });
+  const response = await api.post('/auth/resend-code', { phone_number });
   return response.data;
 };
 
 export const verifyPhone = async (phone_number: string, verification_code: string): Promise<AuthResponse> => {
-  const response = await api.post('/auth/verify-phone', null, {
-    params: { phone_number, verification_code },
-  });
+  const response = await api.post('/auth/verify-phone', { phone_number, verification_code });
   return response.data;
 };
 
