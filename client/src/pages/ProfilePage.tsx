@@ -36,7 +36,7 @@ const statusColor: Record<string, string> = {
 };
 
 export const ProfilePage = () => {
-  const { user, isAuthenticated, logout, refreshUser } = useAuth();
+  const { user, isAuthenticated, logout, refreshUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -48,8 +48,8 @@ export const ProfilePage = () => {
   const [showNewPw, setShowNewPw] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) navigate('/login', { state: { from: { pathname: '/profile' } } });
-  }, [isAuthenticated, navigate]);
+    if (!isLoading && !isAuthenticated) navigate('/login', { state: { from: { pathname: '/profile' } } });
+  }, [isAuthenticated, isLoading, navigate]);
 
   const { register: regProfile, handleSubmit: handleProfileSubmit, formState: { errors: profileErrors }, reset: resetProfileForm } = useForm({
     resolver: zodResolver(profileSchema),
@@ -100,7 +100,7 @@ export const ProfilePage = () => {
     } finally { setUpdatingPassword(false); }
   };
 
-  if (!user) return <Loading fullScreen message="Loading profile..." />;
+  if (isLoading || !user) return <Loading fullScreen message="Loading profile..." />;
 
   const initials = user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   const memberSince = new Date(user.created_at).toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
