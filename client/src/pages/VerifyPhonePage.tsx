@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { verifyPhone, resendVerification } from '../api/auth';
 import { useAuthContext } from '../contexts/AuthContext';
-import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -81,7 +80,7 @@ const VerifyPhonePage = () => {
 
   return (
     <div className="max-w-md mx-auto py-12 px-4">
-      <Card className="p-8 space-y-6 bg-white border border-slate-100 shadow-xl">
+      <div className="space-y-6">
         <div className="text-center space-y-1">
           <div className="flex justify-center mb-2">
             <ShieldCheck className="w-10 h-10 text-blue-600" />
@@ -119,21 +118,7 @@ const VerifyPhonePage = () => {
           </Button>
         </form>
 
-        <div className="text-center text-xs text-slate-500">
-          <p>
-            Didn't receive it?{' '}
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={cooldown > 0}
-              className="font-semibold text-blue-600 hover:underline disabled:text-slate-400 disabled:no-underline disabled:cursor-not-allowed"
-            >
-              {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend Code'}
-            </button>
-          </p>
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline mt-1 inline-block">Back to Login</Link>
-        </div>
-      </Card>
+      </div>
     </div>
   );
 };

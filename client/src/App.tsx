@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect } from 'react';
 import { BrowserRouter, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -15,17 +10,32 @@ import CartDrawer from './components/layout/CartDrawer';
 import BottomTabBar from './components/layout/BottomTabBar';
 import AppRoutes from './router';
 
-// Scroll to Top helper on route changes
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as any });
   }, [pathname]);
-
   return null;
 };
 
+const Layout = () => {
+  const { pathname } = useLocation();
+  const isAuthPage = ['/login', '/register', '/verify-phone', '/forgot-password'].includes(pathname);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <Header />
+      <main className={`flex-1 w-full ${isAuthPage ? 'flex items-center justify-center overflow-hidden' : 'py-8 md:py-12 pb-20 lg:pb-12'}`}>
+        <div className={isAuthPage ? 'w-full px-4' : 'px-4 sm:px-6 lg:px-[100px]'}>
+          <AppRoutes />
+        </div>
+      </main>
+      {!isAuthPage && <Footer />}
+      <CartDrawer />
+      <BottomTabBar />
+    </div>
+  );
+};
 export default function App() {
   return (
     <ErrorBoundary>
@@ -34,26 +44,7 @@ export default function App() {
           <AuthProvider>
             <CartProvider>
               <ScrollToTop />
-              <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
-                {/* Header Navigation */}
-                <Header />
-
-                {/* Main page stage */}
-                <main className="flex-1 w-full py-8 md:py-12 pb-20 lg:pb-12">
-                  <div className="px-4 sm:px-6 lg:px-[100px]">
-                    <AppRoutes />
-                  </div>
-                </main>
-
-                {/* Main Footer */}
-                <Footer />
-
-                {/* Cart Drawer */}
-                <CartDrawer />
-
-                {/* Mobile Bottom Tab Bar */}
-                <BottomTabBar />
-              </div>
+              <Layout />
             </CartProvider>
           </AuthProvider>
         </NotificationProvider>

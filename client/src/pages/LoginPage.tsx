@@ -6,51 +6,34 @@ import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../utils/validation';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-import Card from '../components/common/Card';
-import { LogIn, Key, Loader2, Mail, AlertCircle, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const LoginPage = () => {
-  const { login, isAuthenticated, loading } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Get target redirect route
   const from = (location.state as any)?.from?.pathname || '/profile';
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
-    }
+    if (isAuthenticated) navigate(from, { replace: true });
   }, [isAuthenticated, navigate, from]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      phone_number: '',
-      password: '',
-    }
+    defaultValues: { phone_number: '', password: '' }
   });
 
   const onSubmit = async (formData: any) => {
     setSubmitting(true);
     const toastId = toast.loading('Authenticating credentials...');
     try {
-      // Normalize phone number: remove leading 0 if present, add 254 prefix
       let phoneNumber = formData.phone_number.trim();
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = phoneNumber.substring(1);
-      }
-      if (!phoneNumber.startsWith('254')) {
-        phoneNumber = '254' + phoneNumber;
-      }
-
+      if (phoneNumber.startsWith('0')) phoneNumber = phoneNumber.substring(1);
+      if (!phoneNumber.startsWith('254')) phoneNumber = '254' + phoneNumber;
       await login(phoneNumber, formData.password);
       toast.success('Successfully logged in!', { id: toastId });
     } catch (err: any) {
@@ -59,8 +42,8 @@ export const LoginPage = () => {
         navigate('/verify-phone', { state: { phone: err.phone } });
         return;
       }
-      console.error('Failed login submit:', err);
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Invalid phone number or password. Please verify and try again.';
+      const detail = err.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : Array.isArray(detail) ? detail[0]?.msg : err.response?.data?.message || 'Invalid phone number or password.';
       toast.error(msg, { id: toastId });
     } finally {
       setSubmitting(false);
@@ -69,21 +52,14 @@ export const LoginPage = () => {
 
   return (
     <div className="max-w-md mx-auto py-12 px-4 animate-fade-in">
-      <Card className="p-8 space-y-6 bg-white border border-slate-100 shadow-xl text-left relative">
-        
-        {/* Floating Accent */}
-        <div className="absolute top-0 right-0 -mt-2 -mr-2 bg-blue-100 text-blue-700 p-2.5 rounded-full shadow-inner pointer-events-none">
-          <LogIn className="w-5 h-5" />
-        </div>
+      <div className="space-y-6 text-left">
 
         {/* Title */}
         <div className="text-center space-y-1">
           <span className="text-xl font-black tracking-tight text-slate-900 block">
             Blue<span className="text-blue-600">Tech</span> Portal
           </span>
-          <h1 className="text-2xl font-black text-slate-950 tracking-tight">
-            Sign In
-          </h1>
+          <h1 className="text-2xl font-black text-slate-950 tracking-tight">Sign In</h1>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
             Log in to sync your repair status updates, checkout faster, and track historical receipts.
           </p>
@@ -91,7 +67,6 @@ export const LoginPage = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-          
           <Input
             id="phone_number"
             label="Phone Number"
@@ -109,7 +84,7 @@ export const LoginPage = () => {
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 error={errors.password?.message}
                 {...register('password')}
@@ -133,16 +108,12 @@ export const LoginPage = () => {
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             <span>{submitting ? 'Signing In...' : 'Login'}</span>
           </Button>
-
         </form>
 
-        {/* Divider & Switch link */}
         <div className="border-t border-slate-100 pt-4 text-center">
           <p className="text-xs text-slate-500 font-medium">
             Don't have an online account yet?{' '}
-            <Link to="/register" className="font-extrabold text-blue-600 hover:text-blue-700 hover:underline">
-              Create Account
-            </Link>
+            <Link to="/register" className="font-extrabold text-blue-600 hover:text-blue-700 hover:underline">Create Account</Link>
           </p>
           <p className="text-[11px] text-slate-400 mt-2">
             By signing in, you agree to our{' '}
@@ -150,7 +121,9 @@ export const LoginPage = () => {
           </p>
         </div>
 
-      </Card>
+
+
+      </div>
     </div>
   );
 };

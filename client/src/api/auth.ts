@@ -22,9 +22,8 @@ export interface AuthResponse {
 }
 
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  // Backend expects `username` field (accepts email or phone)
   const response = await api.post('/auth/login', {
-    username: credentials.phone_number,
+    phone_number: credentials.phone_number,
     password: credentials.password,
   });
   return response.data;
