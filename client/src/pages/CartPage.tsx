@@ -14,11 +14,6 @@ export const CartPage = () => {
       {/* Breadcrumbs & Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div>
-          <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-            <Link to="/" className="hover:text-blue-600">Home</Link>
-            <span>/</span>
-            <span className="text-blue-600">Shopping Cart</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1.5 flex items-center">
             <ShoppingBag className="w-7 h-7 mr-2 text-blue-600" />
             Your Shopping Cart

@@ -52,7 +52,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         newItems[existingIndex].quantity = product.stock_quantity;
       } else {
         newItems[existingIndex].quantity = targetQty;
-        toast.success(`Updated ${product.name} quantity in cart!`);
       }
     } else {
       if (quantity > product.stock_quantity) {
@@ -60,19 +59,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       newItems.push({ product, quantity });
-      toast.success(`Added ${product.name} to cart!`);
     }
 
     saveCart(newItems);
   };
 
   const removeItem = (productId: string) => {
-    const itemToRemove = items.find(item => item.product.id === productId);
     const newItems = items.filter(item => item.product.id !== productId);
     saveCart(newItems);
-    if (itemToRemove) {
-      toast.success(`Removed ${itemToRemove.product.name} from cart.`);
-    }
   };
 
   const updateQuantity = (productId: string, quantity: number) => {

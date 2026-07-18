@@ -1,6 +1,5 @@
 import React from 'react';
 import Hero from '../components/home/Hero';
-import SideCarousel from '../components/home/SideCarousel';
 import PromotionalDealsCarousel from '../components/home/PromotionalDealsCarousel';
 import FeaturedProducts from '../components/home/FeaturedProducts';
 import ServiceCategories from '../components/home/ServiceCategories';
@@ -16,21 +15,8 @@ import HowItWorks from '../components/home/HowItWorks';
 export const HomePage = () => {
   return (
     <div className="space-y-8 pt-0 pb-8 animate-fade-in text-left">
-      {/* 1. Hero Promo - 66% width with side poster */}
-      <div className="hidden lg:flex gap-[25px]">
-        {/* Hero - 2/3 width */}
-        <div className="flex-[2]">
-          <div className="w-full">
-            <Hero />
-          </div>
-        </div>
-        
-        {/* Side Poster Carousel */}
-        <SideCarousel />
-      </div>
-
-      {/* Mobile Hero */}
-      <div className="lg:hidden -mx-4 sm:-mx-6">
+      {/* Hero - full width */}
+      <div className="-mx-4 sm:-mx-6">
         <Hero />
       </div>
 

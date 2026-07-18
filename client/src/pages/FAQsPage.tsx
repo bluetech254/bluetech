@@ -66,11 +66,6 @@ const Item = ({ q, a }: { q: string; a: string }) => {
 export const FAQsPage = () => (
   <div className="space-y-10 py-6 animate-fade-in text-left max-w-3xl mx-auto">
     <div>
-      <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-        <Link to="/" className="hover:text-blue-600">Home</Link>
-        <span>/</span>
-        <span className="text-blue-600">FAQs</span>
-      </div>
       <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1.5 flex flex-wrap items-center gap-2">
         <HelpCircle className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" /> Frequently Asked Questions
       </h1>

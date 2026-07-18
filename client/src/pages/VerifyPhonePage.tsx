@@ -79,7 +79,7 @@ const VerifyPhonePage = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-12 px-4">
+    <div className="max-w-md mx-auto px-4">
       <div className="space-y-6">
         <div className="text-center space-y-1">
           <div className="flex justify-center mb-2">

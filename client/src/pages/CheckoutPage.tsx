@@ -145,13 +145,6 @@ export const CheckoutPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div>
-          <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-            <Link to="/" className="hover:text-blue-600">Home</Link>
-            <span>/</span>
-            <Link to="/cart" className="hover:text-blue-600">Cart</Link>
-            <span>/</span>
-            <span className="text-slate-600">Secure Checkout</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1.5 flex items-center">
             Secure Checkout
           </h1>

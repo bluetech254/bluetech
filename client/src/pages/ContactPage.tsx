@@ -43,11 +43,6 @@ export const ContactPage = () => {
     <div className="space-y-8 py-6 animate-fade-in text-left">
       {/* Upper Title */}
       <div>
-        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-          <span>Home</span>
-          <span>/</span>
-          <span className="text-blue-600">Contact Us</span>
-        </div>
         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-1.5">
           Contact Our Workshop
         </h1>

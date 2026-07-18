@@ -29,7 +29,7 @@ export const CartItem = ({ item }: CartItemProps) => {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-slate-900 truncate hover:text-blue-600 transition-colors">
+          <h3 className="font-bold text-slate-900 break-words hover:text-blue-600 transition-colors">
             <Link to={`/products/${product.id}`}>
               {product.name}
             </Link>
