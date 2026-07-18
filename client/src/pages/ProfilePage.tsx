@@ -138,10 +138,6 @@ export const ProfilePage = () => {
               <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Member since {memberSince}</span>
             </div>
           </div>
-          {/* Logout */}
-          <button onClick={logout} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold rounded-xl transition-colors flex-shrink-0">
-            <LogOut className="w-3.5 h-3.5" /> Sign Out
-          </button>
         </div>
 
         {/* Stats row */}
