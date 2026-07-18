@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from app.utils.mpesa import stk_push
-from app.utils.auth import verify_token
 from app.database import supabase
 import logging
 
@@ -9,7 +8,7 @@ router = APIRouter(prefix="/api/v1/payments", tags=["payments"])
 
 
 @router.post("/mpesa/initiate")
-def mpesa_initiate(order_id: str, user_id: str = Depends(verify_token)):
+def mpesa_initiate(order_id: str):
     order_resp = supabase.table("orders").select("*").eq("id", order_id).single().execute()
     if not order_resp.data:
         raise HTTPException(status_code=404, detail="Order not found")
