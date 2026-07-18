@@ -77,12 +77,12 @@ export const RegisterPage = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-2.5">
           <Input id="full_name" label="Full Name" placeholder="e.g. Dennis Mutua" error={errors.full_name?.message} {...register('full_name')} />
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <Input id="email" label="Email Address" type="email" placeholder="e.g. dennis@example.com" error={errors.email?.message} {...register('email')} />
             <Input id="phone_number" label="Phone Number" placeholder="07XXXXXXXX" error={errors.phone_number?.message} {...register('phone_number')} />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="relative">
               <Input id="password" label="Password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" error={errors.password?.message} {...register('password')} />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-8 text-slate-400 hover:text-slate-600 transition-colors">
