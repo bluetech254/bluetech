@@ -115,47 +115,50 @@ export const ProfilePage = () => {
   return (
     <div className="max-w-5xl mx-auto animate-fade-in pb-20 lg:pb-8">
 
-      {/* Profile Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-6 pb-6 border-b border-slate-100">
-        {/* Avatar */}
-        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-2xl sm:text-3xl font-black shadow-lg flex-shrink-0">
-          {initials}
-        </div>
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 truncate">{user.full_name}</h1>
-            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${(user as any).is_verified ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-              {(user as any).is_verified ? <CheckCircle2 className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-              {(user as any).is_verified ? 'Verified' : 'Unverified'}
-            </span>
+      {/* Hero Banner */}
+      <div className="relative bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-2xl overflow-hidden mb-6 p-6 sm:p-8">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #3b82f6 0%, transparent 50%), radial-gradient(circle at 80% 20%, #1d4ed8 0%, transparent 40%)' }} />
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          {/* Avatar */}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-2xl sm:text-3xl font-black shadow-lg flex-shrink-0">
+            {initials}
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
-            <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{user.phone_number}</span>
-            {user.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{user.email}</span>}
-            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Member since {memberSince}</span>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h1 className="text-xl sm:text-2xl font-black text-white truncate">{user.full_name}</h1>
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${(user as any).is_verified ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
+                {(user as any).is_verified ? <CheckCircle2 className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                {(user as any).is_verified ? 'Verified' : 'Unverified'}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+              <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{user.phone_number}</span>
+              {user.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{user.email}</span>}
+              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Member since {memberSince}</span>
+            </div>
           </div>
+          {/* Logout */}
+          <button onClick={logout} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold rounded-xl transition-colors flex-shrink-0">
+            <LogOut className="w-3.5 h-3.5" /> Sign Out
+          </button>
         </div>
-        {/* Logout */}
-        <button onClick={logout} className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 text-xs font-bold rounded-xl transition-colors flex-shrink-0">
-          <LogOut className="w-3.5 h-3.5" /> Sign Out
-        </button>
-      </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="relative grid grid-cols-3 gap-3 mt-6">
           {[
             { label: 'Total Orders', value: orders.length, icon: <Package className="w-4 h-4" /> },
             { label: 'Repair Jobs', value: bookings.length, icon: <Wrench className="w-4 h-4" /> },
             { label: 'Account Status', value: (user as any).is_verified ? 'Active' : 'Pending', icon: <ShieldCheck className="w-4 h-4" /> },
           ].map(s => (
-            <div key={s.label} className="bg-white border border-slate-100 rounded-xl p-3 text-center">
-              <div className="text-blue-500 flex justify-center mb-1">{s.icon}</div>
-              <div className="text-slate-900 font-black text-lg leading-none">{s.value}</div>
+            <div key={s.label} className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center">
+              <div className="text-blue-300 flex justify-center mb-1">{s.icon}</div>
+              <div className="text-white font-black text-lg leading-none">{s.value}</div>
               <div className="text-slate-400 text-[10px] mt-0.5">{s.label}</div>
             </div>
           ))}
         </div>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6">
