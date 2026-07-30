@@ -1,0 +1,10 @@
+{
+  "/(app)/repairs/page": "app/(app)/repairs/page.js",
+  "/(app)/products/page": "app/(app)/products/page.js",
+  "/(app)/zones/page": "app/(app)/zones/page.js",
+  "/(app)/services/page": "app/(app)/services/page.js",
+  "/(app)/loyalty/page": "app/(app)/loyalty/page.js",
+  "/(app)/analytics/page": "app/(app)/analytics/page.js",
+  "/(app)/users/page": "app/(app)/users/page.js",
+  "/(app)/page": "app/(app)/page.js"
+}
