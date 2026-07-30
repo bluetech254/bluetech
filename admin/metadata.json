@@ -1,6 +1,0 @@
-{
-  "name": "Blue Technology Admin Panel",
-  "description": "Complete operational control over electronics repair bookings and e-commerce product sales for Blue Technology, Kenya.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
