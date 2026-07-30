@@ -123,7 +123,7 @@ export const adminApi = {
   getServiceCategories: () => request("/api/proxy/repair-services/categories"),
 
   // Users
-  getUsers: (q = "+") => request(`/api/proxy/admin/search${qs({ q })}`),
+  getUsers: (q = "a") => request(`/api/proxy/admin/search${qs({ q })}`),
 
   // Points
   getUserPoints: (user_id: string) => request(`/api/proxy/points/admin/user/${user_id}`),
