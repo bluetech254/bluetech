@@ -1,31 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const BASE = process.env.NEXT_PUBLIC_API_URL;
+
 export async function POST(req: NextRequest) {
-  const { username, password } = await req.json();
+  const body = await req.json();
 
-  if (!username || !password) {
-    return NextResponse.json({ error: "Username and password required" }, { status: 400 });
+  const res = await fetch(`${BASE}/api/v1/admin/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    return NextResponse.json(data, { status: res.status });
   }
 
-  const backendRes = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/auth/login`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    }
-  );
-
-  if (!backendRes.ok) {
-    const data = await backendRes.json().catch(() => ({}));
-    return NextResponse.json(
-      { error: data.detail ?? "Invalid credentials" },
-      { status: 401 }
-    );
-  }
-
-  const { access_token, admin } = await backendRes.json();
-
+  const { access_token, admin } = data;
   const session = {
     id: admin.id,
     username: admin.username,
@@ -36,14 +28,13 @@ export async function POST(req: NextRequest) {
     exp: Date.now() + 8 * 60 * 60 * 1000,
   };
 
-  const res = NextResponse.json({ ok: true, role: admin.role });
-  res.cookies.set("admin_session", JSON.stringify(session), {
-    httpOnly: true,
+  const response = NextResponse.json({ ok: true, admin });
+  response.cookies.set("admin_session", JSON.stringify(session), {
+    httpOnly: false,
     sameSite: "lax",
     path: "/",
     maxAge: 8 * 60 * 60,
     secure: process.env.NODE_ENV === "production",
   });
-
-  return res;
+  return response;
 }
