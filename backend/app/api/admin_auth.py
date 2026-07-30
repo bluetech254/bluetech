@@ -180,3 +180,18 @@ def list_admins(admin: dict = Depends(require_superadmin)):
         "id, username, full_name, email, role, is_active, created_at, last_login"
     ).order("created_at", desc=True).execute()
     return {"data": resp.data, "count": len(resp.data)}
+
+
+# ── User management (admin controls over client users) ───────────────────────
+
+@router.put("/users/{user_id}/toggle-active")
+def toggle_user_active(user_id: str, is_active: bool, admin: dict = Depends(get_current_admin)):
+    """Activate or deactivate a client user account."""
+    supabase_admin.table("users").update({
+        "is_active": is_active,
+        "updated_at": datetime.utcnow().isoformat()
+    }).eq("id", user_id).execute()
+
+    action = "activated" if is_active else "deactivated"
+    logger.info(f"User {user_id} {action} by admin {admin.get('username')}")
+    return {"message": f"User {action} successfully"}

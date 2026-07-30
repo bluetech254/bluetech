@@ -227,6 +227,15 @@ export const databaseService = {
     return [];
   },
 
+  async toggleUserActive(userId: string, is_active: boolean): Promise<boolean> {
+    if (supabase) {
+      const { error } = await supabase.from('users').update({ is_active }).eq('id', userId);
+      if (!error) return true;
+      if (error) console.error('Supabase update failed:', error);
+    }
+    return false;
+  },
+
   // --- DASHBOARD STATS ---
   async getDashboardStats(): Promise<DashboardStats> {
     try {

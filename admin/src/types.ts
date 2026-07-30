@@ -87,6 +87,7 @@ export interface User {
   email: string;
   full_name: string;
   phone_number?: string;
+  is_active?: boolean;
   created_at: string;
   last_sign_in_at?: string;
   email_confirmed_at?: string;

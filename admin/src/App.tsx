@@ -444,7 +444,7 @@ export default function App() {
                 />
               )}
               {activeTab === 'users' && (
-                <UsersView users={users} />
+                <UsersView users={users} onShowToast={showToast} onUsersUpdated={() => fetchAllData(true)} />
               )}
             </Suspense>
           )}

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 from uuid import UUID
 from app.services import order_service
 from app.models.order import OrderCreate, StatusUpdate
 from app.utils.exceptions import OrderNotFoundException, ProductNotFoundException, InsufficientStockException, DeliveryZoneNotFoundException
+from app.api.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 
@@ -41,7 +42,7 @@ def get_order(order_id: UUID):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{order_id}/status", response_model=dict)
-def update_order_status(order_id: UUID, status_update: StatusUpdate):
+def update_order_status(order_id: UUID, status_update: StatusUpdate, admin: dict = Depends(get_current_admin)):
     """Update order status (Admin)"""
     try:
         updated = order_service.update_order_status(order_id, status_update.status)
