@@ -1,1 +1,1 @@
-self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/home/jarvis/Documents/bluetech-admin/app/layout\":[\"static/media/463dafcda517f24f-s.p.woff\",\"static/media/4473ecc91f70f139-s.p.woff\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/home/jarvis/Documents/GitHub/bluetech/bluetech-admin/app/layout\":[\"static/media/463dafcda517f24f-s.p.woff\",\"static/media/4473ecc91f70f139-s.p.woff\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"

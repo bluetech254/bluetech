@@ -71,10 +71,16 @@ export default function Sidebar() {
           <Settings size={17} strokeWidth={2} />
           Settings
         </Link>
-        <Link href="/login" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-ink-muted hover:text-bad hover:bg-base-hover transition-colors">
+        <button
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            window.location.href = "/login";
+          }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-ink-muted hover:text-bad hover:bg-base-hover transition-colors w-full text-left"
+        >
           <LogOut size={17} strokeWidth={2} />
           Log out
-        </Link>
+        </button>
       </div>
     </aside>
   );

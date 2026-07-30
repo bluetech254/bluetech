@@ -1,4 +1,4 @@
-// File: /home/jarvis/Documents/bluetech-admin/app/layout.tsx
+// File: /home/jarvis/Documents/GitHub/bluetech/bluetech-admin/app/layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

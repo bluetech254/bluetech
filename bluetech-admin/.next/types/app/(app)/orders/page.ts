@@ -1,4 +1,4 @@
-// File: /home/jarvis/Documents/bluetech-admin/app/(app)/orders/page.tsx
+// File: /home/jarvis/Documents/GitHub/bluetech/bluetech-admin/app/(app)/orders/page.tsx
 import * as entry from '../../../../../app/(app)/orders/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
