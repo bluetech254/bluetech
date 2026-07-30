@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 from uuid import UUID
 from app.services import booking_service
 from app.models.booking import BookingCreate, CostUpdate
 from app.models.order import StatusUpdate
 from app.utils.exceptions import BookingNotFoundException
+from app.api.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/api/v1/bookings", tags=["Bookings"])
 
@@ -38,8 +39,8 @@ def get_booking(booking_id: UUID):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{booking_id}/status", response_model=dict)
-def update_booking_status(booking_id: UUID, status_update: StatusUpdate):
-    """Update booking status (Admin)"""
+def update_booking_status(booking_id: UUID, status_update: StatusUpdate, admin: dict = Depends(get_current_admin)):
+    """Update booking status (Admin) — triggers SMS to customer"""
     try:
         updated = booking_service.update_booking_status(booking_id, status_update.status)
         return updated
@@ -49,7 +50,7 @@ def update_booking_status(booking_id: UUID, status_update: StatusUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{booking_id}/cost", response_model=dict)
-def update_booking_cost(booking_id: UUID, cost_update: CostUpdate):
+def update_booking_cost(booking_id: UUID, cost_update: CostUpdate, admin: dict = Depends(get_current_admin)):
     """Update booking cost estimate (Admin)"""
     try:
         updated = booking_service.update_booking_cost(booking_id, cost_update)

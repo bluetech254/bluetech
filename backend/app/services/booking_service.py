@@ -28,11 +28,29 @@ def get_booking_by_id(booking_id: UUID) -> dict:
     return response.data
 
 def update_booking_status(booking_id: UUID, status: str) -> dict:
-    """Update booking status"""
+    """Update booking status and notify customer via SMS"""
     response = supabase_admin.table("bookings").update({"status": status}).eq("id", str(booking_id)).execute()
     if not response.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
-    return response.data[0]
+    
+    booking = response.data[0]
+    short_id = str(booking_id)[:8].upper()
+
+    sms_map = {
+        "confirmed":    f"BlueTech: Your repair booking #{short_id} is confirmed. We'll contact you shortly.",
+        "in_diagnosis": f"BlueTech: Your device (#{short_id}) is being diagnosed. We'll send a cost estimate soon.",
+        "ready":        f"BlueTech: Your device #{short_id} is ready for collection! Final cost: KES {booking.get('final_cost', 0):,.0f}.",
+        "completed":    f"BlueTech: Repair #{short_id} complete. Thank you for choosing BlueTech!",
+    }
+
+    if status in sms_map:
+        try:
+            from app.utils.sms_service import send_sms
+            send_sms(booking["phone_number"], sms_map[status])
+        except Exception:
+            pass  # SMS failure must never break the status update
+
+    return booking
 
 def update_booking_cost(booking_id: UUID, cost_data: CostUpdate) -> dict:
     """Update booking cost"""
