@@ -1,11 +1,9 @@
 {
   "/login/page": "app/login/page.js",
   "/api/proxy/[...path]/route": "app/api/proxy/[...path]/route.js",
-  "/api/auth/logout/route": "app/api/auth/logout/route.js",
-  "/api/auth/route": "app/api/auth/route.js",
-  "/.well-known/appspecific/com.chrome.devtools.json/route": "app/.well-known/appspecific/com.chrome.devtools.json/route.js",
-  "/(app)/users/page": "app/(app)/users/page.js",
   "/(app)/loyalty/page": "app/(app)/loyalty/page.js",
   "/(app)/analytics/page": "app/(app)/analytics/page.js",
-  "/(app)/page": "app/(app)/page.js"
+  "/(app)/page": "app/(app)/page.js",
+  "/(app)/orders/page": "app/(app)/orders/page.js",
+  "/(app)/repairs/page": "app/(app)/repairs/page.js"
 }
