@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 from uuid import UUID
 from app.services import product_service
 from app.models.product import ProductCreate, ProductUpdate, ProductResponse
 from app.utils.exceptions import ProductNotFoundException
+from app.api.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/api/v1/products", tags=["Products"])
 
@@ -31,7 +32,7 @@ def get_product(product_id: UUID):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("", response_model=dict)
-def create_product(product: ProductCreate):
+def create_product(product: ProductCreate, admin: dict = Depends(get_current_admin)):
     """Create new product (Admin)"""
     try:
         created = product_service.create_product(product)
@@ -40,7 +41,7 @@ def create_product(product: ProductCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{product_id}", response_model=dict)
-def update_product(product_id: UUID, product: ProductUpdate):
+def update_product(product_id: UUID, product: ProductUpdate, admin: dict = Depends(get_current_admin)):
     """Update product (Admin)"""
     try:
         updated = product_service.update_product(product_id, product)
@@ -51,7 +52,7 @@ def update_product(product_id: UUID, product: ProductUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{product_id}")
-def delete_product(product_id: UUID):
+def delete_product(product_id: UUID, admin: dict = Depends(get_current_admin)):
     """Deactivate product (Admin)"""
     try:
         result = product_service.deactivate_product(product_id)
