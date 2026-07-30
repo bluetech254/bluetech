@@ -2,11 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from app.config import settings
-from app.api import products, orders, bookings, tracking, delivery_zones, services, auth, payments, admin_auth, points
+from app.api import products, orders, bookings, tracking, delivery_zones, services, auth, payments, admin_auth, points, admin_ops
 
 # Tag metadata — drives ReDoc sidebar grouping and descriptions
 tags_metadata = [
     {"name": "Admin Authentication",  "description": "Dedicated admin login, profile, password management, and admin account control. All write operations require a valid admin Bearer token."},
+    {"name": "Admin Operations",      "description": "Analytics dashboard, stock alerts, CSV export, bulk order actions, referral tracking, customer history, global search, and audit log."},
     {"name": "Client Authentication", "description": "Customer registration, login, phone OTP verification, and password reset via SMS."},
     {"name": "Products",              "description": "Product catalog — public read, admin-guarded create/update/deactivate."},
     {"name": "Orders",                "description": "E-commerce order lifecycle. Supports loyalty points redemption and referral codes at checkout. Points are awarded on delivery."},
@@ -56,6 +57,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(admin_auth.router)
+app.include_router(admin_ops.router)
 app.include_router(auth.router)
 app.include_router(products.router)
 app.include_router(orders.router)

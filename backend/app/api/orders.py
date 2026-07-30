@@ -7,6 +7,7 @@ from app.models.order import OrderCreate, StatusUpdate
 from app.utils.exceptions import OrderNotFoundException, ProductNotFoundException, InsufficientStockException, DeliveryZoneNotFoundException
 from app.api.admin_auth import get_current_admin
 from app.utils.auth import decode_token
+from app.utils.audit import log_action
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 security = HTTPBearer(auto_error=False)
@@ -65,6 +66,7 @@ def update_order_status(order_id: UUID, status_update: StatusUpdate, admin: dict
     """Update order status (Admin)"""
     try:
         updated = order_service.update_order_status(order_id, status_update.status)
+        log_action(admin, "order.status_update", f"order:{order_id}", {"status": status_update.status})
         return updated
     except OrderNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))

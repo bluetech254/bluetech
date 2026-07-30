@@ -6,6 +6,7 @@ from app.models.booking import BookingCreate, CostUpdate
 from app.models.order import StatusUpdate
 from app.utils.exceptions import BookingNotFoundException
 from app.api.admin_auth import get_current_admin
+from app.utils.audit import log_action
 
 router = APIRouter(prefix="/api/v1/bookings", tags=["Bookings"])
 
@@ -43,6 +44,7 @@ def update_booking_status(booking_id: UUID, status_update: StatusUpdate, admin: 
     """Update booking status (Admin) — triggers SMS to customer"""
     try:
         updated = booking_service.update_booking_status(booking_id, status_update.status)
+        log_action(admin, "booking.status_update", f"booking:{booking_id}", {"status": status_update.status})
         return updated
     except BookingNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -54,6 +56,8 @@ def update_booking_cost(booking_id: UUID, cost_update: CostUpdate, admin: dict =
     """Update booking cost estimate (Admin)"""
     try:
         updated = booking_service.update_booking_cost(booking_id, cost_update)
+        log_action(admin, "booking.cost_update", f"booking:{booking_id}",
+                   {"estimated": str(cost_update.estimated_cost), "final": str(cost_update.final_cost)})
         return updated
     except BookingNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
