@@ -519,7 +519,7 @@ def root():
   <!-- Stats -->
   <div class="stats-bar">
     <div class="stat-item">
-      <div class="stat-value">18+</div>
+      <div class="stat-value">25+</div>
       <div class="stat-label">Endpoints</div>
     </div>
     <div class="stat-item">
@@ -533,6 +533,10 @@ def root():
     <div class="stat-item">
       <div class="stat-value">SMS</div>
       <div class="stat-label">Notifications</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">Points</div>
+      <div class="stat-label">Loyalty System</div>
     </div>
     <div class="stat-item">
       <div class="stat-value">KES</div>
@@ -553,14 +557,16 @@ def root():
           <div class="card-icon icon-rose">🔐</div>
           <div class="card-title">Admin Authentication</div>
         </div>
-        <p class="card-desc">Dedicated admin-only auth. Role-based access with superadmin controls.</p>
+        <p class="card-desc">Dedicated admin-only auth. Role-based JWT with superadmin controls. Completely separate from client auth.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/admin/auth/login</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/admin/auth/me</span></div>
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/admin/auth/logout</span></div>
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/admin/auth/change-password</span></div>
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/admin/auth/create-admin</span></div>
+          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/admin/auth/deactivate/{id}</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/admin/auth/list</span></div>
+          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/admin/auth/users/{id}/toggle-active</span></div>
         </div>
       </div>
 
@@ -570,7 +576,7 @@ def root():
           <div class="card-icon icon-blue">👤</div>
           <div class="card-title">Client Authentication</div>
         </div>
-        <p class="card-desc">Customer registration, login, phone OTP verification, and password reset.</p>
+        <p class="card-desc">Customer registration with referral code support, login, phone OTP verification, and password reset via SMS.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/auth/signup</span></div>
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/auth/login</span></div>
@@ -587,13 +593,13 @@ def root():
           <div class="card-icon icon-indigo">📦</div>
           <div class="card-title">Products</div>
         </div>
-        <p class="card-desc">Product catalog — list, search, create, update, and deactivate products.</p>
+        <p class="card-desc">Product catalog — public read, admin-guarded writes. Supports search and active-only filtering.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/products</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/products/{id}</span></div>
-          <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/products</span></div>
-          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/products/{id}</span></div>
-          <div class="route-item"><span class="method method-delete">DEL</span><span class="route-path">/api/v1/products/{id}</span></div>
+          <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/products <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
+          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/products/{id} <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
+          <div class="route-item"><span class="method method-delete">DEL</span><span class="route-path">/api/v1/products/{id} <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
         </div>
       </div>
 
@@ -603,11 +609,12 @@ def root():
           <div class="card-icon icon-emerald">🛒</div>
           <div class="card-title">Orders</div>
         </div>
-        <p class="card-desc">E-commerce order lifecycle — create, track, and update fulfillment status.</p>
+        <p class="card-desc">E-commerce order lifecycle. Supports loyalty points redemption and referral codes at checkout. Points awarded on delivery.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/orders</span></div>
+          <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/orders</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/orders/{id}</span></div>
-          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/orders/{id}/status</span></div>
+          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/orders/{id}/status <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/orders/track/{phone}</span></div>
         </div>
       </div>
@@ -618,11 +625,13 @@ def root():
           <div class="card-icon icon-purple">🔧</div>
           <div class="card-title">Repair Bookings</div>
         </div>
-        <p class="card-desc">Device repair job management — book, track, and update repair status.</p>
+        <p class="card-desc">Device repair job management. Status updates trigger SMS to customer at key stages.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/bookings</span></div>
+          <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/bookings</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/bookings/{id}</span></div>
-          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/bookings/{id}/status</span></div>
+          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/bookings/{id}/status <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
+          <div class="route-item"><span class="method method-put">PUT</span><span class="route-path">/api/v1/bookings/{id}/cost <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/bookings/track/{phone}</span></div>
         </div>
       </div>
@@ -633,7 +642,7 @@ def root():
           <div class="card-icon icon-amber">💳</div>
           <div class="card-title">M-Pesa Payments</div>
         </div>
-        <p class="card-desc">Safaricom M-Pesa STK push integration — initiate, callback, and poll status.</p>
+        <p class="card-desc">Safaricom M-Pesa STK push — initiate payment, receive Safaricom webhook callback, poll payment status.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/payments/mpesa/initiate</span></div>
           <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/payments/mpesa/callback</span></div>
@@ -641,16 +650,44 @@ def root():
         </div>
       </div>
 
-      <!-- Services & Zones -->
+      <!-- Loyalty & Referrals -->
       <div class="endpoint-card">
         <div class="card-header">
-          <div class="card-icon icon-blue">🗺️</div>
-          <div class="card-title">Services & Zones</div>
+          <div class="card-icon icon-indigo">⭐</div>
+          <div class="card-title">Loyalty & Referrals</div>
         </div>
-        <p class="card-desc">Repair services catalog and delivery zone fee management.</p>
+        <p class="card-desc">Earn 10% of subtotal as points on delivery. 50 pts per referral. Redeem 1000+ pts for KES discount (delivery fee always charged).</p>
+        <div class="route-list">
+          <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/points/me</span></div>
+          <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/points/history</span></div>
+          <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/points/redeem</span></div>
+          <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/points/admin/user/{id} <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
+          <div class="route-item"><span class="method method-post">POST</span><span class="route-path">/api/v1/points/admin/award/{id} <span style="color:#f87171;font-size:9px;">🔒 Admin</span></span></div>
+        </div>
+      </div>
+
+      <!-- Repair Services -->
+      <div class="endpoint-card">
+        <div class="card-header">
+          <div class="card-icon icon-blue">🛠️</div>
+          <div class="card-title">Repair Services</div>
+        </div>
+        <p class="card-desc">Repair services catalog with category filtering. Used for cost reference in booking workflow.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/repair-services</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/repair-services/categories</span></div>
+          <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/repair-services/{id}</span></div>
+        </div>
+      </div>
+
+      <!-- Delivery Zones -->
+      <div class="endpoint-card">
+        <div class="card-header">
+          <div class="card-icon icon-emerald">🗺️</div>
+          <div class="card-title">Delivery Zones</div>
+        </div>
+        <p class="card-desc">Active delivery zones and their fees. Used at checkout to calculate order total.</p>
+        <div class="route-list">
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/delivery-zones</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/api/v1/track/{phone}</span></div>
         </div>
@@ -660,11 +697,12 @@ def root():
       <div class="endpoint-card">
         <div class="card-header">
           <div class="card-icon icon-emerald">❤️</div>
-          <div class="card-title">Health & Meta</div>
+          <div class="card-title">Health & System</div>
         </div>
-        <p class="card-desc">System health check and API metadata endpoints.</p>
+        <p class="card-desc">API and database health checks. Use for uptime monitoring and deployment verification.</p>
         <div class="route-list">
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/health</span></div>
+          <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/health/db</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/docs</span></div>
           <div class="route-item"><span class="method method-get">GET</span><span class="route-path">/redoc</span></div>
         </div>
@@ -691,6 +729,7 @@ def root():
       <a href="/docs">Swagger UI</a>
       <a href="/redoc">ReDoc</a>
       <a href="/health">Health</a>
+      <a href="/health/db">DB Health</a>
     </div>
   </footer>
 
@@ -700,5 +739,17 @@ def root():
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy"}
+    """API health check"""
+    return {"status": "healthy", "version": "1.0.0"}
+
+
+@app.get("/health/db")
+def db_health_check():
+    """Database connectivity health check"""
+    from app.database import supabase
+    try:
+        supabase.table("products").select("id").limit(1).execute()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        from fastapi import Response
+        return {"status": "unhealthy", "database": "unreachable", "error": str(e)}
