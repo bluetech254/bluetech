@@ -9,8 +9,13 @@ async function handler(req: NextRequest, { params }: { params: { path: string[] 
     let token = "";
     try {
       const raw = cookieStore.get("admin_session")?.value;
-      token = raw ? JSON.parse(decodeURIComponent(raw)).token ?? "" : "";
-    } catch {}
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        token = parsed.token ?? "";
+      }
+    } catch (e) {
+      console.error("[proxy cookie parse error]", e);
+    }
 
     const path = params.path.join("/");
     const search = req.nextUrl.search;
@@ -25,6 +30,7 @@ async function handler(req: NextRequest, { params }: { params: { path: string[] 
 
     const res = await fetch(url, { method: req.method, headers, body });
     const text = await res.text();
+    if (!res.ok) console.error(`[proxy] ${req.method} ${url} → ${res.status}`, text.slice(0, 200));
 
     return new NextResponse(text, {
       status: res.status,
