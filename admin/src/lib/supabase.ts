@@ -94,6 +94,15 @@ export const databaseService = {
     return false;
   },
 
+  async saveOrderDetails(orderId: string, data: { status: Order['status']; payment_status: Order['payment_status']; notes?: string }): Promise<boolean> {
+    if (supabase) {
+      const { error } = await supabase.from('orders').update(data).eq('id', orderId);
+      if (!error) return true;
+      if (error) console.error('Supabase update failed:', error);
+    }
+    return false;
+  },
+
   // --- BOOKINGS ---
   async getBookings(): Promise<Booking[]> {
     if (supabase) {
