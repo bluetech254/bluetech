@@ -1,116 +1,105 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import clsx from "clsx";
 import {
-  LayoutDashboard,
+  Zap,
+  LayoutGrid,
   ShoppingBag,
   Wrench,
   Package,
   MapPin,
-  ClipboardList,
+  ListChecks,
+  Users,
   Gift,
   BarChart3,
-  Users,
   ShieldCheck,
-  Settings,
   LogOut,
-  Zap,
+  Sparkles,
 } from "lucide-react";
 
-const nav = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+const NAV = [
+  { href: "/", label: "Dashboard", icon: LayoutGrid },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
-  { href: "/repairs", label: "Repairs", icon: Wrench },
+  { href: "/repairs", label: "Repair Bookings", icon: Wrench },
   { href: "/products", label: "Products", icon: Package },
   { href: "/zones", label: "Delivery Zones", icon: MapPin },
-  { href: "/services", label: "Services", icon: ClipboardList },
+  { href: "/services", label: "Repair Services", icon: ListChecks },
+  { href: "/users", label: "Users", icon: Users },
   { href: "/loyalty", label: "Loyalty & Referrals", icon: Gift },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/users", label: "Users", icon: Users },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
   const pathname = usePathname();
-  const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  useEffect(() => {
-    try {
-      const raw = document.cookie
-        .split("; ")
-        .find((c) => c.startsWith("admin_session="))
-        ?.split("=")
-        .slice(1)
-        .join("=");
-      if (raw) setIsSuperadmin(JSON.parse(decodeURIComponent(raw)).role === "superadmin");
-    } catch { /* keep false */ }
-  }, []);
+  async function handleLogout() {
+    setLoggingOut(true);
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 bg-base-panel border-r border-base-border px-4 py-6">
-      <div className="flex items-center gap-2.5 px-2 mb-8">
-        <div className="w-9 h-9 rounded-xl bg-volt flex items-center justify-center">
+    <aside className="w-[260px] shrink-0 h-screen sticky top-0 flex flex-col p-4 border-r border-base-border bg-base-panel/60">
+      <div className="flex items-center gap-2.5 px-2 py-3 mb-4">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-volt to-volt-dark flex items-center justify-center">
           <Zap size={18} className="text-white" fill="white" />
         </div>
-        <div className="leading-tight">
-          <div className="font-bold text-[15px] tracking-tight">BlueTech</div>
-          <div className="text-[11px] text-ink-dim -mt-0.5">Kenya Admin</div>
-        </div>
+        <span className="font-display font-bold text-[15px] tracking-tight text-ink">BlueTech Kenya</span>
       </div>
 
-      <nav className="flex-1 flex flex-col gap-1">
-        {nav.map((item) => {
+      <nav className="flex-1 space-y-1 overflow-y-auto">
+        {NAV.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={clsx(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                active
-                  ? "bg-volt/15 text-white"
-                  : "text-ink-muted hover:text-ink hover:bg-base-hover"
-              )}
+              className={clsx("nav-item", active && "nav-item-active")}
             >
-              <Icon size={17} strokeWidth={2} className={active ? "text-volt" : ""} />
+              <Icon size={17} strokeWidth={2} />
               {item.label}
             </Link>
           );
         })}
-        {isSuperadmin && (
+
+        {role === "superadmin" && (
           <Link
             href="/admins"
-            className={clsx(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
-              pathname.startsWith("/admins")
-                ? "bg-volt/15 text-white"
-                : "text-ink-muted hover:text-ink hover:bg-base-hover"
-            )}
+            className={clsx("nav-item", pathname.startsWith("/admins") && "nav-item-active")}
           >
-            <ShieldCheck size={17} strokeWidth={2} className={pathname.startsWith("/admins") ? "text-volt" : ""} />
+            <ShieldCheck size={17} strokeWidth={2} />
             Admin Accounts
           </Link>
         )}
       </nav>
 
-      <div className="flex flex-col gap-1 pt-4 border-t border-base-border">
-        <Link href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-ink-muted hover:text-ink hover:bg-base-hover transition-colors">
-          <Settings size={17} strokeWidth={2} />
-          Settings
-        </Link>
-        <button
-          onClick={async () => {
-            await fetch("/api/auth/logout", { method: "POST" });
-            window.location.href = "/login";
-          }}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-ink-muted hover:text-bad hover:bg-base-hover transition-colors w-full text-left"
+      <div className="card-gradient p-4 mt-3 mb-3">
+        <Sparkles size={18} className="mb-2 opacity-90" />
+        <p className="text-sm font-semibold leading-snug">Track stock &amp; repairs in real time</p>
+        <p className="text-xs text-white/75 mt-1">Low-stock alerts keep your shelves stocked automatically.</p>
+        <Link
+          href="/products"
+          className="inline-block mt-3 bg-white text-volt-dark text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-white/90 transition-colors"
         >
-          <LogOut size={17} strokeWidth={2} />
-          Log out
-        </button>
+          View products
+        </Link>
       </div>
+
+      <button
+        onClick={handleLogout}
+        disabled={loggingOut}
+        className="nav-item text-bad hover:text-bad hover:bg-bad/10 w-full disabled:opacity-50"
+      >
+        <LogOut size={17} strokeWidth={2} />
+        {loggingOut ? "Logging out…" : "Log Out"}
+      </button>
     </aside>
   );
 }

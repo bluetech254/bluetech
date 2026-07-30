@@ -1,126 +1,123 @@
+export type AdminRole = "admin" | "superadmin";
+
+export interface AdminSession {
+  id: string;
+  username: string;
+  full_name: string;
+  email: string;
+  role: AdminRole;
+  token: string;
+  exp: number;
+}
+
 export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "dispatched"
-  | "delivered"
-  | "cancelled";
+  | "pending" | "confirmed" | "processing" | "dispatched" | "delivered" | "cancelled";
 
 export type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "picked_up"
-  | "in_diagnosis"
-  | "in_repair"
-  | "ready"
-  | "completed"
-  | "cancelled";
-
-export type PaymentMethod = "mpesa" | "cash_on_delivery" | "card";
-export type PaymentStatus = "paid" | "unpaid";
-export type DeviceType = "phone" | "laptop" | "tablet" | "other";
-export type FulfillmentType = "dropoff" | "pickup";
+  | "pending" | "confirmed" | "picked_up" | "in_diagnosis" | "in_repair" | "ready" | "completed" | "cancelled";
 
 export interface OrderItem {
   id: string;
-  productId: string;
   title: string;
-  qty: number;
-  unitPrice: number;
+  quantity: number;
+  price: number;
 }
 
 export interface Order {
   id: string;
-  customerName: string;
-  phone: string;
+  full_name: string;
+  phone_number: string;
   email?: string;
-  zoneId: string;
-  address: string;
-  items: OrderItem[];
-  deliveryFee: number;
+  delivery_zone?: string;
+  delivery_address?: string;
+  subtotal: number;
+  delivery_fee: number;
+  points_discount: number;
+  total_amount: number;
   status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  paymentMethod: PaymentMethod;
+  payment_status: string;
+  payment_method: string;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
-  pointsEarned: number;
+  created_at: string;
+  order_items: OrderItem[];
 }
 
 export interface Booking {
   id: string;
-  customerName: string;
-  phone: string;
-  deviceType: DeviceType;
-  deviceModel: string;
-  issue: string;
-  fulfillmentType: FulfillmentType;
-  pickupAddress?: string;
+  full_name: string;
+  phone_number: string;
+  device_type: string;
+  device_model: string;
+  issue_description: string;
+  fulfillment_type: string;
+  pickup_address?: string;
   status: BookingStatus;
-  estimatedCost?: number;
-  finalCost?: number;
-  technicianNotes?: string;
-  smsLog: { stage: BookingStatus; sentAt: string }[];
-  createdAt: string;
-  updatedAt: string;
+  estimated_cost?: number;
+  final_cost?: number;
+  internal_notes?: string;
+  created_at: string;
 }
 
 export interface Product {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   price: number;
-  stock: number;
-  lowStockThreshold: number;
+  stock_quantity: number;
+  low_stock_threshold: number;
   category: string;
   brand: string;
-  imageUrl: string;
-  specs: Record<string, string>;
-  isActive: boolean;
-  unitsSold: number;
-  createdAt: string;
+  image_url?: string;
+  specs?: Record<string, string>;
+  is_active: boolean;
+  units_sold: number;
+  created_at: string;
 }
 
 export interface DeliveryZone {
   id: string;
-  name: string;
-  fee: number;
-  isActive: boolean;
-  ordersFulfilled: number;
+  zone_name: string;
+  delivery_fee: number;
+  is_active: boolean;
 }
 
-export interface Service {
+export interface RepairService {
   id: string;
-  name: string;
-  category: string;
-  basePrice: number;
-  durationMins: number;
-  warrantyDays: number;
-  jobsCompleted: number;
+  service_name: string;
+  service_category: string;
+  base_price: number;
+  duration_minutes: number;
+  warranty_days: number;
+  is_active: boolean;
 }
 
-export interface Customer {
+export interface DashboardData {
+  today: { orders: number; bookings: number; revenue: number; new_users: number };
+  totals: {
+    orders: number; bookings: number; products: number; users: number;
+    order_revenue: number; booking_revenue: number; total_revenue: number;
+  };
+  active_repair_queue: number;
+  low_stock_alerts: { id: string; title: string; stock: number; threshold: number }[];
+  order_status_breakdown: Record<string, number>;
+  revenue_chart: { date: string; revenue: number }[];
+  recent_orders: Order[];
+  recent_bookings: Booking[];
+}
+
+export interface ReferralEntry {
+  user_id: string;
+  full_name: string;
+  referral_count: number;
+  points_earned: number;
+}
+
+export interface AdminAccount {
   id: string;
-  name: string;
+  username: string;
+  full_name: string;
   email: string;
-  phone: string;
-  verified: boolean;
-  registeredAt: string;
-  lastSignIn: string;
-  isActive: boolean;
-  loyaltyPoints: number;
-  lifetimeSpend: number;
-  referralCode: string;
-  referredBy?: string;
-  referralCount: number;
-}
-
-export interface LoyaltyTransaction {
-  id: string;
-  customerId: string;
-  customerName: string;
-  type: "earn" | "redeem" | "referral_bonus" | "manual_award" | "expiry";
-  points: number;
-  reason: string;
-  createdAt: string;
+  role: AdminRole;
+  is_active: boolean;
+  last_login?: string;
 }

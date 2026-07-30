@@ -1,56 +1,36 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        base: {
-          DEFAULT: "#0A0A0F",
-          panel: "#131218",
-          card: "#1A1922",
-          border: "#26252F",
-          hover: "#201F29",
-        },
-        ink: {
-          DEFAULT: "#F3F2F7",
-          muted: "#96939F",
-          dim: "#5F5D69",
-        },
-        volt: {
-          DEFAULT: "#2F6BFF",
-          dim: "#1D3E99",
-          soft: "#DCE7FF",
-        },
-        amber: {
-          tile: "#FDB44B",
-        },
-        lilac: {
-          tile: "#B9A6FF",
-        },
-        lime: {
-          tile: "#D3F26A",
-        },
-        coral: {
-          tile: "#FF8C7A",
-        },
-        good: "#3ECF8E",
-        warn: "#FDB44B",
-        bad: "#FF6B6B",
+        base: "#0d0b1a",
+        "base-panel": "#161329",
+        "base-panel2": "#1b1733",
+        "base-hover": "#211d3d",
+        "base-border": "#2a2547",
+        ink: "#f3f1fb",
+        "ink-muted": "#9d97c2",
+        "ink-dim": "#5b5480",
+        volt: "#7c5cfc",
+        "volt-dark": "#5b3ff0",
+        good: "#22c99e",
+        bad: "#f4506b",
+        warn: "#f5a623",
+        coral: "#ff8a5c",
+        lilac: "#b794f6",
+        teal: "#3ecfd0",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"],
-        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        display: ["var(--font-display)", "sans-serif"],
+        body: ["var(--font-body)", "sans-serif"],
       },
       borderRadius: {
         xl2: "1.25rem",
       },
       boxShadow: {
-        card: "0 1px 2px rgba(0,0,0,0.4), 0 12px 32px -12px rgba(0,0,0,0.5)",
+        panel: "0 1px 0 0 rgba(255,255,255,0.03) inset, 0 8px 24px -12px rgba(0,0,0,0.5)",
       },
     },
   },

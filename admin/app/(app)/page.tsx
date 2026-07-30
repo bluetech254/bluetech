@@ -1,159 +1,273 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Topbar from "@/components/layout/Topbar";
-import StatTile from "@/components/ui/StatTile";
-import StatusBadge from "@/components/ui/StatusBadge";
-import { adminApi } from "@/lib/api";
-import { formatKES } from "@/lib/mock-data";
-import { ShoppingBag, Wrench, Wallet, Layers, ArrowUpRight, AlertTriangle } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
+import {
+  ShoppingBag, Wrench, Users as UsersIcon, Wallet, ChevronDown, ArrowRight,
+} from "lucide-react";
 import Link from "next/link";
+import { adminApi, formatKES } from "@/lib/api";
+import { DashboardData } from "@/lib/types";
+import StatusBadge from "@/components/ui/StatusBadge";
+import StatCard from "@/components/ui/StatCard";
+
+const DONUT_COLORS = ["#7c5cfc", "#3ecfd0", "#f5a623", "#ff8a5c", "#b794f6", "#f4506b"];
 
 export default function DashboardPage() {
-  const [firstName, setFirstName] = useState("Admin");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [range, setRange] = useState("This Month");
 
   useEffect(() => {
-    try {
-      const raw = document.cookie.split("; ").find((c) => c.startsWith("admin_session="))?.split("=").slice(1).join("=");
-      if (raw) {
-        const s = JSON.parse(decodeURIComponent(raw));
-        const name = s.full_name?.split(" ")[0] ?? s.username;
-        if (name) setFirstName(name);
-      }
-    } catch { /* keep default */ }
-
-    adminApi.dashboard().then(setData).catch(console.error);
+    adminApi
+      .dashboard()
+      .then((d: any) => setData(d))
+      .catch((e) => setError(e.message ?? "Failed to load dashboard"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const today = data?.today ?? {};
-  const totals = data?.totals ?? {};
-  const orderStatusMap: Record<string, number> = data?.order_status_breakdown ?? {};
-  const lowStock: any[] = data?.low_stock_alerts ?? [];
-  const trend = (data?.revenue_chart ?? []).map((d: any) => ({
-    label: new Date(d.date).toLocaleDateString("en-KE", { month: "short", day: "numeric" }),
-    productRevenue: d.revenue,
-    repairRevenue: 0,
-  }));
-  const recentOrders: any[] = data?.recent_orders ?? [];
-  const recentBookings: any[] = data?.recent_bookings ?? [];
-  const feed = [
-    ...recentOrders.map((o: any) => ({ kind: "order" as const, id: o.id, name: o.full_name, status: o.status, amount: o.total_amount, createdAt: o.created_at })),
-    ...recentBookings.map((b: any) => ({ kind: "booking" as const, id: b.id, name: b.full_name, status: b.status, amount: b.final_cost ?? b.estimated_cost ?? 0, createdAt: b.created_at })),
-  ].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 8);
+  const revenueChange = useMemo(() => {
+    const chart = data?.revenue_chart ?? [];
+    if (chart.length < 2) return undefined;
+    const prev = chart[chart.length - 2].revenue;
+    const curr = chart[chart.length - 1].revenue;
+    if (!prev) return undefined;
+    return Math.round(((curr - prev) / prev) * 1000) / 10;
+  }, [data]);
 
-  const maxOrderStatus = Math.max(1, ...Object.values(orderStatusMap));
+  const statusDonut = useMemo(() => {
+    if (!data?.order_status_breakdown) return [];
+    return Object.entries(data.order_status_breakdown)
+      .filter(([, v]) => v > 0)
+      .map(([name, value]) => ({ name: name.replace(/_/g, " "), value }));
+  }, [data]);
+
+  if (loading) {
+    return <div className="text-ink-muted text-sm py-20 text-center">Loading dashboard…</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="card p-6 text-sm text-bad">
+        Couldn't load dashboard data: {error}
+      </div>
+    );
+  }
+
+  if (!data) return null;
 
   return (
-    <div>
-      <Topbar title={`Hello, ${firstName} 👋`} subtitle="Here's how BlueTech Kenya is performing today." />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-        <StatTile tone="amber" icon={ShoppingBag} label="Orders today" value={String(today.orders ?? 0)} sub={`${orderStatusMap.pending ?? 0} pending overall`} />
-        <StatTile tone="lilac" icon={Wrench} label="Repair bookings today" value={String(today.bookings ?? 0)} sub={`${data?.active_repair_queue ?? 0} currently active`} />
-        <StatTile tone="lime" icon={Wallet} label="Revenue today" value={formatKES(today.revenue ?? 0)} sub="Paid orders + completed repairs" />
-        <StatTile tone="coral" icon={Layers} label="Active queue" value={String(data?.active_repair_queue ?? 0)} sub="Open repair jobs" />
+    <div className="space-y-6">
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-3">
+        <FilterSelect label="Auto Date Range" value={range} onChange={setRange} options={["Today", "This Week", "This Month", "This Year"]} />
+        <FilterSelect label="Order Status" value="All" options={["All", "Pending", "Confirmed", "Delivered"]} />
+        <FilterSelect label="Zone" value="All" options={["All", "Nairobi CBD", "Westlands", "Karen"]} />
+        <FilterSelect label="Fulfillment" value="All" options={["All", "Pickup", "Delivery"]} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        <div className="xl:col-span-2 card p-5">
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Today's Revenue" value={formatKES(data.today.revenue)} icon={Wallet} change={revenueChange} gradient />
+        <StatCard label="Today's Orders" value={String(data.today.orders)} icon={ShoppingBag} gradient />
+        <StatCard label="New Users Today" value={String(data.today.new_users)} icon={UsersIcon} />
+        <StatCard label="Active Repair Queue" value={String(data.active_repair_queue)} icon={Wrench} />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="card p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-1">
             <div>
-              <h3 className="font-semibold text-[15px]">Revenue Trend — Last 30 Days</h3>
-              <p className="text-xs text-ink-dim mt-0.5">Paid orders revenue</p>
+              <h3 className="font-display font-semibold text-ink">Revenue Analytics</h3>
+              <p className="text-xs text-ink-muted mt-0.5">Total revenue · {formatKES(data.totals.total_revenue)}</p>
             </div>
+            <FilterSelect value={range} onChange={setRange} options={["This Week", "This Month", "This Year"]} compact />
           </div>
-          <div className="h-72 -ml-3 mt-3">
+          <div className="h-64 mt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trend} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+              <AreaChart data={data.revenue_chart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="productGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2F6BFF" stopOpacity={0.45} />
-                    <stop offset="95%" stopColor="#2F6BFF" stopOpacity={0} />
+                  <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7c5cfc" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#7c5cfc" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#26252F" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: "#5F5D69", fontSize: 11 }} axisLine={false} tickLine={false} interval={4} />
-                <YAxis tick={{ fill: "#5F5D69", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v / 1000)}k`} width={40} />
-                <Tooltip contentStyle={{ background: "#1A1922", border: "1px solid #26252F", borderRadius: 12, fontSize: 12 }} labelStyle={{ color: "#F3F2F7" }} formatter={(v) => [formatKES(Number(v)), "Revenue"]} />
-                <Area type="monotone" dataKey="productRevenue" stroke="#2F6BFF" fill="url(#productGrad)" strokeWidth={2} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2547" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: "#5b5480", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#5b5480", fontSize: 11 }} axisLine={false} tickLine={false} width={60} />
+                <Tooltip
+                  contentStyle={{ background: "#161329", border: "1px solid #2a2547", borderRadius: 12, fontSize: 12 }}
+                  labelStyle={{ color: "#9d97c2" }}
+                  formatter={(v: number) => [formatKES(v), "Revenue"]}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#7c5cfc" strokeWidth={2.5} fill="url(#revFill)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid grid-cols-3 gap-3 mt-2 pt-4 border-t border-base-border">
-            <div><div className="text-xs text-ink-dim">All-time revenue</div><div className="font-semibold tabular mt-0.5">{formatKES(totals.total_revenue ?? 0)}</div></div>
-            <div><div className="text-xs text-ink-dim">From products</div><div className="font-semibold tabular mt-0.5">{formatKES(totals.order_revenue ?? 0)}</div></div>
-            <div><div className="text-xs text-ink-dim">From repairs</div><div className="font-semibold tabular mt-0.5">{formatKES(totals.booking_revenue ?? 0)}</div></div>
-          </div>
         </div>
 
-        <div className="card p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-[15px]">Recent activity</h3>
-            <Link href="/orders" className="text-xs text-volt font-medium flex items-center gap-1 hover:underline">View all <ArrowUpRight size={12} /></Link>
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-display font-semibold text-ink">Order Status</h3>
+            <Link href="/orders" className="text-xs text-volt font-medium flex items-center gap-1 hover:underline">
+              View details <ArrowRight size={12} />
+            </Link>
           </div>
-          <div className="flex flex-col gap-2.5 overflow-y-auto max-h-[520px] pr-1">
-            {!data && <p className="text-sm text-ink-dim">Loading…</p>}
-            {feed.map((item) => (
-              <div key={item.kind + item.id} className="rounded-xl border border-base-border p-3.5 hover:bg-base-hover transition-colors">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-semibold">{item.name}</span>
-                  <span className="text-xs text-ink-dim tabular">{item.id?.slice(0, 8)}</span>
-                </div>
-                <div className="pill bg-volt/10 text-volt mb-2 text-[11px]">{item.kind === "order" ? "Online order" : "Repair booking"}</div>
-                <div className="flex items-center justify-between">
-                  <StatusBadge status={item.status} />
-                  <span className="text-sm font-semibold tabular">{formatKES(item.amount)}</span>
-                </div>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusDonut}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={45}
+                  outerRadius={68}
+                  paddingAngle={3}
+                  strokeWidth={0}
+                >
+                  {statusDonut.map((_, i) => (
+                    <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ background: "#161329", border: "1px solid #2a2547", borderRadius: 12, fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-1">
+            {statusDonut.map((s, i) => (
+              <div key={s.name} className="flex items-center gap-1.5 text-xs text-ink-muted capitalize">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+                {s.name} · {s.value}
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
+      {/* Low stock + recent orders */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="card p-5">
-          <h3 className="font-semibold text-[15px] mb-4">Order pipeline</h3>
-          <div className="flex flex-col gap-3">
-            {Object.entries(orderStatusMap).map(([status, count]) => (
-              <div key={status}>
-                <div className="flex items-center justify-between text-xs mb-1"><StatusBadge status={status} /><span className="text-ink-muted tabular">{count}</span></div>
-                <div className="h-1.5 rounded-full bg-base-hover overflow-hidden"><div className="h-full bg-volt rounded-full" style={{ width: `${(count / maxOrderStatus) * 100}%` }} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="card p-5 col-span-1">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-[15px] flex items-center gap-2"><AlertTriangle size={15} className="text-warn" /> Stock alerts</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-display font-semibold text-ink">Low Stock Alerts</h3>
             <Link href="/products" className="text-xs text-volt font-medium hover:underline">Manage</Link>
           </div>
-          {lowStock.length === 0 ? (
-            <p className="text-sm text-ink-muted">{data ? "All stock levels look healthy." : "Loading…"}</p>
-          ) : (
-            <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto pr-1">
-              {lowStock.map((p: any) => (
-                <div key={p.id} className="flex items-center justify-between text-sm">
-                  <div className="min-w-0"><div className="truncate font-medium">{p.title}</div></div>
-                  <span className={`pill ${p.stock === 0 ? "bg-bad/15 text-bad" : "bg-warn/15 text-warn"} shrink-0`}>{p.stock === 0 ? "Out of stock" : `${p.stock} left`}</span>
+          <div className="space-y-4">
+            {data.low_stock_alerts.length === 0 && (
+              <p className="text-sm text-ink-dim py-6 text-center">All products are well stocked.</p>
+            )}
+            {data.low_stock_alerts.map((p) => {
+              const pct = Math.min(100, Math.round((p.stock / Math.max(p.threshold, 1)) * 100));
+              return (
+                <div key={p.id}>
+                  <div className="flex items-center justify-between text-sm mb-1.5">
+                    <span className="text-ink truncate pr-2">{p.title}</span>
+                    <span className="text-bad text-xs font-medium tabular shrink-0">{p.stock} left</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-base-hover overflow-hidden">
+                    <div className="h-full bg-bad rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
 
-        <div className="card p-5">
-          <h3 className="font-semibold text-[15px] mb-4">Totals</h3>
-          <div className="flex flex-col gap-3 text-sm">
-            <div className="flex justify-between"><span className="text-ink-muted">Total orders</span><span className="tabular font-semibold">{totals.orders ?? 0}</span></div>
-            <div className="flex justify-between"><span className="text-ink-muted">Total bookings</span><span className="tabular font-semibold">{totals.bookings ?? 0}</span></div>
-            <div className="flex justify-between"><span className="text-ink-muted">Total products</span><span className="tabular font-semibold">{totals.products ?? 0}</span></div>
-            <div className="flex justify-between"><span className="text-ink-muted">Total users</span><span className="tabular font-semibold">{totals.users ?? 0}</span></div>
+        <div className="card p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-display font-semibold text-ink">Recent Orders</h3>
+            <Link href="/orders" className="text-xs text-volt font-medium hover:underline">View all</Link>
           </div>
+          <div className="overflow-x-auto -mx-5">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="th">Customer</th>
+                  <th className="th">Total</th>
+                  <th className="th">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recent_orders.map((o) => (
+                  <tr key={o.id}>
+                    <td className="td">{o.full_name}</td>
+                    <td className="td tabular">{formatKES(o.total_amount)}</td>
+                    <td className="td"><StatusBadge status={o.status} /></td>
+                  </tr>
+                ))}
+                {data.recent_orders.length === 0 && (
+                  <tr><td className="td text-ink-dim" colSpan={3}>No recent orders.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent bookings */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-display font-semibold text-ink">Recent Repair Bookings</h3>
+          <Link href="/repairs" className="text-xs text-volt font-medium hover:underline">View all</Link>
+        </div>
+        <div className="overflow-x-auto -mx-5">
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="th">Customer</th>
+                <th className="th">Device</th>
+                <th className="th">Fulfillment</th>
+                <th className="th">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.recent_bookings.map((b) => (
+                <tr key={b.id}>
+                  <td className="td">{b.full_name}</td>
+                  <td className="td">{b.device_type} · {b.device_model}</td>
+                  <td className="td capitalize">{b.fulfillment_type}</td>
+                  <td className="td"><StatusBadge status={b.status} /></td>
+                </tr>
+              ))}
+              {data.recent_bookings.length === 0 && (
+                <tr><td className="td text-ink-dim" colSpan={4}>No recent bookings.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
+}
+
+function FilterSelect({
+  label, value, onChange, options, compact = false,
+}: {
+  label?: string; value: string; onChange?: (v: string) => void; options: string[]; compact?: boolean;
+}) {
+  return (
+    <div className="relative">
+      {label && <label className="block text-[11px] text-ink-dim mb-1">{label}</label>}
+      <div className="relative">
+        <select
+          className={clsxSelect(compact)}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+        >
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-dim pointer-events-none" />
+      </div>
+    </div>
+  );
+}
+
+function clsxSelect(compact: boolean) {
+  return `select-field pr-8 ${compact ? "text-xs py-1.5 !w-auto" : "min-w-[150px]"}`;
 }

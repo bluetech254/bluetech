@@ -1,178 +1,143 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import Topbar from "@/components/layout/Topbar";
-import Drawer from "@/components/ui/Drawer";
-import { adminApi } from "@/lib/api";
-import { formatKES } from "@/lib/mock-data";
-import { Search, LayoutGrid, List, Plus, Package } from "lucide-react";
-import clsx from "clsx";
+import { useEffect, useState } from "react";
+import { Search, Plus, Pencil, Trash2, ImageOff } from "lucide-react";
+import { adminApi, formatKES } from "@/lib/api";
+import { Product } from "@/lib/types";
 
-const CATEGORIES = ["Phones", "Laptops", "Tablets", "Accessories", "Audio"];
-
-function mapProduct(p: any) {
-  return {
-    id: p.id,
-    title: p.title ?? p.name,
-    description: p.description,
-    price: p.price,
-    stock: p.stock_quantity ?? p.stock ?? 0,
-    lowStockThreshold: p.low_stock_threshold ?? 5,
-    category: p.category,
-    brand: p.brand,
-    imageUrl: p.image_url ?? p.imageUrl ?? "",
-    isActive: p.is_active ?? true,
-    unitsSold: p.units_sold ?? 0,
-    createdAt: p.created_at,
-  };
-}
+const emptyDraft: Partial<Product> = {
+  title: "", price: 0, stock_quantity: 0, low_stock_threshold: 5, category: "", brand: "",
+};
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"grid" | "table">("grid");
+  const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [showInactive, setShowInactive] = useState(false);
-  const [editing, setEditing] = useState<any | "new" | null>(null);
+  const [activeOnly, setActiveOnly] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Partial<Product>>(emptyDraft);
 
   function load() {
-    adminApi.getProducts(undefined, false).then((r) => {
-      setProducts((r.data ?? []).map(mapProduct));
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    setLoading(true);
+    adminApi.getProducts(search || undefined, activeOnly).then((res: any) => setProducts(res.data ?? [])).finally(() => setLoading(false));
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(load, [activeOnly]);
 
-  const filtered = useMemo(() => products.filter((p) => {
-    if (!showInactive && !p.isActive) return false;
-    if (category !== "all" && p.category !== category) return false;
-    if (search && !p.title?.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }), [products, search, category, showInactive]);
-
-  async function saveProduct(form: any) {
-    const body = {
-      title: form.title, description: form.description, price: form.price,
-      stock_quantity: form.stock, low_stock_threshold: form.lowStockThreshold,
-      category: form.category, brand: form.brand, is_active: form.isActive,
-    };
-    if (form.id && editing !== "new") {
-      await adminApi.updateProduct(form.id, body);
-    } else {
-      await adminApi.createProduct(body);
-    }
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
     load();
-    setEditing(null);
   }
 
-  async function deactivate(id: string) {
+  function startCreate() {
+    setDraft(emptyDraft);
+    setEditing(null);
+    setShowForm(true);
+  }
+
+  function startEdit(p: Product) {
+    setDraft(p);
+    setEditing(p.id);
+    setShowForm(true);
+  }
+
+  async function saveDraft() {
+    if (editing) {
+      await adminApi.updateProduct(editing, draft);
+    } else {
+      await adminApi.createProduct(draft);
+    }
+    setShowForm(false);
+    load();
+  }
+
+  async function remove(id: string) {
     await adminApi.deleteProduct(id);
     load();
-    setEditing(null);
   }
 
   return (
-    <div>
-      <Topbar title="Products" subtitle="Catalog of everything for sale in the shop." />
-
-      <div className="card p-4 mb-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 input-field flex-1 min-w-[200px]">
-            <Search size={14} className="text-ink-dim" />
-            <input className="bg-transparent outline-none w-full text-sm" placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <select className="input-field min-w-[150px]" value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="all">All categories</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <label className="flex items-center gap-2 text-sm text-ink-muted select-none cursor-pointer">
-            <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="accent-volt" />
-            Show inactive
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <form onSubmit={handleSearch} className="relative max-w-xs w-full">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim" />
+          <input className="input-field pl-9" placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </form>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-ink-muted cursor-pointer">
+            <input type="checkbox" checked={activeOnly} onChange={(e) => setActiveOnly(e.target.checked)} />
+            Active only
           </label>
-          <div className="flex items-center gap-1 bg-base-panel border border-base-border rounded-xl p-1">
-            <button onClick={() => setView("grid")} className={clsx("p-1.5 rounded-lg", view === "grid" ? "bg-volt text-white" : "text-ink-muted")}><LayoutGrid size={15} /></button>
-            <button onClick={() => setView("table")} className={clsx("p-1.5 rounded-lg", view === "table" ? "bg-volt text-white" : "text-ink-muted")}><List size={15} /></button>
-          </div>
-          <button className="btn-primary" onClick={() => setEditing("new")}><Plus size={15} /> Add product</button>
+          <button onClick={startCreate} className="btn-primary"><Plus size={15} /> Add product</button>
         </div>
       </div>
 
-      {loading && <p className="text-ink-dim text-sm">Loading…</p>}
-
-      {!loading && view === "grid" ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((p) => (
-            <div key={p.id} onClick={() => setEditing(p)} className="card p-4 cursor-pointer hover:border-volt/50 transition-colors">
-              {p.imageUrl ? (
-                <img src={p.imageUrl} alt={p.title} className="w-full aspect-square rounded-xl object-cover mb-3" />
-              ) : (
-                <div className="w-full aspect-square rounded-xl bg-base-hover flex items-center justify-center mb-3 text-ink-dim"><Package size={22} /></div>
-              )}
-              <div className="text-xs text-ink-dim mb-1">{p.brand} · {p.category}</div>
-              <div className="font-medium text-sm truncate mb-1">{p.title}</div>
-              <div className="flex items-center justify-between">
-                <span className="font-semibold tabular text-sm">{formatKES(p.price)}</span>
-                <span className={clsx("pill text-[11px]", p.stock === 0 ? "bg-bad/15 text-bad" : p.stock <= p.lowStockThreshold ? "bg-warn/15 text-warn" : "bg-good/15 text-good")}>{p.stock} in stock</span>
-              </div>
-              {!p.isActive && <div className="pill bg-ink-dim/20 text-ink-muted mt-2 text-[11px]">Inactive</div>}
-            </div>
-          ))}
-          {filtered.length === 0 && <div className="col-span-full text-center text-ink-dim py-16">No products match these filters.</div>}
-        </div>
-      ) : !loading ? (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-base-border">
-                <tr><th className="th">Product</th><th className="th">Category</th><th className="th">Price</th><th className="th">Stock</th><th className="th">Status</th><th className="th"></th></tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr key={p.id} className="border-b border-base-border/60 hover:bg-base-hover/50 transition-colors">
-                    <td className="td"><div className="font-medium">{p.title}</div><div className="text-xs text-ink-dim">{p.brand}</div></td>
-                    <td className="td text-ink-muted">{p.category}</td>
-                    <td className="td tabular font-semibold">{formatKES(p.price)}</td>
-                    <td className="td tabular">{p.stock}</td>
-                    <td className="td"><span className={clsx("pill text-[11px]", p.isActive ? "bg-good/15 text-good" : "bg-ink-dim/20 text-ink-muted")}>{p.isActive ? "Active" : "Inactive"}</span></td>
-                    <td className="td"><button className="btn-ghost !px-3 !py-1.5 text-xs" onClick={() => setEditing(p)}>Edit</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {showForm && (
+        <div className="card p-5 space-y-4">
+          <h3 className="font-display font-semibold text-ink">{editing ? "Edit product" : "New product"}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input className="input-field" placeholder="Title" value={draft.title ?? ""} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} />
+            <input className="input-field" placeholder="Brand" value={draft.brand ?? ""} onChange={(e) => setDraft((d) => ({ ...d, brand: e.target.value }))} />
+            <input className="input-field" placeholder="Category" value={draft.category ?? ""} onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))} />
+            <input className="input-field" type="number" placeholder="Price (KES)" value={draft.price ?? ""} onChange={(e) => setDraft((d) => ({ ...d, price: Number(e.target.value) }))} />
+            <input className="input-field" type="number" placeholder="Stock quantity" value={draft.stock_quantity ?? ""} onChange={(e) => setDraft((d) => ({ ...d, stock_quantity: Number(e.target.value) }))} />
+            <input className="input-field" type="number" placeholder="Low stock threshold" value={draft.low_stock_threshold ?? ""} onChange={(e) => setDraft((d) => ({ ...d, low_stock_threshold: Number(e.target.value) }))} />
+            <input className="input-field md:col-span-3" placeholder="Image URL" value={draft.image_url ?? ""} onChange={(e) => setDraft((d) => ({ ...d, image_url: e.target.value }))} />
+            <textarea className="input-field md:col-span-3" placeholder="Description" rows={3} value={draft.description ?? ""} onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))} />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={saveDraft} className="btn-primary">Save product</button>
+            <button onClick={() => setShowForm(false)} className="btn-ghost">Cancel</button>
           </div>
         </div>
-      ) : null}
+      )}
 
-      <Drawer open={!!editing} onClose={() => setEditing(null)} title={editing === "new" ? "Add product" : editing?.title ?? ""} subtitle={editing === "new" ? "Create a new catalog item" : "Edit product"}>
-        {editing && <ProductForm product={editing === "new" ? null : editing} onSave={saveProduct} onDelete={editing !== "new" ? () => deactivate(editing.id) : undefined} />}
-      </Drawer>
-    </div>
-  );
-}
-
-function ProductForm({ product, onSave, onDelete }: { product: any | null; onSave: (p: any) => void; onDelete?: () => void }) {
-  const [form, setForm] = useState(product ?? {
-    title: "", description: "", price: 0, stock: 0, lowStockThreshold: 5,
-    category: "Phones", brand: "", isActive: true,
-  });
-  return (
-    <div className="flex flex-col gap-4">
-      <div><label className="text-xs text-ink-dim mb-1.5 block">Title</label><input className="input-field w-full" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-      <div><label className="text-xs text-ink-dim mb-1.5 block">Description</label><textarea className="input-field w-full min-h-[70px]" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs text-ink-dim mb-1.5 block">Price (KES)</label><input type="number" className="input-field w-full tabular" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></div>
-        <div><label className="text-xs text-ink-dim mb-1.5 block">Stock</label><input type="number" className="input-field w-full tabular" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} /></div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-xs text-ink-dim mb-1.5 block">Category</label><select className="input-field w-full" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-        <div><label className="text-xs text-ink-dim mb-1.5 block">Brand</label><input className="input-field w-full" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></div>
-      </div>
-      <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" className="accent-volt" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />Active (visible to customers)</label>
-      <div className="flex gap-3 pt-2">
-        <button className="btn-primary flex-1" onClick={() => onSave(form)}>Save product</button>
-        {onDelete && <button className="btn-ghost !text-bad" onClick={onDelete}>Deactivate</button>}
+      <div className="card overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="th">Product</th>
+              <th className="th">Brand</th>
+              <th className="th">Category</th>
+              <th className="th">Price</th>
+              <th className="th">Stock</th>
+              <th className="th">Status</th>
+              <th className="th w-20"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td className="td text-ink-dim" colSpan={7}>Loading products…</td></tr>}
+            {!loading && products.length === 0 && <tr><td className="td text-ink-dim" colSpan={7}>No products found.</td></tr>}
+            {products.map((p) => (
+              <tr key={p.id} className="hover:bg-base-hover/40">
+                <td className="td">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-base-hover flex items-center justify-center overflow-hidden shrink-0">
+                      {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" /> : <ImageOff size={14} className="text-ink-dim" />}
+                    </div>
+                    {p.title}
+                  </div>
+                </td>
+                <td className="td">{p.brand}</td>
+                <td className="td">{p.category}</td>
+                <td className="td tabular">{formatKES(p.price)}</td>
+                <td className={`td tabular ${p.stock_quantity <= p.low_stock_threshold ? "text-bad font-medium" : ""}`}>{p.stock_quantity}</td>
+                <td className="td">
+                  <span className={`pill ${p.is_active ? "bg-good/15 text-good" : "bg-ink-dim/15 text-ink-dim"}`}>
+                    {p.is_active ? "Active" : "Inactive"}
+                  </span>
+                </td>
+                <td className="td">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => startEdit(p)} className="text-ink-muted hover:text-volt"><Pencil size={15} /></button>
+                    <button onClick={() => remove(p.id)} className="text-ink-muted hover:text-bad"><Trash2 size={15} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

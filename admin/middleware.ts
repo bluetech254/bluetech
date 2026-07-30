@@ -1,30 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/api/auth"];
+const PUBLIC_PATHS = ["/login"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  if (
+    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
+    pathname.startsWith("/api/auth")
+  ) {
     return NextResponse.next();
   }
 
-  const cookie = req.cookies.get("admin_session")?.value;
-
-  if (!cookie) {
+  const raw = req.cookies.get("admin_session")?.value;
+  if (!raw) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
   try {
-    const session = JSON.parse(cookie);
-    if (!session?.id || session.exp < Date.now()) {
+    const session = JSON.parse(decodeURIComponent(raw));
+    if (!session?.token || !session?.exp || Date.now() > session.exp) {
       const res = NextResponse.redirect(new URL("/login", req.url));
-      res.cookies.set("admin_session", "", { maxAge: 0, path: "/" });
+      res.cookies.delete("admin_session");
       return res;
     }
   } catch {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const res = NextResponse.redirect(new URL("/login", req.url));
+    res.cookies.delete("admin_session");
+    return res;
   }
 
   return NextResponse.next();

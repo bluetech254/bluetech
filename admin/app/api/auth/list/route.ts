@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const BASE = process.env.NEXT_PUBLIC_API_URL;
+
 export async function GET(req: NextRequest) {
-  const cookie = req.cookies.get("admin_session")?.value;
-  if (!cookie) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const raw = req.cookies.get("admin_session")?.value;
+  if (!raw) return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
+  const session = JSON.parse(raw);
 
-  let token: string;
-  try {
-    token = JSON.parse(cookie).token;
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/auth/list`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const res = await fetch(`${BASE}/api/v1/admin/auth/list`, {
+    headers: { Authorization: `Bearer ${session.token}` },
   });
-
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
   return NextResponse.json(data, { status: res.status });
 }
