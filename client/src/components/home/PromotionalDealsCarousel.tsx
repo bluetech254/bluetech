@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import api from '../../api/axios';
 
 interface Deal {
   id: string;
@@ -20,12 +21,12 @@ export const PromotionalDealsCarousel = () => {
     const fetchDeals = async () => {
       try {
         const [productsRes, servicesRes] = await Promise.all([
-          fetch('https://bluetechnology-y1f8.onrender.com/api/v1/products?limit=10'),
-          fetch('https://bluetechnology-y1f8.onrender.com/api/v1/repair-services?limit=10')
+          api.get('/products'),
+          api.get('/repair-services')
         ]);
 
-        const productsData = await productsRes.json();
-        const servicesData = await servicesRes.json();
+        const productsData = productsRes.data;
+        const servicesData = servicesRes.data;
 
         const products = (productsData.data || []).map((p: any) => ({
           id: p.id,
