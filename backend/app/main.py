@@ -2,15 +2,47 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from app.config import settings
-from app.api import products, orders, bookings, tracking, delivery_zones, services, auth, payments, admin_auth
+from app.api import products, orders, bookings, tracking, delivery_zones, services, auth, payments, admin_auth, points
+
+# Tag metadata — drives ReDoc sidebar grouping and descriptions
+tags_metadata = [
+    {"name": "Admin Authentication",  "description": "Dedicated admin login, profile, password management, and admin account control. All write operations require a valid admin Bearer token."},
+    {"name": "Client Authentication", "description": "Customer registration, login, phone OTP verification, and password reset via SMS."},
+    {"name": "Products",              "description": "Product catalog — public read, admin-guarded create/update/deactivate."},
+    {"name": "Orders",                "description": "E-commerce order lifecycle. Supports loyalty points redemption and referral codes at checkout. Points are awarded on delivery."},
+    {"name": "Repair Bookings",       "description": "Device repair job management. Status updates trigger SMS notifications to the customer."},
+    {"name": "Payments",              "description": "Safaricom M-Pesa STK push — initiate payment, receive Safaricom callback, and poll payment status."},
+    {"name": "Loyalty & Referrals",   "description": "Points system: earn 10% of order subtotal on delivery, 50 points per referral. Redeem 1000+ points for KES discount (delivery fee always charged)."},
+    {"name": "Repair Services",       "description": "Repair services catalog with category filtering."},
+    {"name": "Delivery Zones",        "description": "Active delivery zones and their fees."},    {"name": "Tracking",              "description": "Track all orders and bookings by phone number."},
+]
 
 # Create FastAPI app
 app = FastAPI(
     title="Blue Technology API",
-    description="Backend API for electronics repair booking and e-commerce platform",
+    description="""
+## BlueTech REST API
+
+Production backend for **Blue Technology Ltd** — Nairobi's electronics repair and e-commerce platform.
+
+### Authentication
+- **Client routes** use `Bearer` JWT tokens obtained from `/api/v1/auth/login`
+- **Admin routes** use `Bearer` JWT tokens obtained from `/api/v1/admin/auth/login`
+
+### Loyalty & Referrals
+- Earn **10% of order subtotal** as points on delivery
+- Refer a friend → earn **50 points** when they place their first order
+- Redeem **1000+ points** for KES discount at checkout (delivery fee always applies)
+
+### Payments
+- M-Pesa STK push via Safaricom Daraja API
+    """,
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    openapi_tags=tags_metadata,
+    contact={"name": "Blue Technology Ltd", "email": "dev@bluetech.co.ke"},
+    license_info={"name": "Proprietary"},
 )
 
 # CORS middleware
@@ -23,15 +55,16 @@ app.add_middleware(
 )
 
 # Register routers
-app.include_router(auth.router)
 app.include_router(admin_auth.router)
+app.include_router(auth.router)
 app.include_router(products.router)
 app.include_router(orders.router)
 app.include_router(bookings.router)
-app.include_router(tracking.router)
-app.include_router(delivery_zones.router)
-app.include_router(services.router)
 app.include_router(payments.router)
+app.include_router(points.router)
+app.include_router(services.router)
+app.include_router(delivery_zones.router)
+app.include_router(tracking.router)
 
 @app.get("/", response_class=HTMLResponse)
 def root():

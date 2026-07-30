@@ -6,7 +6,7 @@ from app.services.auth_service import (signup_user, login_user, admin_login,
                                        forgot_password, reset_password, verify_phone,
                                        verify_email, resend_verification_code, AuthException)
 
-router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
+router = APIRouter(prefix="/api/v1/auth", tags=["Client Authentication"])
 
 @router.post("/signup", response_model=AuthResponse)
 def signup(user: UserSignup):

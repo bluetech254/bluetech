@@ -1,23 +1,42 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from uuid import UUID
 from app.services import order_service
 from app.models.order import OrderCreate, StatusUpdate
 from app.utils.exceptions import OrderNotFoundException, ProductNotFoundException, InsufficientStockException, DeliveryZoneNotFoundException
 from app.api.admin_auth import get_current_admin
+from app.utils.auth import decode_token
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
+security = HTTPBearer(auto_error=False)
+
+
+def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[str]:
+    """Extract user_id from token if present, else None (guest checkout)."""
+    if not credentials:
+        return None
+    payload = decode_token(credentials.credentials)
+    return payload.get("user_id") if payload else None
+
 
 @router.post("", response_model=dict)
-def create_order(order: OrderCreate):
-    """Create new order"""
+def create_order(order: OrderCreate, user_id: Optional[str] = Depends(get_optional_user)):
+    """
+    Create a new order.
+    - Authenticated users earn loyalty points on delivery
+    - Supports points redemption (min 1000 pts) via `redeem_points` field
+    - Supports referral code via `referral_code` field
+    """
     try:
-        created = order_service.create_order(order)
+        created = order_service.create_order(order, user_id=user_id)
         return created
     except (ProductNotFoundException, DeliveryZoneNotFoundException) as e:
         raise HTTPException(status_code=404, detail=str(e))
     except InsufficientStockException as e:
         raise HTTPException(status_code=422, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

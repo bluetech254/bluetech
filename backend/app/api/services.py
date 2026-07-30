@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 from app.database import supabase
 
-router = APIRouter(prefix="/api/v1/repair-services", tags=["Services"])
+router = APIRouter(prefix="/api/v1/repair-services", tags=["Repair Services"])
 
 @router.get("", response_model=dict)
 def get_repair_services(

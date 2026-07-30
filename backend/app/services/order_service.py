@@ -4,7 +4,7 @@ from decimal import Decimal
 from app.database import supabase, supabase_admin
 from app.models.order import OrderCreate, OrderItemCreate
 from app.utils.exceptions import ProductNotFoundException, InsufficientStockException, DeliveryZoneNotFoundException, OrderNotFoundException
-
+from app.services import points_service
 def calculate_order_totals(items: List[OrderItemCreate]) -> dict:
     """Calculate order totals"""
     product_ids = [str(item.product_id) for item in items]
@@ -61,21 +61,36 @@ def check_stock_availability(items: List[OrderItemCreate]):
                 f"Insufficient stock for {product['title']}. Available: {product['stock_quantity']}, Requested: {item.quantity}"
             )
 
-def create_order(order_data: OrderCreate) -> dict:
-    """Create new order with items"""
+def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
+    """Create new order with items. Handles points redemption and referral linking."""
     # Check stock
     check_stock_availability(order_data.items)
-    
+
     # Calculate totals
     calc = calculate_order_totals(order_data.items)
-    
-    # Get delivery fee
     delivery_fee = get_delivery_fee(order_data.delivery_zone)
-    
-    # Calculate total
-    total_amount = calc["subtotal"] + delivery_fee
-    
-    # Create order
+    subtotal = calc["subtotal"]
+
+    # Points redemption — reduce subtotal (delivery fee still charged)
+    points_discount = Decimal(0)
+    if order_data.redeem_points and user_id:
+        if order_data.redeem_points < points_service.REDEEM_MINIMUM:
+            raise ValueError(f"Minimum redemption is {points_service.REDEEM_MINIMUM} points")
+        current_pts = points_service.get_user_points(user_id)
+        if current_pts < order_data.redeem_points:
+            raise ValueError(f"Insufficient points. You have {current_pts}")
+        points_discount = Decimal(str(order_data.redeem_points))  # 1 pt = KES 1
+
+    total_amount = subtotal - points_discount + delivery_fee
+
+    # Resolve referral code → store referrer_id on order for later awarding
+    referrer_id = None
+    if order_data.referral_code and user_id:
+        referrer_id = points_service.resolve_referral_code(order_data.referral_code)
+        # Don't let users refer themselves
+        if referrer_id == user_id:
+            referrer_id = None
+
     order_insert = {
         "full_name": order_data.full_name,
         "phone_number": order_data.phone_number,
@@ -83,37 +98,44 @@ def create_order(order_data: OrderCreate) -> dict:
         "delivery_address": order_data.delivery_address,
         "delivery_zone": order_data.delivery_zone,
         "delivery_fee": float(delivery_fee),
-        "subtotal": float(calc["subtotal"]),
+        "subtotal": float(subtotal),
+        "points_discount": float(points_discount),
         "total_amount": float(total_amount),
         "status": "pending",
         "payment_method": order_data.payment_method,
         "payment_status": "unpaid",
-        "notes": order_data.notes
+        "notes": order_data.notes,
+        "user_id": user_id,
+        "referrer_id": referrer_id,
+        "points_redeemed": int(points_discount),
     }
-    
+
     order_response = supabase.table("orders").insert(order_insert).execute()
     order = order_response.data[0]
-    
+    order_id = order["id"]
+
     # Create order items
-    order_items = []
-    for item in calc["line_items"]:
-        order_items.append({
-            "order_id": order["id"],
-            "product_id": item["product_id"],
-            "product_title": item["product_title"],
-            "quantity": item["quantity"],
-            "unit_price": float(item["unit_price"]),
-            "total_price": float(item["total_price"])
-        })
-    
+    order_items = [{
+        "order_id": order_id,
+        "product_id": item["product_id"],
+        "product_title": item["product_title"],
+        "quantity": item["quantity"],
+        "unit_price": float(item["unit_price"]),
+        "total_price": float(item["total_price"])
+    } for item in calc["line_items"]]
     supabase.table("order_items").insert(order_items).execute()
-    
+
     # Decrement stock
     for item in order_data.items:
         product = supabase.table("products").select("stock_quantity").eq("id", str(item.product_id)).single().execute()
         new_stock = product.data["stock_quantity"] - item.quantity
         supabase_admin.table("products").update({"stock_quantity": new_stock}).eq("id", str(item.product_id)).execute()
-    
+
+    # Deduct redeemed points immediately
+    if points_discount > 0 and user_id:
+        points_service._add_points(user_id, -int(points_discount), "redemption",
+                                   f"Redeemed {int(points_discount)} points on order #{order_id[:8].upper()}", order_id)
+
     return order
 
 def get_order_by_id(order_id: UUID) -> dict:
@@ -132,11 +154,36 @@ def get_orders(status: str = None) -> List[dict]:
     return response.data
 
 def update_order_status(order_id: UUID, status: str) -> dict:
-    """Update order status"""
+    """Update order status. Awards points + referral bonus on delivery."""
     response = supabase_admin.table("orders").update({"status": status}).eq("id", str(order_id)).execute()
     if not response.data:
         raise OrderNotFoundException(f"Order {order_id} not found")
-    return response.data[0]
+    order = response.data[0]
+
+    if status == "delivered":
+        user_id = order.get("user_id")
+        subtotal = float(order.get("subtotal", 0))
+
+        # Award earn points to buyer
+        if user_id and subtotal > 0:
+            points_service.award_order_points(user_id, subtotal, str(order_id))
+
+        # Award referral bonus to referrer (only on first order)
+        referrer_id = order.get("referrer_id")
+        if referrer_id and user_id:
+            # Check if this is the user's first delivered order
+            prev = supabase_admin.table("orders")\
+                .select("id")\
+                .eq("user_id", user_id)\
+                .eq("status", "delivered")\
+                .neq("id", str(order_id))\
+                .execute()
+            if not prev.data:
+                buyer = supabase_admin.table("users").select("full_name").eq("id", user_id).single().execute()
+                buyer_name = buyer.data.get("full_name", "A user") if buyer.data else "A user"
+                points_service.award_referral_points(referrer_id, buyer_name)
+
+    return order
 
 def track_orders_by_phone(phone: str) -> List[dict]:
     """Track orders by phone"""

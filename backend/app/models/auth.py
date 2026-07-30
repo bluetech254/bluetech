@@ -7,7 +7,8 @@ class UserSignup(BaseModel):
     phone_number: str
     email: Optional[EmailStr] = None
     password: str = Field(..., min_length=6)
-    
+    referral_code: Optional[str] = None   # referral code from an existing user
+
     @field_validator('phone_number')
     def normalize_phone(cls, v):
         return validate_kenya_phone(v)

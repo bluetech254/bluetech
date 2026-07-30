@@ -43,6 +43,8 @@ class OrderCreate(BaseModel):
     items: List[OrderItemCreate] = Field(..., min_length=1)
     notes: Optional[str] = None
     payment_method: str = "cash_on_delivery"
+    referral_code: Optional[str] = None       # code entered at checkout
+    redeem_points: Optional[int] = None       # points to redeem (min 1000)
 
 class OrderResponse(BaseModel):
     id: UUID

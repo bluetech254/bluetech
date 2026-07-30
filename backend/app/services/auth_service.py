@@ -22,9 +22,14 @@ def signup_user(signup_data: UserSignup) -> dict:
         if existing_email.data:
             raise AuthException("Email already registered")
     
-    # Hash password
     hashed_password = hash_password(signup_data.password)
     verification_code = generate_verification_code()
+
+    # Resolve referral code → referred_by user_id
+    from app.services.points_service import resolve_referral_code, generate_referral_code
+    referred_by = None
+    if signup_data.referral_code:
+        referred_by = resolve_referral_code(signup_data.referral_code)
 
     user_data = {
         "full_name": signup_data.full_name,
@@ -35,6 +40,9 @@ def signup_user(signup_data: UserSignup) -> dict:
         "phone_verified": False,
         "email_verified": False,
         "verification_code": verification_code,
+        "referral_code": generate_referral_code(),
+        "referred_by": referred_by,
+        "points": 0,
     }
 
     response = supabase.table("users").insert(user_data).execute()
