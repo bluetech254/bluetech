@@ -51,9 +51,7 @@ export const requestPasswordReset = async (phone_number: string) => {
 };
 
 export const resetPassword = async (phone_number: string, reset_code: string, new_password: string) => {
-  const response = await api.post('/auth/reset-password', null, {
-    params: { phone_number, reset_code, new_password },
-  });
+  const response = await api.post('/auth/reset-password', { phone_number, reset_code, new_password });
   return response.data;
 };
 

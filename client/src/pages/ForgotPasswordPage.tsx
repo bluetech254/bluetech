@@ -22,6 +22,14 @@ const ForgotPasswordPage = () => {
     return n;
   };
 
+  const parseError = (err: any, fallback: string) => {
+    const detail = err.response?.data?.detail;
+    if (!detail) return fallback;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return detail.map((e: any) => e.msg).join(', ');
+    return fallback;
+  };
+
   const onRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -30,7 +38,7 @@ const ForgotPasswordPage = () => {
       toast.success('Reset code sent to your phone.');
       setStep('reset');
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Failed to send reset code.');
+      toast.error(parseError(err, 'Failed to send reset code.'));
     } finally {
       setSubmitting(false);
     }
@@ -44,7 +52,7 @@ const ForgotPasswordPage = () => {
       toast.success('Password reset successfully!');
       navigate('/login');
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Reset failed. Check your code.');
+      toast.error(parseError(err, 'Reset failed. Check your code.'));
     } finally {
       setSubmitting(false);
     }
