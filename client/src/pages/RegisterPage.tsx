@@ -27,6 +27,7 @@ export const RegisterPage = () => {
       phone_number: '',
       password: '',
       confirm_password: '',
+      referral_code: '',
     }
   });
 
@@ -49,6 +50,7 @@ export const RegisterPage = () => {
         email: formData.email,
         phone_number: phoneNumber,
         password: formData.password,
+        referral_code: formData.referral_code || undefined,
       });
 
       toast.success('Account created! Check your phone for a verification code.', { id: toastId });
@@ -80,6 +82,7 @@ export const RegisterPage = () => {
           <div className="grid grid-cols-1 gap-2">
             <Input id="email" label="Email Address" type="email" placeholder="e.g. dennis@example.com" error={errors.email?.message} {...register('email')} />
             <Input id="phone_number" label="Phone Number" placeholder="07XXXXXXXX" error={errors.phone_number?.message} {...register('phone_number')} />
+            <Input id="referral_code" label="Referral Code (optional)" placeholder="e.g. BLUE-XXXX" error={errors.referral_code?.message} {...register('referral_code')} />
           </div>
 
           <div className="grid grid-cols-1 gap-2">

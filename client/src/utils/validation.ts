@@ -7,6 +7,7 @@ export const registerSchema = z.object({
   phone_number: z.string().regex(/^(0?7\d{8}|254\d{9})$/, 'Invalid phone number (use 07... or 7...)'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirm_password: z.string(),
+  referral_code: z.string().optional(),
 }).refine((data) => data.password === data.confirm_password, {
   message: "Passwords don't match",
   path: ["confirm_password"],
@@ -27,6 +28,8 @@ export const orderSchema = z.object({
   delivery_zone: z.string().min(1, 'Please select a delivery zone'),
   payment_method: z.enum(['mpesa', 'cash_on_delivery']),
   notes: z.string().optional(),
+  referral_code: z.string().optional(),
+  redeem_points: z.number().int().min(0).optional(),
   terms_accepted: z.boolean().refine((val) => val === true, 'You must accept terms'),
 });
 

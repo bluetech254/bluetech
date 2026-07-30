@@ -13,6 +13,8 @@ export interface CreateOrderData {
   }>;
   notes?: string;
   payment_method?: string;
+  referral_code?: string;
+  redeem_points?: number;
 }
 
 export const createOrder = async (orderData: CreateOrderData): Promise<Order> => {

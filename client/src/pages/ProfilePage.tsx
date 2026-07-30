@@ -8,6 +8,7 @@ import { Order, Booking } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PointsCard } from '../components/points/PointsCard';
 import { profileSchema, passwordSchema } from '../utils/validation';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
@@ -186,6 +187,11 @@ export const ProfilePage = () => {
                     <span className="text-xs font-bold text-slate-700">{a.label}</span>
                   </button>
             ))}
+          </div>
+
+          {/* Points — desktop only (mobile has dedicated /points tab) */}
+          <div className="hidden lg:block">
+            <PointsCard variant="compact" />
           </div>
 
           {/* Recent orders */}

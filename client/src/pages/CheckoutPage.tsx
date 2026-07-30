@@ -3,8 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCart } from '../hooks/useCart';
+import { useAuth } from '../hooks/useAuth';
 import { getDeliveryZones } from '../api/zones';
 import { createOrder, initiateMpesaPayment } from '../api/orders';
+import { getMyPoints } from '../api/points';
 import { DeliveryZone } from '../types';
 import { orderSchema } from '../utils/validation';
 import { formatCurrency } from '../utils/formatters';
@@ -16,17 +18,20 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import MpesaWaitingModal from '../components/cart/MpesaWaitingModal';
-import { ChevronLeft, CreditCard, DollarSign, Loader2, ClipboardCheck, AlertCircle, Phone, MapPin, Sparkles, CheckCircle, FileText } from 'lucide-react';
+import { ChevronLeft, CreditCard, DollarSign, Loader2, ClipboardCheck, AlertCircle, Phone, MapPin, Sparkles, CheckCircle, FileText, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const CheckoutPage = () => {
   const { items, subtotal, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [loadingZones, setLoadingZones] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [mpesaOrder, setMpesaOrder] = useState<{ orderId: string; phone: string; amount: string } | null>(null);
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [redeemPoints, setRedeemPoints] = useState(false);
 
   // Restore pre-selected zone from sessionStorage
   const defaultZoneId = sessionStorage.getItem('bluetech_delivery_zone_id') || '';
@@ -47,6 +52,8 @@ export const CheckoutPage = () => {
       delivery_zone: defaultZoneId,
       payment_method: 'mpesa' as 'mpesa' | 'cash_on_delivery',
       notes: '',
+      referral_code: '',
+      redeem_points: 0,
       terms_accepted: false,
     }
   });
@@ -69,6 +76,13 @@ export const CheckoutPage = () => {
     fetchZones();
   }, []);
 
+  // Load points balance for authenticated users
+  useEffect(() => {
+    if (isAuthenticated) {
+      getMyPoints().then(d => setPointsBalance(d.points_balance)).catch(() => {});
+    }
+  }, [isAuthenticated]);
+
   const orderPlaced = useRef(false);
 
   // Guard Clause: No items in cart -> go back to cart
@@ -81,7 +95,8 @@ export const CheckoutPage = () => {
 
   const selectedZone = zones.find(z => z.id === watchedZoneId);
   const deliveryFee = selectedZone ? selectedZone.delivery_fee : 0;
-  const grandTotal = subtotal + deliveryFee;
+  const pointsDiscount = redeemPoints && pointsBalance >= 1000 ? pointsBalance : 0;
+  const grandTotal = subtotal - pointsDiscount + deliveryFee;
 
   const onSubmit = async (formData: any) => {
     if (items.length === 0) return;
@@ -118,6 +133,8 @@ export const CheckoutPage = () => {
         items: orderItems,
         notes: formData.notes || undefined,
         payment_method: formData.payment_method,
+        referral_code: formData.referral_code || undefined,
+        redeem_points: redeemPoints && pointsBalance >= 1000 ? pointsBalance : undefined,
       };
 
       console.log('Sending order:', orderPayload);
@@ -352,6 +369,37 @@ export const CheckoutPage = () => {
                 Step 4: Place Order
               </h2>
 
+              {/* Points redemption */}
+              {isAuthenticated && pointsBalance >= 1000 && (
+                <div className={`rounded-xl border-2 p-4 transition-colors ${redeemPoints ? 'border-yellow-400 bg-yellow-50' : 'border-slate-100 bg-slate-50'}`}>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={redeemPoints}
+                      onChange={e => setRedeemPoints(e.target.checked)}
+                      className="w-4 h-4 text-yellow-500 rounded"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" />
+                      <span className="text-sm font-bold text-slate-800">
+                        Redeem {pointsBalance.toLocaleString()} points — save {formatCurrency(pointsBalance)}
+                      </span>
+                    </div>
+                  </label>
+                  {redeemPoints && (
+                    <p className="text-xs text-yellow-700 mt-2 ml-7">Delivery fee still applies. Discount applied to subtotal.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Referral code */}
+              <Input
+                id="referral_code"
+                label="Referral Code (optional)"
+                placeholder="e.g. BLUE-XXXX"
+                {...register('referral_code')}
+              />
+
               <div className="text-left pt-1">
                 <label htmlFor="notes" className="block text-sm font-semibold text-slate-700 mb-1.5">
                   Order Instruction Notes (optional)
@@ -437,6 +485,13 @@ export const CheckoutPage = () => {
                   {selectedZone ? formatCurrency(deliveryFee) : <span className="text-xs text-red-500 font-normal">Pending zone Choice</span>}
                 </span>
               </div>
+
+              {pointsDiscount > 0 && (
+                <div className="flex justify-between font-semibold text-yellow-600">
+                  <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-yellow-400" /> Points Discount</span>
+                  <span>-{formatCurrency(pointsDiscount)}</span>
+                </div>
+              )}
 
               {selectedZone && (
                 <div className="text-[11px] text-slate-400 bg-slate-50 p-2 rounded-lg flex items-center text-left">

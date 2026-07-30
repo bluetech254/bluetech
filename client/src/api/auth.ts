@@ -11,6 +11,7 @@ export interface RegisterCredentials {
   email: string;
   phone_number: string;
   password: string;
+  referral_code?: string;
 }
 
 export interface AuthResponse {
@@ -45,9 +46,7 @@ export const verifyPhone = async (phone_number: string, verification_code: strin
 };
 
 export const requestPasswordReset = async (phone_number: string) => {
-  const response = await api.post('/auth/password-reset', null, {
-    params: { phone_number },
-  });
+  const response = await api.post('/auth/forgot-password', { phone_number });
   return response.data;
 };
 

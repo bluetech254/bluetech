@@ -10,10 +10,10 @@ BlueTech Kenya is a tech e-commerce + repair booking platform. This document is 
 
 - **Framework:** Next.js 14 (App Router, TypeScript)
 - **Styling:** Tailwind CSS (dark theme, custom design tokens)
-- **State:** React `useState` / `useEffect` only — no external state library
+- **State:** React `useState` / `useEffect` only — no external state library⋮
 - **Charts:** Recharts
 - **Icons:** lucide-react
-- **Auth:** httpOnly cookie (`admin_session`) set by Next.js API route, JWT verified by backend
+- **Auth:** httpOnly cookie (`admin_session`) set by Next.js API route, JWT verified by backen
 
 ---
 
