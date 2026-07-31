@@ -6,7 +6,7 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  Wallet, ShoppingBag, Wrench, TrendingUp, TrendingDown, Download,
+  Wallet, ShoppingBag, Wrench, TrendingUp, Download,
 } from "lucide-react";
 import { adminApi, formatKES } from "@/lib/api";
 import { DashboardData, Order, Booking } from "@/lib/types";
@@ -25,27 +25,15 @@ export default function RevenuePage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [detailedOrders, setDetailedOrders] = useState<Order[]>([]);
-
   useEffect(() => {
     Promise.allSettled([
       adminApi.dashboard(),
       adminApi.getOrders() as Promise<{ data: Order[] }>,
       adminApi.getBookings() as Promise<{ data: Booking[] }>,
-    ]).then(async ([d, o, b]) => {
-      const dashData = d.status === "fulfilled" ? d.value as DashboardData : null;
-      const orderList: Order[] = o.status === "fulfilled" ? (o.value as any).data ?? [] : [];
-      if (d.status === "fulfilled") setDash(dashData);
-      if (o.status === "fulfilled") setOrders(orderList);
+    ]).then(([d, o, b]) => {
+      if (d.status === "fulfilled") setDash(d.value as DashboardData);
+      if (o.status === "fulfilled") setOrders((o.value as any).data ?? []);
       if (b.status === "fulfilled") setBookings((b.value as any).data ?? []);
-
-      // If list orders have no order_items, fetch details for up to 20 recent orders
-      const hasItems = orderList.some((ord) => (ord.order_items ?? []).length > 0);
-      if (!hasItems && orderList.length > 0) {
-        const sample = orderList.slice(0, 20);
-        const results = await Promise.allSettled(sample.map((ord) => adminApi.getOrder(ord.id) as Promise<Order>));
-        setDetailedOrders(results.flatMap((r) => r.status === "fulfilled" ? [r.value] : []));
-      }
     }).finally(() => setLoading(false));
   }, []);
 
@@ -62,29 +50,29 @@ export default function RevenuePage() {
   // Revenue by day from chart
   const chartData = dash?.revenue_chart ?? [];
 
-  // Top products by revenue
-  // Top products by revenue — use recent_orders from dashboard (has order_items)
-  // plus any order_items present in the full orders list
   const topProducts = useMemo(() => {
-    const allOrders = [
-      ...(dash?.recent_orders ?? []),
-      ...orders,
-      ...detailedOrders,
-    ];
+    // Deduplicate orders by ID (orders list is the authoritative source with items)
+    const seen = new Set<string>();
+    const allOrders = [...orders, ...(dash?.recent_orders ?? [])].filter((o) => {
+      if (seen.has(o.id)) return false;
+      seen.add(o.id);
+      return true;
+    });
     const map: Record<string, { title: string; revenue: number; units: number }> = {};
     for (const o of allOrders) {
-      for (const item of o.order_items ?? []) {
-        const price = Number(item.price) || 0;
+      for (const item of (o as any).order_items ?? []) {
+        // Supabase returns: product_title, unit_price, total_price, quantity
+        const title = item.product_title || item.title || "Unknown";
+        const revenue = Number(item.total_price) || (Number(item.unit_price) * Number(item.quantity)) || 0;
         const qty = Number(item.quantity) || 0;
-        if (!price && !qty) continue;
-        const key = item.title;
-        if (!map[key]) map[key] = { title: item.title, revenue: 0, units: 0 };
-        map[key].revenue += price * qty;
-        map[key].units += qty;
+        if (!revenue) continue;
+        if (!map[title]) map[title] = { title, revenue: 0, units: 0 };
+        map[title].revenue += revenue;
+        map[title].units += qty;
       }
     }
     return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 8);
-  }, [orders, dash, detailedOrders]);
+  }, [orders, dash]);
 
   // Booking revenue by status
   const bookingRevenue = useMemo(() => {
