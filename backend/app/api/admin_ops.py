@@ -26,7 +26,7 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     """
     today = datetime.utcnow().date().isoformat()
 
-    orders_r   = supabase_admin.table("orders").select("*").execute()
+    orders_r   = supabase_admin.table("orders").select("*, order_items(*)").execute()
     bookings_r = supabase_admin.table("bookings").select("*").execute()
     products_r = supabase_admin.table("products").select("id,title,stock_quantity,low_stock_threshold,is_active").eq("is_active", True).execute()
     users_r    = supabase_admin.table("users").select("id,created_at").execute()
@@ -91,7 +91,7 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
         "low_stock_alerts":    low_stock,
         "order_status_breakdown": dict(status_counts),
         "revenue_chart":       revenue_chart,
-        "recent_orders":       sorted(orders,   key=lambda x: x.get("created_at",""), reverse=True)[:5],
+        "recent_orders":       sorted(orders,   key=lambda x: x.get("created_at",""), reverse=True)[:10],
         "recent_bookings":     sorted(bookings, key=lambda x: x.get("created_at",""), reverse=True)[:5],
     }
 
