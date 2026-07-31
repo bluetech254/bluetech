@@ -41,10 +41,10 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     bookings_today = [b for b in bookings if (b.get("created_at") or "")[:10] == today]
     users_today    = [u for u in users    if (u.get("created_at") or "")[:10] == today]
 
-    # Revenue
-    order_revenue   = sum(o.get("total_amount", 0) for o in orders   if o.get("payment_status") == "paid" and o.get("status") != "cancelled")
-    booking_revenue = sum(b.get("final_cost", 0)   for b in bookings if b.get("status") == "completed")
-    revenue_today   = sum(o.get("total_amount", 0) for o in orders_today if o.get("payment_status") == "paid")
+    # Revenue — all non-cancelled orders (includes pending/unpaid for full visibility)
+    order_revenue   = sum(float(o.get("total_amount", 0) or 0) for o in orders   if o.get("status") != "cancelled")
+    booking_revenue = sum(float(b.get("final_cost", 0) or b.get("estimated_cost", 0) or 0) for b in bookings if b.get("status") != "cancelled")
+    revenue_today   = sum(float(o.get("total_amount", 0) or 0) for o in orders_today if o.get("status") != "cancelled")
 
     # Active repair queue
     active_statuses = {"pending", "confirmed", "picked_up", "in_diagnosis", "in_repair"}
@@ -56,14 +56,14 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
         for p in products if p["stock_quantity"] <= p["low_stock_threshold"]
     ]
 
-    # Revenue by day — last 30 days
+    # Revenue by day — last 30 days, all non-cancelled orders
     from collections import defaultdict
     daily = defaultdict(float)
     for o in orders:
-        if o.get("payment_status") == "paid" and o.get("status") != "cancelled":
+        if o.get("status") != "cancelled":
             day = (o.get("created_at") or "")[:10]
             if day:
-                daily[day] += float(o.get("total_amount", 0))
+                daily[day] += float(o.get("total_amount", 0) or 0)
     revenue_chart = [{"date": k, "revenue": v} for k, v in sorted(daily.items())[-30:]]
 
     # Order status breakdown
