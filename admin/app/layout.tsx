@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SuppressWarnings from "@/components/SuppressWarnings";
 
 export const metadata: Metadata = {
-  title: "BlueTech Kenya — Admin",
-  description: "Admin panel for BlueTech Kenya e-commerce & repair booking platform",
+  title: "BlueTech — Admin",
+  description: "Admin panel for BlueTech e-commerce & repair booking platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="font-body min-h-screen">{children}</body>
+      <body className="font-body min-h-screen"><SuppressWarnings />{children}</body>
     </html>
   );
 }

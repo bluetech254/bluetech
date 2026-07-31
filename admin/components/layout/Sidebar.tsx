@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
+import Image from "next/image";
 import {
-  Zap,
   LayoutGrid,
   ShoppingBag,
   Wrench,
@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   LogOut,
   Sparkles,
+  Bell,
+  DollarSign,
 } from "lucide-react";
 
 const NAV = [
@@ -30,6 +32,8 @@ const NAV = [
   { href: "/users", label: "Users", icon: Users },
   { href: "/loyalty", label: "Loyalty & Referrals", icon: Gift },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/revenue", label: "Revenue", icon: DollarSign },
+  { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
@@ -45,12 +49,10 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
   }
 
   return (
-    <aside className="w-[260px] shrink-0 h-screen sticky top-0 flex flex-col p-4 border-r border-base-border bg-base-panel/60">
+    <aside className="w-[260px] shrink-0 h-screen flex flex-col p-4 border-r border-base-border bg-base-panel">
       <div className="flex items-center gap-2.5 px-2 py-3 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-volt to-volt-dark flex items-center justify-center">
-          <Zap size={18} className="text-white" fill="white" />
-        </div>
-        <span className="font-display font-bold text-[15px] tracking-tight text-ink">BlueTech Kenya</span>
+        <Image src="/logo.png" alt="BlueTech" width={36} height={36} className="rounded-lg" />
+        <span className="font-display font-bold text-[15px] tracking-tight text-ink">BlueTech</span>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto">

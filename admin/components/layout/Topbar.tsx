@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell } from "lucide-react";
+import { Search } from "lucide-react";
+import NotificationBell from "@/components/ui/NotificationBell";
 
 export default function Topbar({ fullName }: { fullName?: string }) {
   const router = useRouter();
@@ -16,12 +17,12 @@ export default function Topbar({ fullName }: { fullName?: string }) {
   const firstName = fullName?.split(" ")[0] ?? "there";
 
   return (
-    <header className="flex items-center justify-between gap-6 mb-6">
-      <div>
+    <header className="flex items-center justify-between gap-4 mb-6">
+      <div className="hidden sm:block shrink-0">
         <h1 className="font-display font-semibold text-xl text-ink">
           Hello, {firstName} <span aria-hidden>👋</span>
         </h1>
-        <p className="text-sm text-ink-muted mt-0.5">Welcome to the BlueTech Kenya admin panel</p>
+        <p className="text-sm text-ink-muted mt-0.5">Welcome to the BlueTech admin panel</p>
       </div>
 
       <form onSubmit={handleSearch} className="flex-1 max-w-md">
@@ -31,15 +32,12 @@ export default function Topbar({ fullName }: { fullName?: string }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="input-field pl-10"
-            placeholder="Search orders, bookings, customers…"
+            placeholder="Search…"
           />
         </div>
       </form>
 
-      <button className="relative w-10 h-10 rounded-xl bg-base-panel border border-base-border flex items-center justify-center hover:bg-base-hover transition-colors shrink-0">
-        <Bell size={17} className="text-ink-muted" />
-        <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-coral" />
-      </button>
+      <NotificationBell />
     </header>
   );
 }

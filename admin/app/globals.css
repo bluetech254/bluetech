@@ -8,16 +8,12 @@
 }
 
 html, body {
-  background: #0d0b1a;
-  color: #f3f1fb;
+  background: #080b18;
+  color: #f0f4ff;
 }
 
 body {
   font-family: var(--font-body);
-  background-image:
-    radial-gradient(1200px 600px at 90% -10%, rgba(124, 92, 252, 0.12), transparent 60%),
-    radial-gradient(800px 500px at 0% 0%, rgba(62, 207, 208, 0.06), transparent 55%);
-  background-attachment: fixed;
 }
 
 @layer components {
@@ -25,8 +21,7 @@ body {
     @apply bg-base-panel border border-base-border rounded-2xl shadow-panel;
   }
   .card-gradient {
-    @apply rounded-2xl shadow-panel text-white relative overflow-hidden;
-    background: linear-gradient(135deg, #7c5cfc 0%, #5b3ff0 55%, #3d2ac2 100%);
+    @apply rounded-2xl shadow-panel text-white relative overflow-hidden bg-volt;
   }
   .btn-primary {
     @apply flex items-center gap-2 bg-volt text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-volt-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
@@ -38,7 +33,7 @@ body {
     @apply bg-base-hover border border-base-border rounded-xl px-3 py-2.5 text-sm text-ink placeholder:text-ink-dim outline-none focus:border-volt/60 transition-colors w-full;
   }
   .select-field {
-    @apply bg-base-hover border border-base-border rounded-xl px-3 py-2.5 text-sm text-ink outline-none focus:border-volt/60 transition-colors appearance-none cursor-pointer;
+    @apply bg-base-hover border border-base-border rounded-xl px-3 py-2.5 text-sm text-ink outline-none focus:border-volt/60 transition-colors appearance-none cursor-pointer w-full;
   }
   .pill {
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
@@ -56,10 +51,10 @@ body {
     @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-ink-muted hover:text-ink hover:bg-base-hover transition-colors cursor-pointer;
   }
   .nav-item-active {
-    @apply bg-gradient-to-r from-volt to-volt-dark text-white shadow-lg shadow-volt/20;
+    @apply bg-volt text-white shadow-lg shadow-volt/20 hover:text-white;
   }
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a2547; border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: #232b4a; border-radius: 8px; }

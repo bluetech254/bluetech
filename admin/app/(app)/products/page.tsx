@@ -17,10 +17,15 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Product>>(emptyDraft);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+
+  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  const visible = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function load() {
     setLoading(true);
-    adminApi.getProducts(search || undefined, activeOnly).then((res: any) => setProducts(res.data ?? [])).finally(() => setLoading(false));
+    adminApi.getProducts(search || undefined, activeOnly).then((res: any) => { setProducts(res.data ?? []); setPage(1); }).finally(() => setLoading(false));
   }
 
   useEffect(load, [activeOnly]);
@@ -109,7 +114,7 @@ export default function ProductsPage() {
           <tbody>
             {loading && <tr><td className="td text-ink-dim" colSpan={7}>Loading products…</td></tr>}
             {!loading && products.length === 0 && <tr><td className="td text-ink-dim" colSpan={7}>No products found.</td></tr>}
-            {products.map((p) => (
+            {visible.map((p) => (
               <tr key={p.id} className="hover:bg-base-hover/40">
                 <td className="td">
                   <div className="flex items-center gap-3">
@@ -139,6 +144,16 @@ export default function ProductsPage() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-ink-muted">
+          <span>{products.length} products · page {page} of {totalPages}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} className="btn-ghost px-3 py-1.5 disabled:opacity-40">Prev</button>
+            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages} className="btn-ghost px-3 py-1.5 disabled:opacity-40">Next</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

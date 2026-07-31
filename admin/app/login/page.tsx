@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,10 +40,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 justify-center mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-volt to-volt-dark flex items-center justify-center">
-            <Zap size={20} className="text-white" fill="white" />
-          </div>
-          <span className="font-display font-bold text-xl tracking-tight">BlueTech Kenya</span>
+          <Image src="/logo.png" alt="BlueTech" width={40} height={40} className="rounded-lg" />
+          <span className="font-display font-bold text-xl tracking-tight">BlueTech</span>
         </div>
 
         <form onSubmit={handleSubmit} className="card p-7 space-y-5">

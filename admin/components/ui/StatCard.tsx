@@ -38,8 +38,11 @@ export default function StatCard({
           <span
             className={clsx(
               "pill !px-1.5 !py-0.5",
-              positive ? "bg-good/20 text-good" : "bg-bad/20 text-bad",
-              gradient && (positive ? "bg-white/20 text-white" : "bg-white/20 text-white")
+              gradient
+                ? "bg-white/20 text-white"
+                : positive
+                ? "bg-good/20 text-good"
+                : "bg-bad/20 text-bad"
             )}
           >
             {positive ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
