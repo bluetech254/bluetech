@@ -33,6 +33,7 @@ build/
 *.egg-info/
 client/dist/
 admin/dist/
+admin/.next/
 
 # IDE
 .vscode/
