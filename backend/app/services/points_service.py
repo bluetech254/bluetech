@@ -4,9 +4,10 @@ import math
 import secrets
 import string
 
-EARN_RATE       = 0.10   # 10% of subtotal → points
-REFERRAL_POINTS = 50     # points awarded to referrer on referee's first order
-REDEEM_MINIMUM  = 1000   # minimum points to redeem
+EARN_RATE              = 0.10   # 10% of subtotal → points
+REFERRAL_POINTS        = 50     # points awarded to referrer on referee's first order
+REFERRAL_SIGNUP_POINTS = 10     # instant points awarded to referrer when referee registers
+REDEEM_MINIMUM         = 1000   # minimum points to redeem
 # 1 point = KES 1; delivery fee always charged separately
 
 
@@ -50,10 +51,16 @@ def award_order_points(user_id: str, subtotal: float, order_id: str):
                 f"Earned {earned} points on order #{order_id[:8].upper()}", order_id)
 
 
+def award_referral_signup_points(referrer_id: str, referee_name: str):
+    """Award 10 instant points to referrer when their referee successfully registers."""
+    _add_points(referrer_id, REFERRAL_SIGNUP_POINTS, "referral_signup",
+                f"Referral signup bonus — {referee_name} joined using your code")
+
+
 def award_referral_points(referrer_id: str, referee_name: str):
-    """Award 50 points to referrer when their referee places first order."""
+    """Award 50 points to referrer when their referee's first order is delivered."""
     _add_points(referrer_id, REFERRAL_POINTS, "referral_earn",
-                f"Referral bonus — {referee_name} placed their first order")
+                f"Referral delivery bonus — {referee_name}'s first order was delivered")
 
 
 def redeem_points(user_id: str, points_to_redeem: int) -> dict:
@@ -68,9 +75,9 @@ def redeem_points(user_id: str, points_to_redeem: int) -> dict:
     if current < points_to_redeem:
         raise ValueError(f"Insufficient points. You have {current}, requested {points_to_redeem}")
 
-    discount = float(points_to_redeem)  # 1 point = KES 1
+    discount = float(points_to_redeem)  # 1 point = KES 1 discount on order/booking
     _add_points(user_id, -points_to_redeem, "redemption",
-                f"Redeemed {points_to_redeem} points for KES {discount:.0f} discount")
+                f"Redeemed {points_to_redeem} points for KES {discount:.0f} discount on order/booking")
 
     return {"discount_amount": discount, "remaining_points": current - points_to_redeem}
 

@@ -36,6 +36,17 @@ def update_booking_status(booking_id: UUID, status: str) -> dict:
     booking = response.data[0]
     short_id = str(booking_id)[:8].upper()
 
+    # Award 10% of final cost as points when repair is completed
+    if status == "completed":
+        user_id = booking.get("user_id")
+        final_cost = float(booking.get("final_cost") or booking.get("estimated_cost") or 0)
+        if user_id and final_cost > 0:
+            try:
+                from app.services.points_service import award_order_points
+                award_order_points(user_id, final_cost, str(booking_id))
+            except Exception:
+                pass
+
     sms_map = {
         "confirmed":    f"BlueTech: Your repair booking #{short_id} is confirmed. We'll contact you shortly.",
         "in_diagnosis": f"BlueTech: Your device (#{short_id}) is being diagnosed. We'll send a cost estimate soon.",

@@ -48,6 +48,11 @@ def signup_user(signup_data: UserSignup) -> dict:
     response = supabase.table("users").insert(user_data).execute()
     user = response.data[0]
 
+    # Award instant signup points to referrer
+    if referred_by:
+        from app.services.points_service import award_referral_signup_points
+        award_referral_signup_points(referred_by, signup_data.full_name)
+
     send_sms(signup_data.phone_number, f"Your BlueTech verification code is: {verification_code}")
 
     user.pop("password", None)

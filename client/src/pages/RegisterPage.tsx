@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerUser } from '../api/auth';
@@ -11,13 +11,17 @@ import toast from 'react-hot-toast';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const refFromUrl = searchParams.get('ref') || '';
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -27,9 +31,13 @@ export const RegisterPage = () => {
       phone_number: '',
       password: '',
       confirm_password: '',
-      referral_code: '',
+      referral_code: refFromUrl,
     }
   });
+
+  useEffect(() => {
+    if (refFromUrl) setValue('referral_code', refFromUrl);
+  }, [refFromUrl, setValue]);
 
   const onSubmit = async (formData: any) => {
     setSubmitting(true);
@@ -82,7 +90,7 @@ export const RegisterPage = () => {
           <div className="grid grid-cols-1 gap-2">
             <Input id="email" label="Email Address" type="email" placeholder="e.g. dennis@example.com" error={errors.email?.message} {...register('email')} />
             <Input id="phone_number" label="Phone Number" placeholder="07XXXXXXXX" error={errors.phone_number?.message} {...register('phone_number')} />
-            <Input id="referral_code" label="Referral Code (optional)" placeholder="e.g. BLUE-XXXX" error={errors.referral_code?.message} {...register('referral_code')} />
+            <Input id="referral_code" label="Referral Code (optional)" placeholder="e.g. BLUE-XXXX" error={errors.referral_code?.message} readOnly={!!refFromUrl} className={refFromUrl ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''} {...register('referral_code')} />
           </div>
 
           <div className="grid grid-cols-1 gap-2">

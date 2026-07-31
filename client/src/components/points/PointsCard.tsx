@@ -45,8 +45,9 @@ export const PointsCard: React.FC<Props> = ({ variant = 'compact' }) => {
 
   const copyReferral = () => {
     if (!data?.referral_code) return;
-    navigator.clipboard.writeText(data.referral_code);
-    toast.success('Referral code copied!');
+    const link = `${window.location.origin}/register?ref=${data.referral_code}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Referral link copied!');
   };
 
   if (loading) {
@@ -94,13 +95,15 @@ export const PointsCard: React.FC<Props> = ({ variant = 'compact' }) => {
           />
         </div>
 
-        {/* Referral code */}
+        {/* Referral link */}
         <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center justify-between">
-          <div>
-            <div className="text-[10px] text-blue-200 font-semibold uppercase tracking-wide">Your Referral Code</div>
-            <div className="font-mono font-black text-sm tracking-widest">{data.referral_code}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] text-blue-200 font-semibold uppercase tracking-wide">Your Referral Link</div>
+            <div className="font-mono text-[11px] text-white/80 truncate">
+              {window.location.origin}/register?ref={data.referral_code}
+            </div>
           </div>
-          <button onClick={copyReferral} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+          <button onClick={copyReferral} className="ml-2 p-1.5 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0">
             <Copy className="w-4 h-4" />
           </button>
         </div>

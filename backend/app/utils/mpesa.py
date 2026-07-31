@@ -26,7 +26,7 @@ def get_password_and_timestamp():
     return password, timestamp
 
 
-def stk_push(phone: str, amount: int, order_id: str) -> dict:
+def stk_push(phone: str, amount: int, reference: str, description: str) -> dict:
     token = get_access_token()
     password, timestamp = get_password_and_timestamp()
     payload = {
@@ -39,8 +39,8 @@ def stk_push(phone: str, amount: int, order_id: str) -> dict:
         "PartyB": SHORTCODE,
         "PhoneNumber": phone,
         "CallBackURL": CALLBACK_URL,
-        "AccountReference": order_id[:12],
-        "TransactionDesc": f"BlueTech Order {order_id[:8].upper()}",
+        "AccountReference": reference[:12],
+        "TransactionDesc": description[:13],
     }
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     resp = requests.post(f"{BASE_URL}/mpesa/stkpush/v1/processrequest", json=payload, headers=headers, timeout=15)

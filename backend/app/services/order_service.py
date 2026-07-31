@@ -87,9 +87,14 @@ def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
     referrer_id = None
     if order_data.referral_code and user_id:
         referrer_id = points_service.resolve_referral_code(order_data.referral_code)
-        # Don't let users refer themselves
         if referrer_id == user_id:
             referrer_id = None
+
+    # Fallback: if no referral code at checkout, use referred_by from user profile
+    if not referrer_id and user_id:
+        user_r = supabase_admin.table("users").select("referred_by").eq("id", user_id).single().execute()
+        if user_r.data and user_r.data.get("referred_by"):
+            referrer_id = user_r.data["referred_by"]
 
     order_insert = {
         "full_name": order_data.full_name,
