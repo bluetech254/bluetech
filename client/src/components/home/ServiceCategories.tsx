@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getRepairServices } from '../../api/services';
 
 interface Service {
   id: string;
@@ -19,11 +20,17 @@ export const ServiceCategories = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch('https://bluetechnology-y1f8.onrender.com/api/v1/repair-services?limit=10');
-        const data = await response.json();
-        setServices(data.data || []);
-      } catch (error) {
-        console.error('Failed to fetch services:', error);
+        const data = await getRepairServices({ limit: 10 });
+        setServices(data.map((s: any) => ({
+          id: s.id,
+          service_name: s.name,
+          long_description: s.description,
+          short_description: s.description,
+          service_category: s.category,
+          image_url: s.image,
+        })));
+      } catch {
+        // silent fail
       } finally {
         setLoading(false);
       }

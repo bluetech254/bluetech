@@ -95,8 +95,8 @@ export const CheckoutPage = () => {
 
   const selectedZone = zones.find(z => z.id === watchedZoneId);
   const deliveryFee = selectedZone ? selectedZone.delivery_fee : 0;
-  const pointsDiscount = redeemPoints && pointsBalance >= 1000 ? pointsBalance : 0;
-  const grandTotal = subtotal - pointsDiscount + deliveryFee;
+  const pointsDiscount = redeemPoints && pointsBalance >= 1000 ? Math.min(pointsBalance, subtotal) : 0;
+  const grandTotal = Math.max(0, subtotal - pointsDiscount + deliveryFee);
 
   const onSubmit = async (formData: any) => {
     if (items.length === 0) return;
