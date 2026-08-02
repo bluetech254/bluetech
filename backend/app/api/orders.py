@@ -51,10 +51,13 @@ def get_orders(status: Optional[str] = Query(None, description="Filter by status
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{order_id}", response_model=dict)
-def get_order(order_id: UUID):
-    """Get order by ID"""
+def get_order(order_id: UUID, user_id: Optional[str] = Depends(get_optional_user)):
+    """Get order by ID — only the owning user or admin can view"""
     try:
         order = order_service.get_order_by_id(order_id)
+        # Enforce ownership: if a user_id is present, the order must belong to them
+        if user_id and order.get("user_id") and str(order["user_id"]) != str(user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
         return order
     except OrderNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))

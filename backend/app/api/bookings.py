@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from uuid import UUID
 from app.services import booking_service
@@ -6,9 +7,17 @@ from app.models.booking import BookingCreate, CostUpdate
 from app.models.order import StatusUpdate
 from app.utils.exceptions import BookingNotFoundException
 from app.api.admin_auth import get_current_admin
+from app.utils.auth import decode_token
 from app.utils.audit import log_action
 
 router = APIRouter(prefix="/api/v1/bookings", tags=["Bookings"])
+security = HTTPBearer(auto_error=False)
+
+def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[str]:
+    if not credentials:
+        return None
+    payload = decode_token(credentials.credentials)
+    return payload.get("user_id") if payload else None
 
 @router.post("", response_model=dict)
 def create_booking(booking: BookingCreate):
@@ -29,10 +38,12 @@ def get_bookings(status: Optional[str] = Query(None, description="Filter by stat
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{booking_id}", response_model=dict)
-def get_booking(booking_id: UUID):
-    """Get booking by ID"""
+def get_booking(booking_id: UUID, user_id: Optional[str] = Depends(get_optional_user)):
+    """Get booking by ID — only the owning user can view"""
     try:
         booking = booking_service.get_booking_by_id(booking_id)
+        if user_id and booking.get("user_id") and str(booking["user_id"]) != str(user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
         return booking
     except BookingNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
