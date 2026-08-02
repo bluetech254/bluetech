@@ -110,7 +110,7 @@ export const ProductsPage = () => {
       {/* Main layout */}
       <div className="flex gap-8 items-start">
 
-        <div className="hidden [@media(min-width:900px)]:block">
+        <div className="hidden lg:block">
           <FilterSidebar filters={filters} onChange={updateFilters} onReset={resetFilters} categories={categories.filter(c => c !== 'All')} />
         </div>
 

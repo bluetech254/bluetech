@@ -28,7 +28,7 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 shadow-sm h-14">
-      <div className="h-full px-4 sm:px-6 lg:max-w-none lg:px-[100px] lg:mx-0 flex items-center justify-between">
+      <div className="h-full px-4 sm:px-6 lg:px-[100px] max-w-[1600px] mx-auto flex items-center justify-between">
 
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">

@@ -119,28 +119,6 @@ export const ShopByCategory = () => {
           })}
         </div>
       </div>
-
-      <style>{`
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-4px); }
-          75% { transform: translateX(4px); }
-        }
-        .animate-scroll {
-          animation: scroll 30s linear infinite;
-        }
-        .animate-shake {
-          animation: shake 0.5s infinite;
-        }
-      `}</style>
     </div>
   );
 };

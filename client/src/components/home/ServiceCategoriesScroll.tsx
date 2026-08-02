@@ -87,24 +87,6 @@ export const ServiceCategories = () => {
           {services.map((s, i) => <Card key={`dup-${i}`} service={s} id={`dup-${i}`} />)}
         </div>
       </div>
-
-      <style>{`
-        @keyframes scroll-reverse {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-4px); }
-          75% { transform: translateX(4px); }
-        }
-        .animate-scroll-reverse {
-          animation: scroll-reverse 30s linear infinite;
-        }
-        .animate-shake {
-          animation: shake 0.5s infinite;
-        }
-      `}</style>
     </div>
   );
 };

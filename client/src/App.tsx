@@ -26,7 +26,7 @@ const Layout = () => {
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
       <Header />
       <main className={`flex-1 w-full ${isAuthPage ? 'flex items-center justify-center overflow-hidden' : 'py-8 md:py-12 pb-20 lg:pb-12'}`}>
-        <div className={isAuthPage ? 'w-full px-4' : 'px-4 sm:px-6 lg:px-[100px]'}>
+        <div className={isAuthPage ? 'w-full px-4' : 'px-4 sm:px-6 lg:px-[100px] max-w-[1600px] mx-auto'}>
           <AppRoutes />
         </div>
       </main>
