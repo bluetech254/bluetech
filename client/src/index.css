@@ -15,10 +15,16 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  * {
+  a, button, input, select, textarea {
     @apply transition-colors duration-200;
-    border-radius: 0 !important;
   }
+
+  /* Default border radius for interactive & media elements */
+  button:not([class*="rounded"]) { border-radius: 0.5rem; }
+  input:not([type="radio"]):not([type="checkbox"]):not([class*="rounded"]) { border-radius: 0.5rem; }
+  select:not([class*="rounded"]) { border-radius: 0.5rem; }
+  textarea:not([class*="rounded"]) { border-radius: 0.5rem; }
+  img:not([class*="rounded"]) { border-radius: 0.5rem; }
 }
 
 /* Modern animations */

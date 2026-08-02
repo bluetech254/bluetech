@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 
 interface Deal {
@@ -12,6 +13,7 @@ interface Deal {
 }
 
 export const PromotionalDealsCarousel = () => {
+  const navigate = useNavigate();
   const [scrollPosition, setScrollPosition] = useState(0);
   const [autoScroll, setAutoScroll] = useState(true);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -47,7 +49,7 @@ export const PromotionalDealsCarousel = () => {
         }));
 
         const merged: Deal[] = [];
-        for (let i = 0; i < Math.max(products.length, services.length); i++) {
+        for (let i = 0; i < 10; i++) {
           if (i < products.length) merged.push(products[i]);
           if (i < services.length) merged.push(services[i]);
         }
@@ -108,9 +110,9 @@ export const PromotionalDealsCarousel = () => {
                 <div className="relative h-40 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                   <img src={deal.image} alt={deal.title} className="w-full h-full object-cover" />
                   
-                  {/* Discount Badge */}
-                  <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                    {deal.discount}
+                  {/* Type Badge */}
+                  <div className="absolute top-3 right-3 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                    {deal.type === 'product' ? 'Deal' : 'Service'}
                   </div>
                   
                   {/* Overlay */}
@@ -128,7 +130,9 @@ export const PromotionalDealsCarousel = () => {
                   <div className="mt-2">
                     <span className="text-lg font-bold text-blue-600">KSH {deal.price.toFixed(0)}</span>
                   </div>
-                  <button className={`w-full mt-3 py-2 rounded text-sm font-medium transition-colors ${
+                  <button
+                    onClick={() => deal.type === 'service' ? navigate(`/book-repair/${deal.id}`) : navigate(`/products/${deal.id}`)}
+                    className={`w-full mt-3 py-2 rounded text-sm font-medium transition-colors ${
                     deal.type === 'service' 
                       ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                       : 'bg-slate-300 hover:bg-slate-400 text-slate-700'

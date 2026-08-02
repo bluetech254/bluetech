@@ -137,8 +137,6 @@ export const CheckoutPage = () => {
         redeem_points: redeemPoints && pointsBalance >= 1000 ? pointsBalance : undefined,
       };
 
-      console.log('Sending order:', orderPayload);
-
       const response = await createOrder(orderPayload);
 
       if (formData.payment_method === 'mpesa') {
@@ -161,8 +159,6 @@ export const CheckoutPage = () => {
         navigate(`/order-success/${response.id}`);
       }
     } catch (err: any) {
-      console.error('Failed to place order:', err);
-      console.error('Error response:', err.response?.data);
       const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to submit order. Check stock availability or connection.';
       toast.error(msg, { id: toastId });
     } finally {
@@ -495,7 +491,7 @@ export const CheckoutPage = () => {
 
               {selectedZone && (
                 <div className="text-[11px] text-slate-400 bg-slate-50 p-2 rounded-lg flex items-center text-left">
-                  <span>Shipping with <strong>{selectedZone.name}</strong> standard rates.</span>
+                  <span>Shipping with <strong>{selectedZone.zone_name}</strong> standard rates.</span>
                 </div>
               )}
 
