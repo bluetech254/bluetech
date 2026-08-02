@@ -25,6 +25,10 @@ export const ProductsPage = () => {
   const [category, setCategory] = useState('');
   const [minPrice, setMinPrice] = useState<number | undefined>();
   const [maxPrice, setMaxPrice] = useState<number | undefined>();
+  const [condition, setCondition] = useState('');
+  const [brand, setBrand] = useState('');
+  const [inStock, setInStock] = useState(false);
+  const [minRating, setMinRating] = useState(0);
 
   // Fetch all products once
   useEffect(() => {
@@ -50,9 +54,13 @@ export const ProductsPage = () => {
       if (category && category !== 'All' && (specs.category || '').toLowerCase() !== category) return false;
       if (minPrice !== undefined && p.price < minPrice) return false;
       if (maxPrice !== undefined && p.price > maxPrice) return false;
+      if (condition && (p as any).condition?.toLowerCase() !== condition) return false;
+      if (brand && !(p.name || '').toLowerCase().includes(brand.toLowerCase()) && !(specs.brand || '').toLowerCase().includes(brand.toLowerCase())) return false;
+      if (inStock && (p as any).stock_quantity <= 0) return false;
+      if (minRating > 0 && ((p as any).rating || 0) < minRating) return false;
       return true;
     });
-  }, [allProducts, search, category, minPrice, maxPrice]);
+  }, [allProducts, search, category, minPrice, maxPrice, condition, brand, inStock, minRating]);
 
   const pages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -70,8 +78,12 @@ export const ProductsPage = () => {
     if ('category' in f) { setCategory(f.category || ''); setPage(1); }
     if ('min_price' in f) { setMinPrice(f.min_price); setPage(1); }
     if ('max_price' in f) { setMaxPrice(f.max_price); setPage(1); }
+    if ('condition' in f) { setCondition(f.condition || ''); setPage(1); }
+    if ('brand' in f) { setBrand(f.brand || ''); setPage(1); }
+    if ('in_stock' in f) { setInStock(!!f.in_stock); setPage(1); }
+    if ('min_rating' in f) { setMinRating(f.min_rating || 0); setPage(1); }
   };
-  const resetFilters = () => { setSearch(''); setCategory(''); setMinPrice(undefined); setMaxPrice(undefined); setPage(1); };
+  const resetFilters = () => { setSearch(''); setCategory(''); setMinPrice(undefined); setMaxPrice(undefined); setCondition(''); setBrand(''); setInStock(false); setMinRating(0); setPage(1); };
 
   return (
     <div className="animate-fade-in">

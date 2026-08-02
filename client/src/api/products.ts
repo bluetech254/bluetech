@@ -6,6 +6,10 @@ export interface ProductFilters {
   search?: string;
   min_price?: number;
   max_price?: number;
+  condition?: string;
+  brand?: string;
+  in_stock?: boolean;
+  min_rating?: number;
   featured?: boolean;
   sort_by?: 'price' | 'name' | 'created_at';
   order?: 'asc' | 'desc';

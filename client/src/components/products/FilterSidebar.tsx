@@ -34,6 +34,10 @@ export const FilterSidebar = ({ filters, onChange, onReset, categories = [] }: F
       category: filters.category,
       min_price: minPrice > 0 ? minPrice : undefined,
       max_price: maxPrice < 3000 ? maxPrice : undefined,
+      condition: condition || undefined,
+      brand: selectedBrand || undefined,
+      in_stock: inStockOnly || undefined,
+      min_rating: minRating > 0 ? minRating : undefined,
     });
   };
 
