@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import { Mail, Phone, MapPin, Clock, Send, AlertCircle, Sparkles, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../api/axios';
 
 export const ContactPage = () => {
   const [submitting, setSubmitting] = useState(false);
@@ -31,12 +32,15 @@ export const ContactPage = () => {
   const onSubmit = async (formData: any) => {
     setSubmitting(true);
     const toastId = toast.loading('Sending your message...');
-    
-    setTimeout(() => {
+    try {
+      await api.post('/contact', formData);
       toast.success('Your message has been sent! Our coordinators will reply within 24 hours.', { id: toastId });
       reset();
+    } catch {
+      toast.error('Failed to send message. Please try again.', { id: toastId });
+    } finally {
       setSubmitting(false);
-    }, 1200);
+    }
   };
 
   return (
