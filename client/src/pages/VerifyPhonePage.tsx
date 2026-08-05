@@ -5,6 +5,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AuthShell from '../components/common/AuthShell';
 
 const VerifyPhonePage = () => {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ const VerifyPhonePage = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4">
+    <AuthShell>
       <div className="space-y-6">
         <div className="text-center space-y-1">
           <div className="flex justify-center mb-2">
@@ -119,7 +120,7 @@ const VerifyPhonePage = () => {
         </form>
 
       </div>
-    </div>
+    </AuthShell>
   );
 };
 

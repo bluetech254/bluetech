@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FileText } from 'lucide-react';
+import LegalShell from '../components/common/LegalShell';
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="mb-8">
@@ -11,19 +12,7 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 
 export const TermsOfServicePage = () => {
   return (
-    <div className="space-y-8 py-6 animate-fade-in text-left max-w-3xl mx-auto">
-      <div>
-        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-          <span>/</span>
-          <span className="text-blue-600">Terms of Service</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1.5 flex flex-wrap items-center gap-2">
-          <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" /> Terms of Service
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">Last updated: July 2026</p>
-      </div>
-
-      <div className="bg-white border border-slate-100 rounded-xl p-6 space-y-6">
+    <LegalShell icon={<FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />} title="Terms of Service">
         <Section title="1. Acceptance of Terms">
           <p>By accessing and using BlueTech's website and services, you agree to be bound by these Terms of Service. If you do not agree to any part of these terms, you may not use our services.</p>
         </Section>
@@ -90,8 +79,7 @@ export const TermsOfServicePage = () => {
             <li>📞 <a href="tel:+254700000000" className="text-blue-600 hover:underline">+254 700 000 000</a></li>
           </ul>
         </Section>
-      </div>
-    </div>
+    </LegalShell>
   );
 };
 

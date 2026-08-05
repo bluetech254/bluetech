@@ -1,8 +1,9 @@
 import React from 'react';
-import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
+import { X, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
 import { formatCurrency } from '../../utils/formatters';
 import Button from '../common/Button';
+import QuantityStepper from '../common/QuantityStepper';
 import { Link, useNavigate } from 'react-router-dom';
 
 export const CartDrawer = () => {
@@ -108,27 +109,13 @@ export const CartDrawer = () => {
                             
                             <div className="flex items-center justify-between mt-2">
                               {/* Quantity Picker */}
-                              <div className="flex items-center border border-slate-200 rounded-lg">
-                                <button
-                                  type="button"
-                                  disabled={quantity <= 1}
-                                  onClick={() => updateQuantity(product.id, quantity - 1)}
-                                  className="p-1 px-2 text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
-                                >
-                                  <Minus className="h-3.5 w-3.5" />
-                                </button>
-                                <span className="px-2 text-sm font-semibold text-slate-900 min-w-6 text-center select-none">
-                                  {quantity}
-                                </span>
-                                <button
-                                  type="button"
-                                  disabled={quantity >= product.stock_quantity}
-                                  onClick={() => updateQuantity(product.id, quantity + 1)}
-                                  className="p-1 px-2 text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
+                              <QuantityStepper
+                                quantity={quantity}
+                                max={product.stock_quantity}
+                                onDecrement={() => updateQuantity(product.id, quantity - 1)}
+                                onIncrement={() => updateQuantity(product.id, quantity + 1)}
+                                size="sm"
+                              />
 
                               {/* Remove Button */}
                               <button

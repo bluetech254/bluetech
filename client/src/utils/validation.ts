@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { PHONE_REGEX } from './phone';
 
 // Register Schema
 export const registerSchema = z.object({
   full_name: z.string().min(3, 'Name must be at least 3 characters'),
   email: z.string().email('Invalid email address'),
-  phone_number: z.string().regex(/^(0?7\d{8}|254\d{9})$/, 'Invalid phone number (use 07... or 7...)'),
+  phone_number: z.string().regex(PHONE_REGEX, 'Invalid phone number (use 07... or 7...)'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirm_password: z.string(),
   referral_code: z.string().optional(),
@@ -22,7 +23,7 @@ export const loginSchema = z.object({
 // Order Schema
 export const orderSchema = z.object({
   customer_name: z.string().min(3, 'Name must be at least 3 characters'),
-  phone_number: z.string().regex(/^(0?7\d{8}|254\d{9})$/, 'Invalid phone number (use 07... or 7...)'),
+  phone_number: z.string().regex(PHONE_REGEX, 'Invalid phone number (use 07... or 7...)'),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   delivery_address: z.string().min(10, 'Address must be at least 10 characters'),
   delivery_zone: z.string().min(1, 'Please select a delivery zone'),
@@ -36,7 +37,7 @@ export const orderSchema = z.object({
 // Booking Schema
 export const bookingSchema = z.object({
   customer_name: z.string().min(3, 'Name must be at least 3 characters'),
-  customer_phone: z.string().regex(/^(0?7\d{8}|254\d{9})$/, 'Invalid phone number (use 07... or 7...)'),
+  customer_phone: z.string().regex(PHONE_REGEX, 'Invalid phone number (use 07... or 7...)'),
   customer_email: z.string().email('Invalid email address').optional().or(z.literal('')),
   device_brand: z.string().min(1, 'Device brand is required'),
   device_model: z.string().min(1, 'Device model is required'),

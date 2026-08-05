@@ -6,6 +6,8 @@ import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { KeyRound, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AuthShell from '../components/common/AuthShell';
+import { normalizePhone } from '../utils/phone';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -14,13 +16,6 @@ const ForgotPasswordPage = () => {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  const normalizePhone = (p: string) => {
-    let n = p.trim();
-    if (n.startsWith('0')) n = n.slice(1);
-    if (!n.startsWith('254')) n = '254' + n;
-    return n;
-  };
 
   const parseError = (err: any, fallback: string) => {
     const detail = err.response?.data?.detail;
@@ -59,7 +54,7 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-12 px-4">
+    <AuthShell>
       <Card className="p-8 space-y-6 bg-white border border-slate-100 shadow-xl">
         <div className="text-center space-y-1">
           <div className="flex justify-center mb-2">
@@ -119,7 +114,7 @@ const ForgotPasswordPage = () => {
           <Link to="/login" className="text-blue-600 font-semibold hover:underline">Back to Login</Link>
         </div>
       </Card>
-    </div>
+    </AuthShell>
   );
 };
 

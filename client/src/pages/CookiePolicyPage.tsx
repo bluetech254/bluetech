@@ -1,5 +1,6 @@
 import React from 'react';
 import { Cookie } from 'lucide-react';
+import LegalShell from '../components/common/LegalShell';
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="mb-8">
@@ -10,19 +11,7 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 
 export const CookiePolicyPage = () => {
   return (
-    <div className="space-y-8 py-6 animate-fade-in text-left max-w-3xl mx-auto">
-      <div>
-        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider space-x-1">
-          <span>/</span>
-          <span className="text-blue-600">Cookie Policy</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1.5 flex flex-wrap items-center gap-2">
-          <Cookie className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" /> Cookie Policy
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">Last updated: July 2026</p>
-      </div>
-
-      <div className="bg-white border border-slate-100 rounded-xl p-6 space-y-6">
+    <LegalShell icon={<Cookie className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />} title="Cookie Policy">
         <Section title="1. What Are Cookies?">
           <p>Cookies are small text files stored on your device when you visit our website. They help us remember your preferences, improve your experience, and analyze how you use our site.</p>
         </Section>
@@ -78,8 +67,7 @@ export const CookiePolicyPage = () => {
             <li>📞 <a href="tel:+254700000000" className="text-blue-600 hover:underline">+254 700 000 000</a></li>
           </ul>
         </Section>
-      </div>
-    </div>
+    </LegalShell>
   );
 };
 

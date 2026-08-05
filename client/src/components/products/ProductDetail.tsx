@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Check, Loader2, Plus, Minus, ShieldCheck, Truck, RefreshCw, ZoomIn, X } from 'lucide-react';
+import { ShoppingCart, Check, Loader2, ShieldCheck, Truck, RefreshCw, ZoomIn, X } from 'lucide-react';
 import { Product } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { useCart } from '../../hooks/useCart';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
+import QuantityStepper from '../common/QuantityStepper';
 
 interface ProductDetailProps {
   product: Product;
@@ -146,17 +147,12 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
             {stock_quantity > 0 && (
               <div className="flex items-center gap-3">
                 {/* Picker */}
-                <div className="flex items-center border-2 border-slate-200 rounded-lg p-1 bg-white shrink-0">
-                  <button type="button" onClick={handleDecrement} disabled={quantity <= 1}
-                    className="p-1.5 rounded-md hover:bg-slate-50 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm font-bold text-slate-900 w-7 text-center select-none">{quantity}</span>
-                  <button type="button" onClick={handleIncrement} disabled={quantity >= stock_quantity}
-                    className="p-1.5 rounded-md hover:bg-slate-50 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
+                <QuantityStepper
+                  quantity={quantity}
+                  max={stock_quantity}
+                  onDecrement={handleDecrement}
+                  onIncrement={handleIncrement}
+                />
 
                 {/* Button */}
                 <Button

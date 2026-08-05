@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
+import LegalShell from '../components/common/LegalShell';
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="space-y-2">
@@ -11,17 +12,7 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 
 export const PrivacyPolicyPage = () => {
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center space-x-3 mb-2">
-        <div className="bg-blue-100 text-blue-700 p-2.5 rounded-full">
-          <Shield className="w-5 h-5" />
-        </div>
-        <h1 className="text-2xl font-black text-slate-950 tracking-tight">Privacy Policy</h1>
-      </div>
-      <p className="text-xs text-slate-400 mb-8">Last updated: July 2025</p>
-
-      <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-5 sm:p-8 space-y-7">
+    <LegalShell icon={<Shield className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />} title="Privacy Policy">
 
         <Section title="1. Information We Collect">
           <p>When you create an account, place an order, or book a repair, we collect personal information including your full name, email address, phone number, and delivery address.</p>
@@ -78,8 +69,7 @@ export const PrivacyPolicyPage = () => {
           </ul>
         </Section>
 
-      </div>
-    </div>
+    </LegalShell>
   );
 };
 

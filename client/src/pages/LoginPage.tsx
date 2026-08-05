@@ -6,8 +6,8 @@ import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../utils/validation';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
-import toast from 'react-hot-toast';
+import AuthShell from '../components/common/AuthShell';
+import { normalizePhone } from '../utils/phone';
 
 export const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
@@ -31,9 +31,7 @@ export const LoginPage = () => {
     setSubmitting(true);
     const toastId = toast.loading('Authenticating credentials...');
     try {
-      let phoneNumber = formData.phone_number.trim();
-      if (phoneNumber.startsWith('0')) phoneNumber = phoneNumber.substring(1);
-      if (!phoneNumber.startsWith('254')) phoneNumber = '254' + phoneNumber;
+      const phoneNumber = normalizePhone(formData.phone_number);
       await login(phoneNumber, formData.password);
       toast.success('Successfully logged in!', { id: toastId });
     } catch (err: any) {
@@ -51,7 +49,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-12 px-4 -mt-12 animate-fade-in">
+    <AuthShell>
       <div className="space-y-6 text-left">
 
         {/* Title */}
@@ -124,7 +122,7 @@ export const LoginPage = () => {
 
 
       </div>
-    </div>
+    </AuthShell>
   );
 };
 

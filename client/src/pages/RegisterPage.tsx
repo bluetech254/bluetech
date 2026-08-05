@@ -8,6 +8,8 @@ import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AuthShell from '../components/common/AuthShell';
+import { normalizePhone } from '../utils/phone';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -44,14 +46,7 @@ export const RegisterPage = () => {
     const toastId = toast.loading('Creating your online client account...');
 
     try {
-      // Normalize phone number: remove leading 0 if present, add 254 prefix
-      let phoneNumber = formData.phone_number.trim();
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = phoneNumber.substring(1);
-      }
-      if (!phoneNumber.startsWith('254')) {
-        phoneNumber = '254' + phoneNumber;
-      }
+      const phoneNumber = normalizePhone(formData.phone_number);
 
       await registerUser({
         full_name: formData.full_name,
@@ -73,7 +68,7 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto w-full -mt-12 animate-fade-in">
+    <AuthShell>
       <div className="space-y-3 text-left">
 
         {/* Header Title */}
@@ -125,7 +120,7 @@ export const RegisterPage = () => {
         </div>
 
       </div>
-    </div>
+    </AuthShell>
   );
 };
 

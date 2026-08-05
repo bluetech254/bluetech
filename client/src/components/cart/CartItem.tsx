@@ -1,5 +1,6 @@
 import React from 'react';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import QuantityStepper from '../common/QuantityStepper';
 import { CartItem as ICartItem } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { useCart } from '../../hooks/useCart';
@@ -44,27 +45,13 @@ export const CartItem = ({ item }: CartItemProps) => {
       {/* Action panel (Quantity picker & Subtotal / Remove) */}
       <div className="flex items-center justify-between sm:justify-end space-x-6 w-full sm:w-auto">
         {/* Quantity control */}
-        <div className="flex items-center border-2 border-slate-100 rounded-lg bg-white p-1">
-          <button
-            type="button"
-            disabled={quantity <= 1}
-            onClick={() => updateQuantity(product.id, quantity - 1)}
-            className="p-1 px-2.5 text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <Minus className="w-3.5 h-3.5" />
-          </button>
-          <span className="px-2 font-bold text-slate-900 text-sm select-none min-w-6 text-center">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            disabled={quantity >= product.stock_quantity}
-            onClick={() => updateQuantity(product.id, quantity + 1)}
-            className="p-1 px-2.5 text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <QuantityStepper
+          quantity={quantity}
+          max={product.stock_quantity}
+          onDecrement={() => updateQuantity(product.id, quantity - 1)}
+          onIncrement={() => updateQuantity(product.id, quantity + 1)}
+          size="sm"
+        />
 
         {/* Pricing Subtotal & Trash */}
         <div className="text-right flex items-center space-x-4">
