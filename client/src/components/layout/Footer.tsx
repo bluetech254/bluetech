@@ -28,9 +28,9 @@ export const Footer = () => {
                 <li><Link to="/about" className="hover:text-blue-400">About Us</Link></li>
                 <li><Link to="/products" className="hover:text-blue-400">Products</Link></li>
                 <li><Link to="/services" className="hover:text-blue-400">Services</Link></li>
-                <li><a href="#" className="hover:text-blue-400">Hot Deals</a></li>
-                <li><a href="#" className="hover:text-blue-400">Blog</a></li>
-                <li><a href="#" className="hover:text-blue-400">Careers</a></li>
+                <li><Link to="/hot-deals" className="hover:text-blue-400">Hot Deals</Link></li>
+                <li><Link to="/blog" className="hover:text-blue-400">Blog</Link></li>
+                <li><Link to="/careers" className="hover:text-blue-400">Careers</Link></li>
               </ul>
             </div>
             <div>

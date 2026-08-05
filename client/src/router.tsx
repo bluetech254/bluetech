@@ -27,6 +27,9 @@ import AboutPage from './pages/AboutPage';
 import ReturnsPage from './pages/ReturnsPage';
 import WarrantyPage from './pages/WarrantyPage';
 import FAQsPage from './pages/FAQsPage';
+import HotDealsPage from './pages/HotDealsPage';
+import BlogPage from './pages/BlogPage';
+import CareersPage from './pages/CareersPage';
 
 export const AppRoutes = () => {
   return (
@@ -55,6 +58,9 @@ export const AppRoutes = () => {
       <Route path="/returns" element={<ReturnsPage />} />
       <Route path="/warranty" element={<WarrantyPage />} />
       <Route path="/faqs" element={<FAQsPage />} />
+      <Route path="/hot-deals" element={<HotDealsPage />} />
+      <Route path="/blog" element={<BlogPage />} />
+      <Route path="/careers" element={<CareersPage />} />
       
       {/* Catch-all fallback redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
