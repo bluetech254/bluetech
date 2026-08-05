@@ -10,12 +10,31 @@ router = APIRouter(prefix="/api/v1/products", tags=["Products"])
 
 @router.get("", response_model=dict)
 def get_products(
-    search: Optional[str] = Query(None, description="Search products by title"),
-    active_only: bool = Query(True, description="Filter active products only")
+    search: Optional[str] = Query(None),
+    active_only: bool = Query(True),
+    is_flash_sale: Optional[bool] = Query(None),
+    is_discounted: Optional[bool] = Query(None),
+    is_clearance: Optional[bool] = Query(None),
+    is_weekly_deal: Optional[bool] = Query(None),
+    is_featured: Optional[bool] = Query(None),
+    is_new_arrival: Optional[bool] = Query(None),
+    is_best_seller: Optional[bool] = Query(None),
+    is_trending: Optional[bool] = Query(None),
 ):
     """Get all products with optional filters"""
     try:
-        products = product_service.get_products(search=search, active_only=active_only)
+        products = product_service.get_products(
+            search=search,
+            active_only=active_only,
+            is_flash_sale=is_flash_sale,
+            is_discounted=is_discounted,
+            is_clearance=is_clearance,
+            is_weekly_deal=is_weekly_deal,
+            is_featured=is_featured,
+            is_new_arrival=is_new_arrival,
+            is_best_seller=is_best_seller,
+            is_trending=is_trending,
+        )
         return {"data": products, "count": len(products)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

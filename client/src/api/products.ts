@@ -15,6 +15,14 @@ export interface ProductFilters {
   order?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+  is_flash_sale?: boolean;
+  is_discounted?: boolean;
+  is_clearance?: boolean;
+  is_weekly_deal?: boolean;
+  is_featured?: boolean;
+  is_new_arrival?: boolean;
+  is_best_seller?: boolean;
+  is_trending?: boolean;
 }
 
 export interface ProductsResponse {

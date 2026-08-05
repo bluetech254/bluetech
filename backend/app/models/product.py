@@ -12,6 +12,19 @@ class ProductBase(BaseModel):
     specifications: dict = Field(default_factory=dict)
     image_url: Optional[str] = None
     is_active: bool = True
+    is_flash_sale: bool = False
+    is_discounted: bool = False
+    is_clearance: bool = False
+    is_weekly_deal: bool = False
+    is_featured: bool = False
+    is_new_arrival: bool = False
+    is_best_seller: bool = False
+    is_trending: bool = False
+    is_editors_choice: bool = False
+    is_back_in_stock: bool = False
+    is_refurbished: bool = False
+    is_pre_order: bool = False
+    is_coming_soon: bool = False
 
 class ProductCreate(ProductBase):
     pass

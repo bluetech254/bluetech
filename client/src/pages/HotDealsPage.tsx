@@ -9,14 +9,21 @@ export const HotDealsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts({ limit: 48 })
-      .then(res => {
-        const deals = res.products.filter(
-          p => p.is_flash_sale || p.is_discounted || p.is_clearance || p.is_weekly_deal
-        );
-        setProducts(deals);
-      })
-      .finally(() => setLoading(false));
+    // Fetch all deal buckets in parallel using real backend flags
+    Promise.all([
+      getProducts({ is_flash_sale: true }),
+      getProducts({ is_discounted: true }),
+      getProducts({ is_clearance: true }),
+      getProducts({ is_weekly_deal: true }),
+    ]).then(([flash, discounted, clearance, weekly]) => {
+      // Merge and deduplicate by id
+      const seen = new Set<string>();
+      const merged: Product[] = [];
+      for (const p of [...flash.products, ...discounted.products, ...clearance.products, ...weekly.products]) {
+        if (!seen.has(p.id)) { seen.add(p.id); merged.push(p); }
+      }
+      setProducts(merged);
+    }).finally(() => setLoading(false));
   }, []);
 
   return (
