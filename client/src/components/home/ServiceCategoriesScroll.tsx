@@ -55,7 +55,7 @@ export const ServiceCategories = () => {
   const Card = ({ service, id }: { service: any; id: string }) => (
     <div
       key={id}
-      className={`flex-shrink-0 w-44 bg-white border border-slate-200 p-4 flex flex-col items-start justify-between h-32 transition-all duration-300 ${hoveredIdx === parseInt(id) ? 'scale-125 -translate-y-8 animate-shake' : ''}`}
+      className={`flex-shrink-0 w-44 bg-white border border-slate-200 p-4 flex flex-col items-start justify-between h-32 transition-all duration-300 ${hoveredIdx === parseInt(id) ? 'scale-105 -translate-y-1 shadow-lg' : ''}`}
       onMouseEnter={() => setHoveredIdx(parseInt(id))}
       onMouseLeave={() => setHoveredIdx(null)}
     >

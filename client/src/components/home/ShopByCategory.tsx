@@ -66,7 +66,7 @@ export const ShopByCategory = () => {
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
               >
-                <div className={`relative overflow-hidden h-32 bg-slate-100 border border-slate-200 transition-all duration-300 ${hoveredIdx === idx ? 'scale-125 -translate-y-8 animate-shake' : ''}`}>
+                <div className={`relative overflow-hidden h-32 bg-slate-100 border border-slate-200 transition-all duration-300 ${hoveredIdx === idx ? 'scale-105 -translate-y-1 shadow-lg' : ''}`}>
                   <img
                     src={image}
                     alt={cat}
@@ -98,7 +98,7 @@ export const ShopByCategory = () => {
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
               >
-                <div className={`relative overflow-hidden h-32 bg-slate-100 border border-slate-200 transition-all duration-300 ${hoveredIdx === idx ? 'scale-125 -translate-y-8 animate-shake' : ''}`}>
+                <div className={`relative overflow-hidden h-32 bg-slate-100 border border-slate-200 transition-all duration-300 ${hoveredIdx === idx ? 'scale-105 -translate-y-1 shadow-lg' : ''}`}>
                   <img
                     src={image}
                     alt={cat}

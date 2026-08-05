@@ -54,14 +54,14 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
 
       {/* Price section */}
       <div className="my-1.5 md:my-2">
-        <p className="text-[8px] md:text-[9px] lg:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Price</p>
+        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Price</p>
         <div className="text-sm md:text-base lg:text-lg font-black text-blue-600">
           {formatCurrency(price)}
         </div>
       </div>
 
       {/* Badges / metadata */}
-      <div className="border-t border-b border-slate-50 py-1.5 md:py-2 my-0.5 grid grid-cols-2 gap-1 md:gap-1.5 text-[9px] md:text-xs lg:text-sm text-slate-500 text-left font-medium">
+      <div className="border-t border-b border-slate-50 py-1.5 md:py-2 my-0.5 grid grid-cols-2 gap-1 md:gap-1.5 text-xs text-slate-500 text-left font-medium">
         <div className="flex items-center space-x-0.5">
           <Clock className="w-2.5 md:w-3 h-2.5 md:h-3 text-slate-400 flex-shrink-0" />
           <span className="truncate">{estimated_duration}</span>
