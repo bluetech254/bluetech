@@ -29,10 +29,7 @@ export const HotDealsPage = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5">
-          / <span className="text-blue-600">Hot Deals</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+<h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
           <Zap className="w-7 h-7 text-blue-600" /> Hot Deals
         </h1>
         <p className="text-sm text-slate-500 mt-1">Limited-time offers on top products — grab them before they're gone.</p>

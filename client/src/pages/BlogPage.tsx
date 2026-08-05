@@ -62,10 +62,7 @@ const categoryColors: Record<string, string> = {
 export const BlogPage = () => (
   <div className="space-y-8 animate-fade-in">
     <div>
-      <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5">
-        / <span className="text-blue-600">Blog</span>
-      </div>
-      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+<h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
         <BookOpen className="w-7 h-7 text-blue-600" /> BlueTech Blog
       </h1>
       <p className="text-sm text-slate-500 mt-1">Tech tips, repair guides, and buying advice from our engineers.</p>

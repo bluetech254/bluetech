@@ -4,10 +4,7 @@ import { Briefcase } from 'lucide-react';
 export const CareersPage = () => (
   <div className="space-y-8 animate-fade-in">
     <div>
-      <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5">
-        / <span className="text-blue-600">Careers</span>
-      </div>
-      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+<h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
         <Briefcase className="w-7 h-7 text-blue-600" /> Careers at BlueTech
       </h1>
       <p className="text-sm text-slate-500 mt-1">Join our team and help shape the future of tech repair and retail in Kenya.</p>
