@@ -6,6 +6,8 @@ import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../utils/validation';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import AuthShell from '../components/common/AuthShell';
 import { normalizePhone } from '../utils/phone';
 
