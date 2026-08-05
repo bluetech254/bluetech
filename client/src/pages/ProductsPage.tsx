@@ -71,7 +71,22 @@ export const ProductsPage = () => {
     if (cat !== 'All') setTimeout(() => document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
-  // Sidebar filter object shape for FilterSidebar compatibility
+  // Memoize all section buckets in one pass
+  const sections = useMemo(() => ({
+    featured:    allProducts.filter(p => p.is_featured),
+    flashSale:   allProducts.filter(p => p.is_flash_sale),
+    hotDeals:    allProducts.filter(p => p.is_discounted && !p.is_flash_sale),
+    newArrivals: allProducts.filter(p => p.is_new_arrival),
+    bestSellers: allProducts.filter(p => p.is_best_seller),
+    trending:    allProducts.filter(p => p.is_trending),
+    editors:     allProducts.filter(p => p.is_editors_choice),
+    weekly:      allProducts.filter(p => p.is_weekly_deal),
+    backInStock: allProducts.filter(p => p.is_back_in_stock),
+    clearance:   allProducts.filter(p => p.is_clearance),
+    refurbished: allProducts.filter(p => p.is_refurbished),
+    preOrder:    allProducts.filter(p => p.is_pre_order),
+    comingSoon:  allProducts.filter(p => p.is_coming_soon),
+  }), [allProducts]);
   const filters = { search, category: category.toLowerCase() || undefined, min_price: minPrice, max_price: maxPrice };
   const updateFilters = (f: any) => {
     if ('search' in f) { setSearch(f.search || ''); setPage(1); }
@@ -119,19 +134,19 @@ export const ProductsPage = () => {
           {/* Section Carousels */}
           {!loading && allProducts.length > 0 && !category && (
             <div className="space-y-8 border-b border-slate-100 pb-8">
-              <SectionCarousel title="Featured Products" emoji="⭐" products={allProducts.filter(p => p.is_featured)} />
-              <SectionCarousel title="Flash Sale" emoji="⚡" products={allProducts.filter(p => p.is_flash_sale)} badgeLabel="FLASH" badgeColor="bg-red-500" />
-              <SectionCarousel title="Hot Deals" emoji="🔥" products={allProducts.filter(p => p.is_discounted && !p.is_flash_sale)} badgeLabel="SALE" badgeColor="bg-orange-500" />
-              <SectionCarousel title="New Arrivals" emoji="🆕" products={allProducts.filter(p => p.is_new_arrival)} badgeLabel="NEW" badgeColor="bg-green-500" />
-              <SectionCarousel title="Best Sellers" emoji="🏆" products={allProducts.filter(p => p.is_best_seller)} />
-              <SectionCarousel title="Trending Now" emoji="📈" products={allProducts.filter(p => p.is_trending)} />
-              <SectionCarousel title="Editor's Choice" emoji="🎖️" products={allProducts.filter(p => p.is_editors_choice)} />
-              <SectionCarousel title="Weekly Deals" emoji="🗓️" products={allProducts.filter(p => p.is_weekly_deal)} badgeLabel="DEAL" badgeColor="bg-purple-500" />
-              <SectionCarousel title="Back in Stock" emoji="✅" products={allProducts.filter(p => p.is_back_in_stock)} badgeLabel="BACK" badgeColor="bg-teal-500" />
-              <SectionCarousel title="Clearance" emoji="🏷️" products={allProducts.filter(p => p.is_clearance)} badgeLabel="CLEARANCE" badgeColor="bg-slate-600" />
-              <SectionCarousel title="Refurbished" emoji="♻️" products={allProducts.filter(p => p.is_refurbished)} badgeLabel="REFURB" badgeColor="bg-amber-500" />
-              <SectionCarousel title="Pre-Order" emoji="🔔" products={allProducts.filter(p => p.is_pre_order)} badgeLabel="PRE-ORDER" badgeColor="bg-indigo-500" />
-              <SectionCarousel title="Coming Soon" emoji="🚀" products={allProducts.filter(p => p.is_coming_soon)} badgeLabel="SOON" badgeColor="bg-pink-500" />
+              <SectionCarousel title="Featured Products" emoji="⭐" products={sections.featured} />
+              <SectionCarousel title="Flash Sale" emoji="⚡" products={sections.flashSale} badgeLabel="FLASH" badgeColor="bg-red-500" />
+              <SectionCarousel title="Hot Deals" emoji="🔥" products={sections.hotDeals} badgeLabel="SALE" badgeColor="bg-orange-500" />
+              <SectionCarousel title="New Arrivals" emoji="🆕" products={sections.newArrivals} badgeLabel="NEW" badgeColor="bg-green-500" />
+              <SectionCarousel title="Best Sellers" emoji="🏆" products={sections.bestSellers} />
+              <SectionCarousel title="Trending Now" emoji="📈" products={sections.trending} />
+              <SectionCarousel title="Editor's Choice" emoji="🎖️" products={sections.editors} />
+              <SectionCarousel title="Weekly Deals" emoji="🗓️" products={sections.weekly} badgeLabel="DEAL" badgeColor="bg-purple-500" />
+              <SectionCarousel title="Back in Stock" emoji="✅" products={sections.backInStock} badgeLabel="BACK" badgeColor="bg-teal-500" />
+              <SectionCarousel title="Clearance" emoji="🏷️" products={sections.clearance} badgeLabel="CLEARANCE" badgeColor="bg-slate-600" />
+              <SectionCarousel title="Refurbished" emoji="♻️" products={sections.refurbished} badgeLabel="REFURB" badgeColor="bg-amber-500" />
+              <SectionCarousel title="Pre-Order" emoji="🔔" products={sections.preOrder} badgeLabel="PRE-ORDER" badgeColor="bg-indigo-500" />
+              <SectionCarousel title="Coming Soon" emoji="🚀" products={sections.comingSoon} badgeLabel="SOON" badgeColor="bg-pink-500" />
             </div>
           )}
 

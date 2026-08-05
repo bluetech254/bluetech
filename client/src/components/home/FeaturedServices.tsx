@@ -43,16 +43,10 @@ export const FeaturedServices = () => {
           Featured Services
         </h3>
         <div className="hidden md:flex gap-2">
-          <button
-            onClick={handlePrev}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          >
+          <button onClick={handlePrev} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
-          <button
-            onClick={handleNext}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          >
+          <button onClick={handleNext} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
             <ChevronRight className="w-5 h-5 text-slate-600" />
           </button>
         </div>
@@ -69,7 +63,7 @@ export const FeaturedServices = () => {
         </div>
       </div>
 
-      {/* Desktop: Grid 5 columns, 2 rows */}
+      {/* Desktop: Grid */}
       <div className="hidden md:grid grid-cols-5 gap-4">
         {services.map((service, idx) => (
           <ServiceCard key={idx} service={service} />

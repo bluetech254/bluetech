@@ -36,20 +36,13 @@ export const HomePage = () => {
         <PremiumProductsPoster />
       </div>
 
-      {/* Mobile: Featured Services */}
-      <div className="lg:hidden mt-8">
-        <FeaturedServices />
-      </div>
-
       {/* Mobile: Expert Services Poster */}
       <div className="md:hidden -mx-4 sm:-mx-6">
         <ExpertServicesPoster />
       </div>
 
-      {/* 3. Services Carousel - Desktop Only */}
-      <div className="hidden lg:block">
-        <FeaturedServices />
-      </div>
+      {/* 3. Services Carousel — single mount, internally responsive */}
+      <FeaturedServices />
 
       {/* 4. Promotional Deals Carousel */}
       <PromotionalDealsCarousel />

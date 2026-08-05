@@ -26,8 +26,8 @@ export const ProductDetailPage = () => {
         
         // Fetch related products of the same category
         if (item.category) {
-          const allRes = await getProducts({ limit: 200 });
-          const itemsFiltered = (allRes.products || []).filter(p => p.id !== id && p.category === item.category);
+          const allRes = await getProducts({ category: item.category, limit: 12 });
+          const itemsFiltered = (allRes.products || []).filter(p => p.id !== id);
           setRelatedProducts(itemsFiltered);
         }
       } catch (err: any) {
