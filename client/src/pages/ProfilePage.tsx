@@ -17,11 +17,11 @@ import Loading from '../components/common/Loading';
 import {
   User, Lock, ClipboardList, Wrench, LogOut, ArrowRight,
   Phone, Mail, Calendar, Smartphone, ShieldCheck, ShieldAlert,
-  Package, CheckCircle2, Clock, ChevronRight
+  Package, CheckCircle2, Clock, ChevronRight, Star
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type Tab = 'overview' | 'orders' | 'bookings' | 'settings';
+type Tab = 'overview' | 'orders' | 'bookings' | 'points' | 'settings';
 
 const statusColor: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -110,6 +110,7 @@ export const ProfilePage = () => {
     { id: 'overview', label: 'Overview', icon: <User className="w-4 h-4" /> },
     { id: 'orders', label: 'Orders', icon: <Package className="w-4 h-4" /> },
     { id: 'bookings', label: 'Repairs', icon: <Wrench className="w-4 h-4" /> },
+    { id: 'points', label: 'Points', icon: <Star className="w-4 h-4" /> },
     { id: 'settings', label: 'Settings', icon: <Lock className="w-4 h-4" /> },
   ];
 
@@ -142,7 +143,7 @@ export const ProfilePage = () => {
           {[
             { label: 'Total Orders', value: orders.length, icon: <Package className="w-4 h-4" /> },
             { label: 'Repair Jobs', value: bookings.length, icon: <Wrench className="w-4 h-4" /> },
-            { label: 'Account Status', value: (user as any).is_verified ? 'Active' : 'Pending', icon: <ShieldCheck className="w-4 h-4" /> },
+            { label: 'Points', value: <button onClick={() => setActiveTab('points')} className="text-yellow-300 font-black text-lg leading-none hover:underline">View</button>, icon: <Star className="w-4 h-4" /> },
           ].map(s => (
             <div key={s.label} className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 text-center">
               <div className="text-blue-300 flex justify-center mb-1">{s.icon}</div>
@@ -321,6 +322,20 @@ export const ProfilePage = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* POINTS TAB */}
+      {activeTab === 'points' && (
+        <div className="max-w-lg mx-auto">
+          <PointsCard variant="full" />
+          <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs text-blue-700 space-y-1">
+            <p className="font-black text-blue-800">How points work</p>
+            <p>• Earn points on every delivered order (% of subtotal)</p>
+            <p>• Earn bonus points when a friend you referred places their first order</p>
+            <p>• Redeem 1,000+ points as cash discount at checkout (1 pt = KES 1)</p>
+            <p>• If your balance covers the full subtotal, choose <strong>Pay with Points</strong> at checkout — no M-Pesa needed</p>
+          </div>
         </div>
       )}
 

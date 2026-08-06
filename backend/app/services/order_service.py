@@ -83,6 +83,15 @@ def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
 
     total_amount = subtotal - points_discount + delivery_fee
 
+    # If paying entirely with points, validate balance covers full amount (excl. delivery)
+    if order_data.payment_method == "points_only":
+        if not user_id:
+            raise ValueError("You must be logged in to pay with points")
+        if not order_data.redeem_points:
+            raise ValueError("redeem_points must be set when using points_only payment")
+        if points_discount < subtotal:
+            raise ValueError(f"Insufficient points to cover subtotal. Need {int(subtotal)} pts, have {order_data.redeem_points}")
+
     # Resolve referral code → store referrer_id on order for later awarding
     referrer_id = None
     if order_data.referral_code and user_id:
@@ -108,7 +117,7 @@ def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
         "total_amount": float(total_amount),
         "status": "pending",
         "payment_method": order_data.payment_method,
-        "payment_status": "unpaid",
+        "payment_status": "paid" if order_data.payment_method == "points_only" else "unpaid",
         "notes": order_data.notes,
         "user_id": user_id,
         "referrer_id": referrer_id,

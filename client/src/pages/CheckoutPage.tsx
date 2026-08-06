@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useCart } from '../hooks/useCart';
+import { zodResolver } from '@hookform/resolvers/zod';import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { getDeliveryZones } from '../api/zones';
 import { createOrder, initiateMpesaPayment } from '../api/orders';
@@ -18,7 +17,7 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import MpesaWaitingModal from '../components/cart/MpesaWaitingModal';
-import { ChevronLeft, CreditCard, DollarSign, Loader2, ClipboardCheck, AlertCircle, Phone, MapPin, Sparkles, CheckCircle, FileText, Star } from 'lucide-react';
+import { ChevronLeft, CreditCard, DollarSign, Loader2, ClipboardCheck, AlertCircle, Phone, MapPin, Sparkles, CheckCircle, FileText, Star, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const CheckoutPage = () => {
@@ -31,6 +30,7 @@ export const CheckoutPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [mpesaOrder, setMpesaOrder] = useState<{ orderId: string; phone: string; amount: string } | null>(null);
   const [pointsBalance, setPointsBalance] = useState(0);
+  const [canRedeem, setCanRedeem] = useState(false);
   const [redeemPoints, setRedeemPoints] = useState(false);
 
   // Restore pre-selected zone from sessionStorage
@@ -79,7 +79,10 @@ export const CheckoutPage = () => {
   // Load points balance for authenticated users
   useEffect(() => {
     if (isAuthenticated) {
-      getMyPoints().then(d => setPointsBalance(d.points_balance)).catch(() => {});
+      getMyPoints().then(d => {
+        setPointsBalance(d.points_balance);
+        setCanRedeem(d.can_redeem);
+      }).catch(() => {});
     }
   }, [isAuthenticated]);
 
@@ -95,7 +98,11 @@ export const CheckoutPage = () => {
 
   const selectedZone = zones.find(z => z.id === watchedZoneId);
   const deliveryFee = selectedZone ? selectedZone.delivery_fee : 0;
-  const pointsDiscount = redeemPoints && pointsBalance >= 1000 ? Math.min(pointsBalance, subtotal) : 0;
+  const isPointsOnly = watchedPaymentMethod === 'points_only';
+  // points_only: redeem exactly subtotal worth of points (delivery still charged separately)
+  const pointsDiscount = isPointsOnly
+    ? Math.min(pointsBalance, subtotal)
+    : (redeemPoints && pointsBalance >= 1000 ? Math.min(pointsBalance, subtotal) : 0);
   const grandTotal = Math.max(0, subtotal - pointsDiscount + deliveryFee);
 
   const onSubmit = async (formData: any) => {
@@ -134,12 +141,19 @@ export const CheckoutPage = () => {
         notes: formData.notes || undefined,
         payment_method: formData.payment_method,
         referral_code: formData.referral_code || undefined,
-        redeem_points: redeemPoints && pointsBalance >= 1000 ? pointsBalance : undefined,
+        redeem_points: (isPointsOnly || (redeemPoints && pointsBalance >= 1000)) ? pointsBalance : undefined,
       };
 
       const response = await createOrder(orderPayload);
 
-      if (formData.payment_method === 'mpesa') {
+      // points_only = already paid, skip M-Pesa
+      if (formData.payment_method === 'points_only') {
+        toast.success('Order placed & paid with points! 🎉', { id: toastId });
+        orderPlaced.current = true;
+        clearCart();
+        sessionStorage.removeItem('bluetech_delivery_zone_id');
+        navigate(`/order-success/${response.id}`);
+      } else if (formData.payment_method === 'mpesa') {
         // Initiate STK push then show waiting modal
         try {
           await initiateMpesaPayment(response.id);
@@ -340,6 +354,29 @@ export const CheckoutPage = () => {
                     </p>
                   </div>
                 </label>
+
+                {/* Pay with Points — only shown when balance covers subtotal */}
+                {isAuthenticated && pointsBalance >= subtotal && subtotal > 0 && (
+                  <label className={`sm:col-span-2 border-2 rounded-xl p-4 flex items-start space-x-3 cursor-pointer transition-all ${watchedPaymentMethod === 'points_only' ? 'border-yellow-400 bg-yellow-50' : 'border-slate-100 hover:border-yellow-200 bg-white'}`}>
+                    <input type="radio" value="points_only" checked={watchedPaymentMethod === 'points_only'} className="w-4 h-4 text-yellow-500 border-slate-200 mt-1 cursor-pointer" {...register('payment_method')} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-yellow-500" />
+                        Pay with Points Wallet
+                        <span className="bg-yellow-400 text-slate-900 text-[9px] font-black px-1.5 py-0.5 rounded-sm">INSTANT</span>
+                      </p>
+                      <p className="text-xs text-slate-500 leading-normal mt-1">
+                        Use your <span className="font-bold text-yellow-600">{pointsBalance.toLocaleString()} pts</span> to pay for this order instantly — no M-Pesa needed. Delivery fee still applies.
+                      </p>
+                      {watchedPaymentMethod === 'points_only' && (
+                        <div className="mt-2 flex items-center gap-2 text-xs font-bold text-yellow-700">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          {Math.min(pointsBalance, subtotal).toLocaleString()} pts deducted · saves {formatCurrency(Math.min(pointsBalance, subtotal))} · you pay only delivery {formatCurrency(deliveryFee)}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                )}
               </div>
 
               {watchedPaymentMethod === 'mpesa' && (
@@ -503,8 +540,8 @@ export const CheckoutPage = () => {
 
             {/* Payment badge */}
             <div className="pt-2 flex justify-center">
-              <Badge variant={watchedPaymentMethod === 'mpesa' ? 'success' : 'info'} className="w-full py-2 font-bold uppercase text-xs">
-                Paying via: {watchedPaymentMethod === 'mpesa' ? 'Lipa Na M-Pesa' : 'Cash on Delivery'}
+              <Badge variant={watchedPaymentMethod === 'mpesa' ? 'success' : watchedPaymentMethod === 'points_only' ? 'warning' : 'info'} className="w-full py-2 font-bold uppercase text-xs">
+                Paying via: {watchedPaymentMethod === 'mpesa' ? 'Lipa Na M-Pesa' : watchedPaymentMethod === 'points_only' ? '⚡ Points Wallet' : 'Cash on Delivery'}
               </Badge>
             </div>
           </Card>
