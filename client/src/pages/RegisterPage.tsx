@@ -60,7 +60,11 @@ export const RegisterPage = () => {
       navigate('/verify-phone', { state: { phone: phoneNumber } });
     } catch (err: any) {
       console.error('Failed registration submit:', err);
-      const msg = err.response?.data?.message || 'Failed to complete registration. Email or Phone might be already registered.';
+      const detail = err.response?.data?.detail;
+      let msg = 'Failed to complete registration. Email or phone may already be registered.';
+      if (typeof detail === 'string') msg = detail;
+      else if (Array.isArray(detail) && detail[0]?.msg) msg = String(detail[0].msg);
+      else if (err.response?.data?.message) msg = String(err.response.data.message);
       toast.error(msg, { id: toastId });
     } finally {
       setSubmitting(false);

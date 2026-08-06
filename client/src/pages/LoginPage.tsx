@@ -43,7 +43,11 @@ export const LoginPage = () => {
         return;
       }
       const detail = err.response?.data?.detail;
-      const msg = typeof detail === 'string' ? detail : Array.isArray(detail) ? detail[0]?.msg : err.response?.data?.message || 'Invalid phone number or password.';
+      const msg = typeof detail === 'string' ? detail
+        : Array.isArray(detail) ? String(detail[0]?.msg ?? 'Validation error')
+        : err.response?.data?.message
+        ? String(err.response.data.message)
+        : 'Invalid phone number or password.';
       toast.error(msg, { id: toastId });
     } finally {
       setSubmitting(false);
