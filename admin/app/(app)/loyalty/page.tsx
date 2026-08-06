@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy, Gift, Search } from "lucide-react";
+import { Trophy, Gift, Search, Loader2 } from "lucide-react";
 import { adminApi } from "@/lib/api";
 import { ReferralEntry } from "@/lib/types";
 
@@ -13,6 +13,7 @@ export default function LoyaltyPage() {
   // Award form
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: string; full_name: string; phone_number: string } | null>(null);
   const [points, setPoints] = useState(0);
   const [reason, setReason] = useState("");
@@ -29,9 +30,13 @@ export default function LoyaltyPage() {
   }, []);
 
   useEffect(() => {
-    if (search.length < 2) { setUsers([]); return; }
+    if (search.length < 2) { setUsers([]); setSearching(false); return; }
+    setSearching(true);
     const t = setTimeout(() => {
-      adminApi.getUsers(search).then((res: any) => setUsers(res.users ?? res.data ?? []));
+      adminApi.getUsers(search)
+        .then((res: any) => setUsers(res.users ?? res.data ?? []))
+        .catch(() => setUsers([]))
+        .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(t);
   }, [search]);
@@ -112,15 +117,18 @@ export default function LoyaltyPage() {
           ) : (
             <div className="relative">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim" />
-              <input className="input-field !pl-8" value={search}
+              {searching && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-dim animate-spin" />}
+              <input className="input-field !pl-8 !pr-8" value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Type name or phone…" />
-              {users.length > 0 && (
+              {search.length >= 2 && !searching && (
                 <div className="absolute z-10 w-full mt-1 bg-base-panel border border-base-border rounded-xl shadow-xl overflow-hidden">
-                  {users.slice(0, 6).map((u: any) => (
+                  {users.length === 0 ? (
+                    <p className="text-xs text-ink-dim px-3 py-2">No users found for "{search}"</p>
+                  ) : users.slice(0, 6).map((u: any) => (
                     <button key={u.id} type="button"
                       onClick={() => { setSelectedUser(u); setSearch(""); setUsers([]); }}
-                      className="w-full text-left px-3 py-2 hover:bg-base-hover text-sm">
+                      className="w-full text-left px-3 py-2 hover:bg-base-hover text-sm border-b border-base-border last:border-0">
                       <span className="font-medium text-ink">{u.full_name}</span>
                       <span className="text-xs text-ink-dim ml-2">{u.phone_number}</span>
                     </button>
