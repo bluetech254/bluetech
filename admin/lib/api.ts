@@ -95,6 +95,8 @@ export const adminApi = {
   getOrder: (id: string) => request(`/api/proxy/orders/${id}`),
   updateOrderStatus: (id: string, status: string) =>
     request(`/api/proxy/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
+  cancelOrder: (id: string) =>
+    request(`/api/proxy/orders/${id}`, { method: "DELETE" }),
 
   // Bookings
   getBookings: (status?: string) => request<{ data: any[]; count: number }>(`/api/proxy/bookings${qs({ status })}`),

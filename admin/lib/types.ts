@@ -37,6 +37,7 @@ export interface Order {
   status: OrderStatus;
   payment_status: string;
   payment_method: string;
+  mpesa_receipt?: string;
   notes?: string;
   created_at: string;
   order_items: OrderItem[];

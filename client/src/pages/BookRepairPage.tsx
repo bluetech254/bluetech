@@ -130,6 +130,12 @@ export const BookRepairPage = () => {
     navigate(`/booking-success/${paymentModal!.bookingId}`);
   };
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = paymentModal ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [paymentModal]);
+
   if (loadingService) {
     return <Loading fullScreen message="Loading diagnostic package details..." />;
   }
@@ -314,8 +320,8 @@ export const BookRepairPage = () => {
 
       {/* Commitment Fee Payment Modal */}
       {paymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-5 text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-5 text-center" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
               <CreditCard className="w-7 h-7 text-blue-600" />
             </div>
