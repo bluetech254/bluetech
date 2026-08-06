@@ -55,6 +55,11 @@ export interface Booking {
   estimated_cost?: number;
   final_cost?: number;
   internal_notes?: string;
+  commitment_fee?: number;
+  commitment_payment_status?: string;
+  commitment_receipt?: string;
+  final_payment_status?: string;
+  final_receipt?: string;
   created_at: string;
 }
 

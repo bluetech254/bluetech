@@ -103,6 +103,8 @@ export const adminApi = {
     request(`/api/proxy/bookings/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
   updateBookingCost: (id: string, estimated_cost?: number, final_cost?: number) =>
     request(`/api/proxy/bookings/${id}/cost`, { method: "PUT", body: JSON.stringify({ estimated_cost, final_cost }) }),
+  requestFinalPayment: (id: string) =>
+    request(`/api/proxy/payments/mpesa/booking/${id}/request-final-payment`, { method: "POST" }),
 
   // Products
   getProducts: (search?: string, activeOnly?: boolean) =>

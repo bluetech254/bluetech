@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Send } from "lucide-react";
 import { adminApi, formatKES } from "@/lib/api";
 import { Booking, BookingStatus } from "@/lib/types";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -26,6 +26,7 @@ export default function RepairsPage() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [costDrafts, setCostDrafts] = useState<Record<string, { estimated_cost?: number; final_cost?: number }>>({});
+  const [sendingPayment, setSendingPayment] = useState<string | null>(null);
 
   function load() {
     setLoading(true);
@@ -43,6 +44,24 @@ export default function RepairsPage() {
     const draft = costDrafts[id] ?? {};
     await adminApi.updateBookingCost(id, draft.estimated_cost, draft.final_cost);
     load();
+  }
+
+  async function requestFinalPayment(b: Booking) {
+    if (!b.final_cost && !b.estimated_cost) {
+      alert("Set a final cost before requesting payment.");
+      return;
+    }
+    if (!confirm(`Mark as completed and send M-Pesa prompt to ${b.phone_number}?`)) return;
+    setSendingPayment(b.id);
+    try {
+      const res: any = await adminApi.requestFinalPayment(b.id);
+      alert(`✅ STK push sent: KES ${res.amount} → ${b.phone_number}`);
+      load();
+    } catch (err: any) {
+      alert(`Failed: ${err.message}`);
+    } finally {
+      setSendingPayment(null);
+    }
   }
 
   return (
@@ -98,31 +117,63 @@ export default function RepairsPage() {
                   <tr>
                     <td colSpan={8} className="td bg-base-hover/30">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-2">
-                        <div className="md:col-span-2">
+                        <div className="md:col-span-2 space-y-2">
                           <p className="text-xs text-ink-dim mb-1">Issue description</p>
                           <p className="text-sm text-ink-muted">{b.issue_description}</p>
                           {b.pickup_address && <p className="text-xs text-ink-dim mt-2">Pickup: {b.pickup_address}</p>}
+                          {/* Payment status summary */}
+                          <div className="flex gap-4 text-xs mt-2">
+                            <span>
+                              Commitment:{" "}
+                              <span className={b.commitment_payment_status === "paid" ? "text-green-600 font-bold" : "text-amber-600 font-bold"}>
+                                {b.commitment_payment_status ?? "unpaid"}
+                                {b.commitment_fee ? ` (KES ${b.commitment_fee})` : ""}
+                              </span>
+                            </span>
+                            <span>
+                              Final:{" "}
+                              <span className={b.final_payment_status === "paid" ? "text-green-600 font-bold" : "text-ink-dim"}>
+                                {b.final_payment_status ?? "unpaid"}
+                              </span>
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-end gap-2" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex-1">
-                            <label className="text-xs text-ink-dim">Estimated (KES)</label>
-                            <input
-                              className="input-field text-sm"
-                              type="number"
-                              defaultValue={b.estimated_cost}
-                              onChange={(e) => setCostDrafts((p) => ({ ...p, [b.id]: { ...p[b.id], estimated_cost: Number(e.target.value) } }))}
-                            />
+                        <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                              <label className="text-xs text-ink-dim">Estimated (KES)</label>
+                              <input
+                                className="input-field text-sm"
+                                type="number"
+                                defaultValue={b.estimated_cost}
+                                onChange={(e) => setCostDrafts((p) => ({ ...p, [b.id]: { ...p[b.id], estimated_cost: Number(e.target.value) } }))}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-xs text-ink-dim">Final (KES)</label>
+                              <input
+                                className="input-field text-sm"
+                                type="number"
+                                defaultValue={b.final_cost}
+                                onChange={(e) => setCostDrafts((p) => ({ ...p, [b.id]: { ...p[b.id], final_cost: Number(e.target.value) } }))}
+                              />
+                            </div>
+                            <button onClick={() => saveCost(b.id)} className="btn-primary !py-2.5 text-xs">Save</button>
                           </div>
-                          <div className="flex-1">
-                            <label className="text-xs text-ink-dim">Final (KES)</label>
-                            <input
-                              className="input-field text-sm"
-                              type="number"
-                              defaultValue={b.final_cost}
-                              onChange={(e) => setCostDrafts((p) => ({ ...p, [b.id]: { ...p[b.id], final_cost: Number(e.target.value) } }))}
-                            />
-                          </div>
-                          <button onClick={() => saveCost(b.id)} className="btn-primary !py-2.5 text-xs">Save</button>
+                          {/* Complete & Request Final Payment */}
+                          {b.status !== "completed" && b.final_payment_status !== "paid" && (
+                            <button
+                              onClick={() => requestFinalPayment(b)}
+                              disabled={sendingPayment === b.id}
+                              className="btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-60"
+                            >
+                              <Send size={13} />
+                              {sendingPayment === b.id ? "Sending..." : "Complete & Request Payment"}
+                            </button>
+                          )}
+                          {b.final_payment_status === "paid" && (
+                            <p className="text-xs text-green-600 font-bold text-center">✅ Final payment received</p>
+                          )}
                         </div>
                       </div>
                     </td>

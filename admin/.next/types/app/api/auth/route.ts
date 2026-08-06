@@ -1,4 +1,4 @@
-// File: /home/jarvis/Documents/GitHub/bluetech/admin/app/api/auth/route.ts
+// File: /home/m/Documents/GitHub/bluetech/admin/app/api/auth/route.ts
 import * as entry from '../../../../../app/api/auth/route.js'
 import type { NextRequest } from 'next/server.js'
 

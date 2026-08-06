@@ -1,9 +1,4 @@
 {
   "/login/page": "app/login/page.js",
-  "/api/proxy/[...path]/route": "app/api/proxy/[...path]/route.js",
-  "/(app)/revenue/page": "app/(app)/revenue/page.js",
-  "/(app)/loyalty/page": "app/(app)/loyalty/page.js",
-  "/(app)/page": "app/(app)/page.js",
-  "/(app)/orders/page": "app/(app)/orders/page.js",
-  "/(app)/products/page": "app/(app)/products/page.js"
+  "/api/auth/route": "app/api/auth/route.js"
 }
