@@ -20,6 +20,8 @@ import VerifyPhonePage from './pages/VerifyPhonePage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import PointsPage from './pages/PointsPage';
 import OrdersPage from './pages/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+import BookingDetailPage from './pages/BookingDetailPage';
 import ContactPage from './pages/ContactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -52,6 +54,8 @@ export const AppRoutes = () => {
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/points" element={<ProtectedRoute><PointsPage /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+      <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+      <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/terms-of-service" element={<TermsOfServicePage />} />
