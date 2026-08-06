@@ -92,7 +92,9 @@ export const CheckoutPage = () => {
     }
   }, [items, loadingZones, navigate]);
 
-  const POINTS_TO_KES = 0.1; // 10 pts = KES 1
+  const selectedZone = zones.find(z => z.id === watchedZoneId);
+  const deliveryFee = selectedZone ? selectedZone.delivery_fee : 0;
+  const POINTS_TO_KES = 0.1;
   const pointsKesValue = Math.round(pointsBalance * POINTS_TO_KES * 100) / 100; // KES value of balance
   const isPointsOnly = watchedPaymentMethod === 'points_only';
   // How many points needed to cover subtotal: ceil(subtotal / 0.1)
