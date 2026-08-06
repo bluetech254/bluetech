@@ -29,8 +29,8 @@ export const trackBookingsByPhone = async (phoneNumber: string): Promise<Booking
   return Array.isArray(response.data) ? response.data : [];
 };
 
-export const initiateCommitmentPayment = async (bookingId: string): Promise<{ checkout_request_id: string; amount: number }> => {
-  const response = await api.post(`/payments/mpesa/booking/${bookingId}/commitment`);
+export const initiateCommitmentPayment = async (bookingId: string, servicePrice: number): Promise<{ checkout_request_id: string; amount: number }> => {
+  const response = await api.post(`/payments/mpesa/booking/${bookingId}/commitment?service_price=${servicePrice}`);
   return response.data;
 };
 

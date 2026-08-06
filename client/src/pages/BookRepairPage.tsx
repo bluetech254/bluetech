@@ -23,7 +23,7 @@ export const BookRepairPage = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // Commitment fee payment state
-  const [paymentModal, setPaymentModal] = useState<{ bookingId: string; amount: number; phone: string } | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ bookingId: string; amount: number; phone: string; servicePrice: number } | null>(null);
   const [paymentState, setPaymentState] = useState<'idle' | 'sending' | 'polling' | 'paid' | 'failed'>('idle');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -88,7 +88,7 @@ export const BookRepairPage = () => {
 
       toast.success('Booking created! Please pay the commitment fee.', { id: toastId });
       const commitmentAmount = service ? Math.max(1, Math.round(service.price * 0.20)) : 0;
-      setPaymentModal({ bookingId: response.id, amount: commitmentAmount, phone: phoneNumber });
+      setPaymentModal({ bookingId: response.id, amount: commitmentAmount, phone: phoneNumber, servicePrice: service?.price ?? 0 });
     } catch (err: any) {
       console.error('Failed to create repair booking:', err);
       const msg = err.response?.data?.message || 'Failed to submit repair booking. Please try again.';
@@ -102,7 +102,7 @@ export const BookRepairPage = () => {
     if (!paymentModal) return;
     setPaymentState('sending');
     try {
-      await initiateCommitmentPayment(paymentModal.bookingId);
+      await initiateCommitmentPayment(paymentModal.bookingId, paymentModal.servicePrice);
       setPaymentState('polling');
       let attempts = 0;
       pollRef.current = setInterval(async () => {

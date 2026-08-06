@@ -62,7 +62,7 @@ def mpesa_booking_initiate(booking_id: str):
 
 
 @router.post("/mpesa/booking/{booking_id}/commitment")
-def mpesa_booking_commitment(booking_id: str):
+def mpesa_booking_commitment(booking_id: str, service_price: int = 0):
     """Initiate 20% commitment fee STK push after booking creation."""
     booking_resp = supabase.table("bookings").select("*").eq("id", booking_id).single().execute()
     if not booking_resp.data:
@@ -72,11 +72,16 @@ def mpesa_booking_commitment(booking_id: str):
     if booking.get("commitment_payment_status") == "paid":
         raise HTTPException(status_code=400, detail="Commitment fee already paid")
 
-    service_price = int(booking.get("estimated_cost") or booking.get("final_cost") or 0)
-    if service_price <= 0:
-        raise HTTPException(status_code=400, detail="No service cost set on this booking")
+    # Use passed service_price, fall back to DB cost if already set
+    price = service_price or int(booking.get("estimated_cost") or booking.get("final_cost") or 0)
+    if price <= 0:
+        raise HTTPException(status_code=400, detail="No service cost provided")
 
-    commitment_amount = max(1, round(service_price * 0.20))
+    commitment_amount = max(1, round(price * 0.20))
+
+    # Persist estimated_cost if not already set so admin can see it
+    if not booking.get("estimated_cost") and service_price > 0:
+        supabase.table("bookings").update({"estimated_cost": float(service_price)}).eq("id", booking_id).execute()
 
     try:
         result = stk_push(
