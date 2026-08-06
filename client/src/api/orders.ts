@@ -41,10 +41,6 @@ export const cancelOrder = async (id: string): Promise<void> => {
   await api.post(`/orders/${id}/cancel`);
 };
 
-export const cancelOrder = async (id: string): Promise<void> => {
-  await api.post(`/orders/${id}/cancel`);
-};
-
 export const trackOrdersByPhone = async (phoneNumber: string): Promise<Order[]> => {
   const response = await api.get(`/orders/track/${phoneNumber}`);
   if (response.data && response.data.data && Array.isArray(response.data.data)) {
