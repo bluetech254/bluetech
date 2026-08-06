@@ -109,6 +109,8 @@ export const adminApi = {
     request(`/api/proxy/payments/mpesa/booking/${id}/request-final-payment`, { method: "POST" }),
   getFinalPaymentStatus: (id: string) =>
     request<{ final_payment_status: string; final_receipt?: string }>(`/api/proxy/payments/mpesa/booking/${id}/final/status`),
+  getTransactions: () =>
+    request<{ data: any[]; count: number }>("/api/proxy/admin/transactions"),
 
   // Products
   getProducts: (search?: string, activeOnly?: boolean) =>

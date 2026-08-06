@@ -41,10 +41,15 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     bookings_today = [b for b in bookings if (b.get("created_at") or "")[:10] == today]
     users_today    = [u for u in users    if (u.get("created_at") or "")[:10] == today]
 
-    # Revenue — all non-cancelled orders (includes pending/unpaid for full visibility)
-    order_revenue   = sum(float(o.get("total_amount", 0) or 0) for o in orders   if o.get("status") != "cancelled")
-    booking_revenue = sum(float(b.get("final_cost", 0) or b.get("estimated_cost", 0) or 0) for b in bookings if b.get("status") != "cancelled")
-    revenue_today   = sum(float(o.get("total_amount", 0) or 0) for o in orders_today if o.get("status") != "cancelled")
+    # Revenue — only paid transactions
+    order_revenue   = sum(float(o.get("total_amount", 0) or 0) for o in orders if o.get("payment_status") == "paid")
+    booking_commitment = sum(float(b.get("commitment_fee", 0) or 0) for b in bookings if b.get("commitment_payment_status") == "paid")
+    booking_final   = sum(
+        max(0, float(b.get("final_cost") or b.get("estimated_cost") or 0) - float(b.get("commitment_fee") or 0))
+        for b in bookings if b.get("final_payment_status") == "paid"
+    )
+    booking_revenue = booking_commitment + booking_final
+    revenue_today   = sum(float(o.get("total_amount", 0) or 0) for o in orders_today if o.get("payment_status") == "paid")
 
     # Active repair queue
     active_statuses = {"pending", "confirmed", "picked_up", "in_diagnosis", "in_repair"}
@@ -56,7 +61,7 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
         for p in products if p["stock_quantity"] <= p["low_stock_threshold"]
     ]
 
-    # Revenue by day — last 30 days, all non-cancelled orders
+    # Revenue by day — last 30 days, orders + completed booking payments
     from collections import defaultdict
     daily = defaultdict(float)
     for o in orders:
@@ -64,6 +69,17 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
             day = (o.get("created_at") or "")[:10]
             if day:
                 daily[day] += float(o.get("total_amount", 0) or 0)
+    for b in bookings:
+        if b.get("commitment_payment_status") == "paid":
+            day = (b.get("created_at") or "")[:10]
+            if day:
+                daily[day] += float(b.get("commitment_fee", 0) or 0)
+        if b.get("final_payment_status") == "paid":
+            day = (b.get("created_at") or "")[:10]
+            if day:
+                total = float(b.get("final_cost") or b.get("estimated_cost") or 0)
+                commitment = float(b.get("commitment_fee") or 0)
+                daily[day] += max(0, total - commitment)
     revenue_chart = [{"date": k, "revenue": v} for k, v in sorted(daily.items())[-30:]]
 
     # Order status breakdown
@@ -180,7 +196,93 @@ def export_bookings_csv(
     )
 
 
-# ── 4. BULK ORDER ACTIONS ─────────────────────────────────────────────────────
+# ── 3b. TRANSACTIONS ──────────────────────────────────────────────────────────
+
+@router.get("/transactions")
+def get_transactions(admin: dict = Depends(get_current_admin)):
+    """
+    Unified transaction list — all paid orders + all bookings with any payment.
+    Returns newest first.
+    """
+    orders_r   = supabase_admin.table("orders").select("*, order_items(*)").execute()
+    bookings_r = supabase_admin.table("bookings").select("*").execute()
+
+    txns = []
+
+    for o in (orders_r.data or []):
+        txns.append({
+            "id":           o["id"],
+            "type":         "order",
+            "ref":          f"ORD-{o['id'][:8].upper()}",
+            "customer":     o.get("full_name", ""),
+            "phone":        o.get("phone_number", ""),
+            "amount":       float(o.get("total_amount") or 0),
+            "payment_status": o.get("payment_status", "unpaid"),
+            "mpesa_receipt":  o.get("mpesa_receipt"),
+            "status":       o.get("status"),
+            "payment_method": o.get("payment_method"),
+            "created_at":   o.get("created_at"),
+            "detail": {
+                "subtotal":        float(o.get("subtotal") or 0),
+                "delivery_fee":    float(o.get("delivery_fee") or 0),
+                "points_discount": float(o.get("points_discount") or 0),
+                "delivery_zone":   o.get("delivery_zone"),
+                "delivery_address":o.get("delivery_address"),
+                "notes":           o.get("notes"),
+                "items":           o.get("order_items", []),
+            }
+        })
+
+    for b in (bookings_r.data or []):
+        # commitment payment
+        if b.get("commitment_payment_status") in ("paid", "pending", "failed"):
+            txns.append({
+                "id":           f"{b['id']}-cmt",
+                "type":         "booking_commitment",
+                "ref":          f"CMT-{b['id'][:8].upper()}",
+                "customer":     b.get("full_name", ""),
+                "phone":        b.get("phone_number", ""),
+                "amount":       float(b.get("commitment_fee") or 0),
+                "payment_status": b.get("commitment_payment_status", "unpaid"),
+                "mpesa_receipt":  b.get("commitment_receipt"),
+                "status":       b.get("status"),
+                "payment_method": "mpesa",
+                "created_at":   b.get("created_at"),
+                "detail": {
+                    "device":      f"{b.get('device_type','')} {b.get('device_model','')}".strip(),
+                    "issue":       b.get("issue_description"),
+                    "estimated_cost": float(b.get("estimated_cost") or 0),
+                    "final_cost":     float(b.get("final_cost") or 0),
+                    "booking_id":  b["id"],
+                }
+            })
+        # final payment
+        if b.get("final_payment_status") in ("paid", "pending", "failed"):
+            txns.append({
+                "id":           f"{b['id']}-fnl",
+                "type":         "booking_final",
+                "ref":          f"FNL-{b['id'][:8].upper()}",
+                "customer":     b.get("full_name", ""),
+                "phone":        b.get("phone_number", ""),
+                "amount":       float((b.get("final_cost") or b.get("estimated_cost") or 0)) - float(b.get("commitment_fee") or 0),
+                "payment_status": b.get("final_payment_status", "unpaid"),
+                "mpesa_receipt":  b.get("final_receipt"),
+                "status":       b.get("status"),
+                "payment_method": "mpesa",
+                "created_at":   b.get("created_at"),
+                "detail": {
+                    "device":      f"{b.get('device_type','')} {b.get('device_model','')}".strip(),
+                    "issue":       b.get("issue_description"),
+                    "estimated_cost": float(b.get("estimated_cost") or 0),
+                    "final_cost":     float(b.get("final_cost") or 0),
+                    "booking_id":  b["id"],
+                }
+            })
+
+    txns.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+    return {"data": txns, "count": len(txns)}
+
+
 
 class BulkStatusUpdate(BaseModel):
     order_ids: List[str]

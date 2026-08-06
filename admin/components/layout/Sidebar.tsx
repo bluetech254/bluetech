@@ -20,12 +20,14 @@ import {
   Sparkles,
   Bell,
   DollarSign,
+  Receipt,
 } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/repairs", label: "Repair Bookings", icon: Wrench },
+  { href: "/transactions", label: "Transactions", icon: Receipt },
   { href: "/products", label: "Products", icon: Package },
   { href: "/zones", label: "Delivery Zones", icon: MapPin },
   { href: "/services", label: "Repair Services", icon: ListChecks },
