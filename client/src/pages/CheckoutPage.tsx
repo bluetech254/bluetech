@@ -137,7 +137,7 @@ export const CheckoutPage = () => {
         notes: formData.notes || undefined,
         payment_method: formData.payment_method,
         referral_code: formData.referral_code || undefined,
-        redeem_points: (isPointsOnly || (redeemPoints && pointsBalance >= 1000)) ? pointsBalance : undefined,
+        redeem_points: (isPointsOnly || (redeemPoints && pointsBalance >= 1000)) ? Math.min(pointsBalance, subtotal) : undefined,
       };
 
       const response = await createOrder(orderPayload);

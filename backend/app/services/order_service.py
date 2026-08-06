@@ -79,7 +79,7 @@ def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
         current_pts = points_service.get_user_points(user_id)
         if current_pts < order_data.redeem_points:
             raise ValueError(f"Insufficient points. You have {current_pts}")
-        points_discount = Decimal(str(order_data.redeem_points))  # 1 pt = KES 1
+    points_discount = Decimal(str(min(order_data.redeem_points, int(subtotal))))  # cap at subtotal, 1 pt = KES 1
 
     total_amount = subtotal - points_discount + delivery_fee
 
