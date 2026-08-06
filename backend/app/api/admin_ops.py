@@ -36,10 +36,15 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     products = products_r.data or []
     users    = users_r.data or []
 
+    # Accept both today and yesterday UTC to cover EAT (UTC+3) timezone
+    from datetime import timezone, timedelta
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat()
+    today_dates = {today, yesterday}
+
     # Today filters
-    orders_today   = [o for o in orders   if (o.get("created_at") or "")[:10] == today]
-    bookings_today = [b for b in bookings if (b.get("created_at") or "")[:10] == today]
-    users_today    = [u for u in users    if (u.get("created_at") or "")[:10] == today]
+    orders_today   = [o for o in orders   if (o.get("created_at") or "")[:10] in today_dates]
+    bookings_today = [b for b in bookings if (b.get("created_at") or "")[:10] in today_dates]
+    users_today    = [u for u in users    if (u.get("created_at") or "")[:10] in today_dates]
 
     # Revenue — only paid transactions
     order_revenue   = sum(float(o.get("total_amount", 0) or 0) for o in orders if o.get("payment_status") == "paid")
@@ -49,7 +54,16 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
         for b in bookings if b.get("final_payment_status") == "paid"
     )
     booking_revenue = booking_commitment + booking_final
-    revenue_today   = sum(float(o.get("total_amount", 0) or 0) for o in orders_today if o.get("payment_status") == "paid")
+
+    # Today's revenue — orders + booking payments
+    revenue_today = (
+        sum(float(o.get("total_amount", 0) or 0) for o in orders_today if o.get("payment_status") == "paid") +
+        sum(float(b.get("commitment_fee", 0) or 0) for b in bookings_today if b.get("commitment_payment_status") == "paid") +
+        sum(
+            max(0, float(b.get("final_cost") or b.get("estimated_cost") or 0) - float(b.get("commitment_fee") or 0))
+            for b in bookings_today if b.get("final_payment_status") == "paid"
+        )
+    )
 
     # Active repair queue
     active_statuses = {"pending", "confirmed", "picked_up", "in_diagnosis", "in_repair"}
@@ -107,8 +121,8 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
         "low_stock_alerts":    low_stock,
         "order_status_breakdown": dict(status_counts),
         "revenue_chart":       revenue_chart,
-        "recent_orders":       sorted(orders,   key=lambda x: x.get("created_at",""), reverse=True)[:10],
-        "recent_bookings":     sorted(bookings, key=lambda x: x.get("created_at",""), reverse=True)[:5],
+        "recent_orders":       sorted(orders,   key=lambda x: x.get("created_at",""), reverse=True)[:50],
+        "recent_bookings":     sorted(bookings, key=lambda x: x.get("created_at",""), reverse=True)[:20],
     }
 
 
