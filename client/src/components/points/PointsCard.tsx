@@ -79,11 +79,9 @@ export const PointsCard: React.FC<Props> = ({ variant = 'compact' }) => {
           )}
         </div>
 
-        <div className="text-4xl font-black mb-1">{data.points_balance.toLocaleString()}</div>
+        <div className="text-4xl font-black mb-1">{data.points_balance.toLocaleString()} pts</div>
         <div className="text-blue-200 text-xs mb-4">
-          {data.can_redeem
-            ? `Ready to redeem! Worth KES ${data.points_balance.toLocaleString()}`
-            : `${(data.redeem_minimum - data.points_balance).toLocaleString()} pts to redeem`}
+          Worth KES {(data.points_balance * 0.1).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · 10 pts = KES 1
         </div>
 
         {/* Progress bar */}
@@ -101,7 +99,7 @@ export const PointsCard: React.FC<Props> = ({ variant = 'compact' }) => {
             className="w-full mb-3 flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 font-black text-sm rounded-lg py-2.5 transition-colors"
           >
             <Star className="w-4 h-4 fill-slate-900" />
-            Use points at checkout → save KES {data.points_balance.toLocaleString()}
+            Use points at checkout → save KES {(data.points_balance * 0.1).toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </Link>
         ) : (
           <Link

@@ -331,10 +331,11 @@ export const ProfilePage = () => {
           <PointsCard variant="full" />
           <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs text-blue-700 space-y-1">
             <p className="font-black text-blue-800">How points work</p>
-            <p>• Earn points on every delivered order (% of subtotal)</p>
+            <p>• Earn points on every delivered order (10% of subtotal → e.g. KES 500 order = 50 pts)</p>
             <p>• Earn bonus points when a friend you referred places their first order</p>
-            <p>• Redeem 1,000+ points as cash discount at checkout (1 pt = KES 1)</p>
-            <p>• If your balance covers the full subtotal, choose <strong>Pay with Points</strong> at checkout — no M-Pesa needed</p>
+            <p>• <strong>10 pts = KES 1</strong> — points are your wallet, they never expire</p>
+            <p>• Use them at checkout as a discount, or pay entirely with points if your balance covers the subtotal</p>
+            <p>• Delivery fee is always charged separately</p>
           </div>
         </div>
       )}

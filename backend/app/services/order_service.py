@@ -71,15 +71,14 @@ def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
     delivery_fee = get_delivery_fee(order_data.delivery_zone)
     subtotal = calc["subtotal"]
 
-    # Points redemption — reduce subtotal (delivery fee still charged)
+    # Points redemption — 10 pts = KES 1, no minimum, capped at subtotal
     points_discount = Decimal(0)
     if order_data.redeem_points and user_id:
-        if order_data.redeem_points < points_service.REDEEM_MINIMUM:
-            raise ValueError(f"Minimum redemption is {points_service.REDEEM_MINIMUM} points")
         current_pts = points_service.get_user_points(user_id)
         if current_pts < order_data.redeem_points:
             raise ValueError(f"Insufficient points. You have {current_pts}")
-    points_discount = Decimal(str(min(order_data.redeem_points, int(subtotal))))  # cap at subtotal, 1 pt = KES 1
+        kes_value = Decimal(str(round(order_data.redeem_points * points_service.POINTS_TO_KES, 2)))
+        points_discount = min(kes_value, subtotal)  # never discount more than subtotal
 
     total_amount = subtotal - points_discount + delivery_fee
 
@@ -90,7 +89,8 @@ def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
         if not order_data.redeem_points:
             raise ValueError("redeem_points must be set when using points_only payment")
         if points_discount < subtotal:
-            raise ValueError(f"Insufficient points to cover subtotal. Need {int(subtotal)} pts, have {order_data.redeem_points}")
+            pts_needed = math.ceil(float(subtotal) / points_service.POINTS_TO_KES)
+            raise ValueError(f"Need {pts_needed} points to cover subtotal of KES {float(subtotal):.2f}")
 
     # Resolve referral code → store referrer_id on order for later awarding
     referrer_id = None

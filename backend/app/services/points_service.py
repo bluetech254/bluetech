@@ -4,11 +4,11 @@ import math
 import secrets
 import string
 
-EARN_RATE              = 0.10   # 10% of subtotal → points
+EARN_RATE              = 0.10   # 10% of subtotal → points  (KES 100 order = 10 pts)
 REFERRAL_POINTS        = 50     # points awarded to referrer on referee's first order
 REFERRAL_SIGNUP_POINTS = 10     # instant points awarded to referrer when referee registers
-REDEEM_MINIMUM         = 1000   # minimum points to redeem
-# 1 point = KES 1; delivery fee always charged separately
+REDEEM_MINIMUM         = 1      # no minimum — any points can be used
+POINTS_TO_KES          = 0.1    # 10 points = KES 1  (1 pt = KES 0.10)
 
 
 def generate_referral_code() -> str:
@@ -63,18 +63,15 @@ def award_referral_points(referrer_id: str, referee_name: str):
 def redeem_points(user_id: str, points_to_redeem: int) -> dict:
     """
     Redeem points toward an order discount.
-    Returns { discount_amount, remaining_points } or raises ValueError.
+    10 points = KES 1  (1 pt = KES 0.10)
     """
-    if points_to_redeem < REDEEM_MINIMUM:
-        raise ValueError(f"Minimum redemption is {REDEEM_MINIMUM} points")
-
     current = get_user_points(user_id)
     if current < points_to_redeem:
         raise ValueError(f"Insufficient points. You have {current}, requested {points_to_redeem}")
 
-    discount = float(points_to_redeem)  # 1 point = KES 1 discount on order/booking
+    discount = round(points_to_redeem * POINTS_TO_KES, 2)  # 10 pts = KES 1
     _add_points(user_id, -points_to_redeem, "redemption",
-                f"Redeemed {points_to_redeem} points for KES {discount:.0f} discount on order/booking")
+                f"Redeemed {points_to_redeem} points for KES {discount:.2f} discount on order/booking")
 
     return {"discount_amount": discount, "remaining_points": current - points_to_redeem}
 

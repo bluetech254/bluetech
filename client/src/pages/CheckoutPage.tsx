@@ -92,14 +92,19 @@ export const CheckoutPage = () => {
     }
   }, [items, loadingZones, navigate]);
 
-  const selectedZone = zones.find(z => z.id === watchedZoneId);
-  const deliveryFee = selectedZone ? selectedZone.delivery_fee : 0;
+  const POINTS_TO_KES = 0.1; // 10 pts = KES 1
+  const pointsKesValue = Math.round(pointsBalance * POINTS_TO_KES * 100) / 100; // KES value of balance
   const isPointsOnly = watchedPaymentMethod === 'points_only';
-  // points_only: redeem exactly subtotal worth of points (delivery still charged separately)
-  const pointsDiscount = isPointsOnly
-    ? Math.min(pointsBalance, subtotal)
-    : (redeemPoints && pointsBalance >= 1000 ? Math.min(pointsBalance, subtotal) : 0);
-  const grandTotal = Math.max(0, subtotal - pointsDiscount + deliveryFee);
+  // How many points needed to cover subtotal: ceil(subtotal / 0.1)
+  const pointsNeededForSubtotal = Math.ceil(subtotal / POINTS_TO_KES);
+  const canPayWithPoints = isAuthenticated && pointsBalance >= pointsNeededForSubtotal && subtotal > 0;
+  // Discount in KES: use all points but cap at subtotal
+  const pointsDiscountKes = isPointsOnly
+    ? Math.min(pointsKesValue, subtotal)
+    : (redeemPoints && pointsBalance > 0 ? Math.min(pointsKesValue, subtotal) : 0);
+  // Points actually consumed (reverse: KES discount / rate)
+  const pointsToRedeem = pointsDiscountKes > 0 ? Math.ceil(pointsDiscountKes / POINTS_TO_KES) : 0;
+  const grandTotal = Math.max(0, subtotal - pointsDiscountKes + deliveryFee);
 
   const onSubmit = async (formData: any) => {
     if (items.length === 0) return;
@@ -137,7 +142,7 @@ export const CheckoutPage = () => {
         notes: formData.notes || undefined,
         payment_method: formData.payment_method,
         referral_code: formData.referral_code || undefined,
-        redeem_points: (isPointsOnly || (redeemPoints && pointsBalance >= 1000)) ? Math.min(pointsBalance, subtotal) : undefined,
+        redeem_points: (isPointsOnly || redeemPoints) && pointsToRedeem > 0 ? pointsToRedeem : undefined,
       };
 
       const response = await createOrder(orderPayload);
@@ -352,7 +357,7 @@ export const CheckoutPage = () => {
                 </label>
 
                 {/* Pay with Points — only shown when balance covers subtotal */}
-                {isAuthenticated && pointsBalance >= subtotal && subtotal > 0 && (
+                {canPayWithPoints && (
                   <label className={`sm:col-span-2 border-2 rounded-xl p-4 flex items-start space-x-3 cursor-pointer transition-all ${watchedPaymentMethod === 'points_only' ? 'border-yellow-400 bg-yellow-50' : 'border-slate-100 hover:border-yellow-200 bg-white'}`}>
                     <input type="radio" value="points_only" checked={watchedPaymentMethod === 'points_only'} className="w-4 h-4 text-yellow-500 border-slate-200 mt-1 cursor-pointer" {...register('payment_method')} />
                     <div className="min-w-0 flex-1">
@@ -362,12 +367,12 @@ export const CheckoutPage = () => {
                         <span className="bg-yellow-400 text-slate-900 text-[9px] font-black px-1.5 py-0.5 rounded-sm">INSTANT</span>
                       </p>
                       <p className="text-xs text-slate-500 leading-normal mt-1">
-                        Use your <span className="font-bold text-yellow-600">{pointsBalance.toLocaleString()} pts</span> to pay for this order instantly — no M-Pesa needed. Delivery fee still applies.
+                        Use <span className="font-bold text-yellow-600">{pointsNeededForSubtotal.toLocaleString()} pts</span> (= {formatCurrency(subtotal)}) from your wallet of <span className="font-bold">{pointsBalance.toLocaleString()} pts</span>. Delivery fee still applies.
                       </p>
                       {watchedPaymentMethod === 'points_only' && (
                         <div className="mt-2 flex items-center gap-2 text-xs font-bold text-yellow-700">
                           <CheckCircle className="w-3.5 h-3.5" />
-                          {Math.min(pointsBalance, subtotal).toLocaleString()} pts deducted · saves {formatCurrency(Math.min(pointsBalance, subtotal))} · you pay only delivery {formatCurrency(deliveryFee)}
+                          {pointsNeededForSubtotal.toLocaleString()} pts deducted · saves {formatCurrency(pointsDiscountKes)} · you pay only delivery {formatCurrency(deliveryFee)}
                         </div>
                       )}
                     </div>
@@ -398,8 +403,8 @@ export const CheckoutPage = () => {
                 Step 4: Place Order
               </h2>
 
-              {/* Points redemption */}
-              {isAuthenticated && pointsBalance >= 1000 && (
+              {/* Points partial redemption — shown when not using points_only and has any points */}
+              {isAuthenticated && pointsBalance > 0 && !isPointsOnly && (
                 <div className={`rounded-xl border-2 p-4 transition-colors ${redeemPoints ? 'border-yellow-400 bg-yellow-50' : 'border-slate-100 bg-slate-50'}`}>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
@@ -411,12 +416,12 @@ export const CheckoutPage = () => {
                     <div className="flex items-center gap-2">
                       <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" />
                       <span className="text-sm font-bold text-slate-800">
-                        Redeem {pointsBalance.toLocaleString()} points — save {formatCurrency(pointsBalance)}
+                        Use {pointsBalance.toLocaleString()} pts — save {formatCurrency(Math.min(pointsKesValue, subtotal))}
                       </span>
                     </div>
                   </label>
                   {redeemPoints && (
-                    <p className="text-xs text-yellow-700 mt-2 ml-7">Delivery fee still applies. Discount applied to subtotal.</p>
+                    <p className="text-xs text-yellow-700 mt-2 ml-7">10 pts = KES 1. Delivery fee still applies.</p>
                   )}
                 </div>
               )}
@@ -515,10 +520,10 @@ export const CheckoutPage = () => {
                 </span>
               </div>
 
-              {pointsDiscount > 0 && (
+              {pointsDiscountKes > 0 && (
                 <div className="flex justify-between font-semibold text-yellow-600">
                   <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-yellow-400" /> Points Discount</span>
-                  <span>-{formatCurrency(pointsDiscount)}</span>
+                  <span>-{formatCurrency(pointsDiscountKes)}</span>
                 </div>
               )}
 
