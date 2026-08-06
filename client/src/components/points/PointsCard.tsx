@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Gift, Copy, Clock, TrendingUp, ChevronRight, Zap } from 'lucide-react';
-import { getMyPoints, getPointsHistory, redeemPoints, PointsData, PointsHistoryItem } from '../../api/points';
+import { Star, Gift, Copy, Clock, TrendingUp, ChevronRight } from 'lucide-react';
+import { getMyPoints, getPointsHistory, PointsData, PointsHistoryItem } from '../../api/points';
 import toast from 'react-hot-toast';
 
 const typeLabel: Record<string, string> = {
@@ -27,7 +27,6 @@ export const PointsCard: React.FC<Props> = ({ variant = 'compact' }) => {
   const [data, setData] = useState<PointsData | null>(null);
   const [history, setHistory] = useState<PointsHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [redeeming, setRedeeming] = useState(false);
 
   const load = async () => {
     try {
@@ -48,20 +47,6 @@ export const PointsCard: React.FC<Props> = ({ variant = 'compact' }) => {
     const link = `${window.location.origin}/register?ref=${data.referral_code}`;
     navigator.clipboard.writeText(link);
     toast.success('Referral link copied!');
-  };
-
-  const handleRedeem = async () => {
-    if (!data?.can_redeem) return;
-    setRedeeming(true);
-    try {
-      const res = await redeemPoints(data.points_balance);
-      toast.success(`Redeemed! KES ${res.discount_amount.toLocaleString()} discount applied to your next order.`);
-      await load();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.detail ?? e?.message ?? 'Redemption failed');
-    } finally {
-      setRedeeming(false);
-    }
   };
 
   if (loading) {
@@ -109,19 +94,18 @@ export const PointsCard: React.FC<Props> = ({ variant = 'compact' }) => {
           />
         </div>
 
-        {/* Redeem button */}
+        {/* Redeem CTA */}
         {data.can_redeem ? (
-          <button
-            onClick={handleRedeem}
-            disabled={redeeming}
-            className="w-full mb-3 flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-60 text-slate-900 font-black text-sm rounded-lg py-2.5 transition-colors"
+          <Link
+            to="/checkout"
+            className="w-full mb-3 flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 font-black text-sm rounded-lg py-2.5 transition-colors"
           >
-            <Zap className="w-4 h-4" />
-            {redeeming ? 'Redeeming…' : `Redeem ${data.points_balance.toLocaleString()} pts → KES ${data.points_balance.toLocaleString()} off`}
-          </button>
+            <Star className="w-4 h-4 fill-slate-900" />
+            Use points at checkout → save KES {data.points_balance.toLocaleString()}
+          </Link>
         ) : (
           <Link
-            to="/shop"
+            to="/products"
             className="w-full mb-3 flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 text-white font-bold text-sm rounded-lg py-2.5 transition-colors"
           >
             <TrendingUp className="w-4 h-4" />

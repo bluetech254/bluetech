@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field
 from app.api.admin_auth import get_current_admin
 from app.services import points_service
 from app.utils.auth import decode_token
@@ -14,10 +13,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     if not payload or "user_id" not in payload:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     return payload
-
-
-class RedeemRequest(BaseModel):
-    points: int = Field(..., ge=1000, description="Points to redeem (minimum 1000)")
 
 
 # ── Client endpoints ──────────────────────────────────────────────────────────
@@ -46,20 +41,8 @@ def points_history(user: dict = Depends(get_current_user)):
     return {"data": points_service.get_points_history(user["user_id"])}
 
 
-@router.post("/redeem")
-def redeem_points(body: RedeemRequest, user: dict = Depends(get_current_user)):
-    """
-    Redeem points for a discount on next order.
-    - Minimum 1000 points
-    - 1 point = KES 1 discount
-    - Delivery fee is always charged separately
-    Returns a discount_amount to apply at checkout.
-    """
-    try:
-        result = points_service.redeem_points(user["user_id"], body.points)
-        return result
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+# Points are redeemed exclusively at checkout via order_service (redeem_points field on OrderCreate).
+# There is no standalone /redeem endpoint — all redemptions are tied to an order_id in the ledger.
 
 
 # ── Admin endpoints ───────────────────────────────────────────────────────────

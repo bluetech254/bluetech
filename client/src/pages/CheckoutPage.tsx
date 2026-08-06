@@ -30,7 +30,6 @@ export const CheckoutPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [mpesaOrder, setMpesaOrder] = useState<{ orderId: string; phone: string; amount: string } | null>(null);
   const [pointsBalance, setPointsBalance] = useState(0);
-  const [canRedeem, setCanRedeem] = useState(false);
   const [redeemPoints, setRedeemPoints] = useState(false);
 
   // Restore pre-selected zone from sessionStorage
@@ -79,10 +78,7 @@ export const CheckoutPage = () => {
   // Load points balance for authenticated users
   useEffect(() => {
     if (isAuthenticated) {
-      getMyPoints().then(d => {
-        setPointsBalance(d.points_balance);
-        setCanRedeem(d.can_redeem);
-      }).catch(() => {});
+      getMyPoints().then(d => setPointsBalance(d.points_balance)).catch(() => {});
     }
   }, [isAuthenticated]);
 
