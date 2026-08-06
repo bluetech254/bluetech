@@ -49,7 +49,7 @@ export const CheckoutPage = () => {
       email: '',
       delivery_address: '',
       delivery_zone: defaultZoneId,
-      payment_method: 'mpesa' as 'mpesa' | 'cash_on_delivery',
+      payment_method: 'mpesa' as 'mpesa' | 'cash_on_delivery' | 'points_only',
       notes: '',
       referral_code: '',
       redeem_points: 0,
