@@ -76,6 +76,26 @@ def update_order_status(order_id: UUID, status_update: StatusUpdate, admin: dict
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/{order_id}/cancel", response_model=dict)
+def client_cancel_order(order_id: UUID, user_id: Optional[str] = Depends(get_optional_user)):
+    """Client: cancel their own pending order."""
+    try:
+        from app.database import supabase_admin as sb
+        order = sb.table("orders").select("status,user_id").eq("id", str(order_id)).single().execute()
+        if not order.data:
+            raise HTTPException(status_code=404, detail="Order not found")
+        if user_id and order.data.get("user_id") and str(order.data["user_id"]) != str(user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
+        if order.data["status"] != "pending":
+            raise HTTPException(status_code=400, detail=f"Cannot cancel an order with status '{order.data['status']}'")
+        sb.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
+        return {"message": "Order cancelled"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/{order_id}", response_model=dict)
 def cancel_order(order_id: UUID, admin: dict = Depends(get_current_admin)):
     """Cancel/delete an order (Admin)"""

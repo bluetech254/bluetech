@@ -149,13 +149,27 @@ export const CheckoutPage = () => {
 
       const response = await createOrder(orderPayload);
 
-      // points_only = already paid, skip M-Pesa
+      // points_only = subtotal paid by points, but delivery fee still needs payment
       if (formData.payment_method === 'points_only') {
-        toast.success('Order placed & paid with points! 🎉', { id: toastId });
-        orderPlaced.current = true;
-        clearCart();
-        sessionStorage.removeItem('bluetech_delivery_zone_id');
-        navigate(`/order-success/${response.id}`);
+        if (deliveryFee > 0) {
+          // Trigger M-Pesa STK for delivery fee only
+          try {
+            await initiateMpesaPayment(response.id);
+            orderPlaced.current = true;
+            clearCart();
+            sessionStorage.removeItem('bluetech_delivery_zone_id');
+            toast.dismiss(toastId);
+            setMpesaOrder({ orderId: response.id, phone: phoneNumber, amount: formatCurrency(deliveryFee) });
+          } catch {
+            toast.error('Order created but M-Pesa prompt for delivery fee failed. Please retry payment.', { id: toastId });
+          }
+        } else {
+          toast.success('Order placed & paid with points! 🎉', { id: toastId });
+          orderPlaced.current = true;
+          clearCart();
+          sessionStorage.removeItem('bluetech_delivery_zone_id');
+          navigate(`/order-success/${response.id}`);
+        }
       } else if (formData.payment_method === 'mpesa') {
         // Initiate STK push then show waiting modal
         try {
@@ -369,7 +383,7 @@ export const CheckoutPage = () => {
                         <span className="bg-yellow-400 text-slate-900 text-[9px] font-black px-1.5 py-0.5 rounded-sm">INSTANT</span>
                       </p>
                       <p className="text-xs text-slate-500 leading-normal mt-1">
-                        Use <span className="font-bold text-yellow-600">{pointsNeededForSubtotal.toLocaleString()} pts</span> (= {formatCurrency(subtotal)}) from your wallet of <span className="font-bold">{pointsBalance.toLocaleString()} pts</span>. Delivery fee still applies.
+                        Use <span className="font-bold text-yellow-600">{pointsNeededForSubtotal.toLocaleString()} pts</span> (= {formatCurrency(subtotal)}) from your wallet of <span className="font-bold">{pointsBalance.toLocaleString()} pts</span>.{deliveryFee > 0 ? ` Delivery fee ${formatCurrency(deliveryFee)} paid via M-Pesa.` : ' Free delivery!'}
                       </p>
                       {watchedPaymentMethod === 'points_only' && (
                         <div className="mt-2 flex items-center gap-2 text-xs font-bold text-yellow-700">

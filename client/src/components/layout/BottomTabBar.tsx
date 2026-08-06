@@ -1,13 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag, Wrench, Star, User } from 'lucide-react';
+import { Home, ShoppingBag, Wrench, Package, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const tabs = [
   { to: '/', icon: Home, label: 'Home', exact: true },
-  { to: '/products', icon: ShoppingBag, label: 'Products' },
-  { to: '/services', icon: Wrench, label: 'Services' },
-  { to: '/points', icon: Star, label: 'Points', authRequired: true },
+  { to: '/products', icon: ShoppingBag, label: 'Shop' },
+  { to: '/services', icon: Wrench, label: 'Repairs' },
+  { to: '/orders', icon: Package, label: 'Orders', authRequired: true },
   { to: '/profile', icon: User, label: 'Profile', authRequired: true },
 ];
 
