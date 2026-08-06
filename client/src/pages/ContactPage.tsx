@@ -72,9 +72,9 @@ export const ContactPage = () => {
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-xs">Phone Calls</p>
-                  <p className="font-semibold text-slate-700 mt-0.5 text-xs sm:text-sm">+254 700 123 456</p>
-                  <p className="font-semibold text-slate-700 text-xs sm:text-sm">+254 711 987 654</p>
+                  <p className="font-bold text-slate-900 text-xs">Phone / WhatsApp</p>
+                  <a href="tel:+254707454182" className="font-semibold text-slate-700 mt-0.5 text-xs sm:text-sm hover:text-blue-600 block">+254 707 454 182</a>
+                  <a href="https://wa.me/254707454182" target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 font-bold hover:underline">Chat on WhatsApp →</a>
                 </div>
               </div>
 
@@ -84,9 +84,8 @@ export const ContactPage = () => {
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-xs">Email Inquiry</p>
-                  <p className="font-semibold text-slate-700 mt-0.5 text-xs sm:text-sm">support@bluetech.co.ke</p>
-                  <p className="font-semibold text-slate-700 text-xs sm:text-sm">info@bluetech.co.ke</p>
+                  <p className="font-bold text-slate-900 text-xs">Email</p>
+                  <a href="mailto:bluetechnology58@gmail.com" className="font-semibold text-slate-700 mt-0.5 text-xs sm:text-sm hover:text-blue-600 block">bluetechnology58@gmail.com</a>
                 </div>
               </div>
 
@@ -96,11 +95,10 @@ export const ContactPage = () => {
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-xs">Storefront Location</p>
+                  <p className="font-bold text-slate-900 text-xs">Location</p>
                   <p className="font-semibold text-slate-700 leading-relaxed mt-0.5 text-xs sm:text-sm">
-                    BlueTech Plaza, 2nd Floor Shop #24,<br />
-                    Moi Avenue, Nairobi CBD,<br />
-                    Kenya
+                    1KM behind Kenyatta University,<br />
+                    Nairobi, Kenya
                   </p>
                 </div>
               </div>
@@ -127,6 +125,29 @@ export const ContactPage = () => {
                 <span>Sundays & Holidays</span>
                 <span className="text-red-500 font-bold">Closed (Online only)</span>
               </div>
+            </div>
+          </Card>
+
+          {/* Social Media */}
+          <Card className="p-6 space-y-4">
+            <h3 className="font-extrabold border-b border-slate-50 pb-3 text-xs text-slate-400">
+              Follow & Connect
+            </h3>
+            <div className="space-y-2.5 text-xs">
+              {[
+                { label: 'WhatsApp', href: 'https://wa.me/254707454182', color: 'text-green-600' },
+                { label: 'Instagram', href: 'https://instagram.com/bluetechnology58', color: 'text-pink-600' },
+                { label: 'Facebook', href: 'https://facebook.com/bluetechnology.co.ke', color: 'text-blue-700' },
+                { label: 'YouTube', href: 'https://youtube.com/@BlueTechnology58', color: 'text-red-600' },
+                { label: 'TikTok', href: 'https://www.tiktok.com/@bluetechnology58', color: 'text-slate-900' },
+                { label: 'Twitter / X', href: 'https://x.com/BLUETECHNOLOG58', color: 'text-slate-700' },
+              ].map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  className={`flex items-center justify-between font-semibold hover:underline ${s.color}`}>
+                  <span>{s.label}</span>
+                  <span className="text-slate-400">→</span>
+                </a>
+              ))}
             </div>
           </Card>
 
