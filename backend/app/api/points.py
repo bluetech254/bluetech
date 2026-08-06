@@ -76,5 +76,13 @@ def admin_get_user_points(user_id: str, admin: dict = Depends(get_current_admin)
 @router.post("/admin/award/{user_id}")
 def admin_award_points(user_id: str, points: int, reason: str, admin: dict = Depends(get_current_admin)):
     """Admin: manually award points to a user (e.g. compensation, promotion)."""
-    points_service._add_points(user_id, points, "admin_award", reason)
-    return {"message": f"Awarded {points} points", "new_balance": points_service.get_user_points(user_id)}
+    from uuid import UUID as _UUID
+    try:
+        _UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID — must be a full UUID (e.g. from the Users page)")
+    try:
+        points_service._add_points(user_id, points, "admin_award", reason)
+        return {"message": f"Awarded {points} points", "new_balance": points_service.get_user_points(user_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
