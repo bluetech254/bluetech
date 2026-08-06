@@ -31,9 +31,8 @@ def get_user_points(user_id: str) -> int:
 
 
 def _add_points(user_id: str, points: int, type_: str, description: str, order_id: str = None):
-    """Add or subtract points atomically via DB-level increment and log to ledger."""
-    # Atomic increment — avoids read-then-write race condition
-    supabase_admin.rpc("increment_user_points", {"uid": user_id, "delta": points}).execute()
+    """Add or subtract points and log to ledger."""
+    supabase_admin.table("users").update({"points": supabase_admin.table("users").select("points").eq("id", user_id).single().execute().data.get("points", 0) + points}).eq("id", user_id).execute()
     entry = {"user_id": user_id, "points": points, "type": type_, "description": description}
     if order_id:
         entry["order_id"] = order_id
