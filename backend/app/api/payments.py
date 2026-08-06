@@ -97,6 +97,16 @@ def mpesa_booking_commitment(booking_id: str):
         raise HTTPException(status_code=502, detail="Failed to initiate M-Pesa payment. Try again.")
 
 
+@router.get("/mpesa/booking/{booking_id}/final/status")
+def mpesa_final_status(booking_id: str):
+    resp = supabase.table("bookings").select(
+        "final_payment_status,final_receipt,final_cost,commitment_fee"
+    ).eq("id", booking_id).single().execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    return resp.data
+
+
 @router.get("/mpesa/booking/{booking_id}/commitment/status")
 def mpesa_commitment_status(booking_id: str):
     resp = supabase.table("bookings").select(
