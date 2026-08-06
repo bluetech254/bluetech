@@ -114,6 +114,7 @@ export const Header = () => {
                       <p className="text-sm font-bold text-slate-900 truncate">{user.full_name}</p>
                     </div>
                     <Link to="/profile" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-medium">My Profile</Link>
+                    <Link to="/orders" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-medium">My Orders & Repairs</Link>
                     <Link to="/track-order" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-medium">Track Orders</Link>
                     <button type="button" onClick={handleLogout} className="w-full flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium border-t border-slate-50">
                       <LogOut className="h-4 w-4 mr-2" />Sign Out

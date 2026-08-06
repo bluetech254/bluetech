@@ -175,7 +175,7 @@ export const ProfilePage = () => {
             {[
               { label: 'Browse Products', to: '/products', icon: <Package className="w-5 h-5" />, color: 'text-blue-600 bg-blue-50' },
               { label: 'Book Repair', to: '/services', icon: <Wrench className="w-5 h-5" />, color: 'text-purple-600 bg-purple-50' },
-              { label: 'Track Order', to: '/track-order', icon: <ClipboardList className="w-5 h-5" />, color: 'text-green-600 bg-green-50' },
+              { label: 'My Orders', to: '/orders', icon: <ClipboardList className="w-5 h-5" />, color: 'text-green-600 bg-green-50' },
               { label: 'Edit Profile', onClick: () => setActiveTab('settings'), icon: <User className="w-5 h-5" />, color: 'text-slate-600 bg-slate-100' },
             ].map(a => (
               a.to
