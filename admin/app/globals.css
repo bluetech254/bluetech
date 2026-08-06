@@ -58,3 +58,10 @@ body {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #232b4a; border-radius: 8px; }
+
+@media print {
+  body { background: white !important; }
+  nav, aside, header, .print\:hidden { display: none !important; }
+  .print\:shadow-none { box-shadow: none !important; }
+  .print\:rounded-none { border-radius: 0 !important; }
+}

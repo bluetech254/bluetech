@@ -79,7 +79,7 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     from collections import defaultdict
     daily = defaultdict(float)
     for o in orders:
-        if o.get("status") != "cancelled":
+        if o.get("payment_status") == "paid":
             day = (o.get("created_at") or "")[:10]
             if day:
                 daily[day] += float(o.get("total_amount", 0) or 0)

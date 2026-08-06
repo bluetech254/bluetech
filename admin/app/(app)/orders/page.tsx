@@ -190,9 +190,13 @@ export default function OrdersPage() {
                 <p className="text-xs text-ink-dim font-mono">#{detailOrder.id}</p>
                 <h2 className="font-bold text-ink text-base mt-0.5">Order Details</h2>
               </div>
-              <button onClick={() => setDetailOrder(null)} className="p-1.5 rounded-lg hover:bg-base-hover text-ink-muted hover:text-ink transition-colors">
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <a href={`/receipt?type=order&id=${detailOrder.id}`} target="_blank" rel="noreferrer"
+                  className="btn-ghost !py-1 !px-2.5 text-xs">🧾 Receipt</a>
+                <button onClick={() => setDetailOrder(null)} className="p-1.5 rounded-lg hover:bg-base-hover text-ink-muted hover:text-ink transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Scrollable body */}

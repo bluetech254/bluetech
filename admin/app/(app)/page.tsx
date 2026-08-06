@@ -30,14 +30,32 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const revenueChange = useMemo(() => {
+  const filteredChart = useMemo(() => {
     const chart = data?.revenue_chart ?? [];
-    if (chart.length < 2) return undefined;
-    const prev = chart[chart.length - 2].revenue;
-    const curr = chart[chart.length - 1].revenue;
+    if (!chart.length) return chart;
+    const now = new Date();
+    let cutoff: string;
+    if (range === "Today") {
+      cutoff = now.toISOString().slice(0, 10);
+    } else if (range === "This Week") {
+      const d = new Date(now); d.setDate(d.getDate() - 6);
+      cutoff = d.toISOString().slice(0, 10);
+    } else if (range === "This Year") {
+      cutoff = `${now.getFullYear()}-01-01`;
+    } else {
+      // This Month
+      cutoff = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    }
+    return chart.filter((p: any) => p.date >= cutoff);
+  }, [data, range]);
+
+  const revenueChange = useMemo(() => {
+    if (filteredChart.length < 2) return undefined;
+    const prev = filteredChart[filteredChart.length - 2].revenue;
+    const curr = filteredChart[filteredChart.length - 1].revenue;
     if (!prev) return undefined;
     return Math.round(((curr - prev) / prev) * 1000) / 10;
-  }, [data]);
+  }, [filteredChart]);
 
   const statusDonut = useMemo(() => {
     if (!data?.order_status_breakdown) return [];
@@ -90,7 +108,7 @@ export default function DashboardPage() {
           </div>
           <div className="h-64 mt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.revenue_chart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <AreaChart data={filteredChart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#7c5cfc" stopOpacity={0.45} />
