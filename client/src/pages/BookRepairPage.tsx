@@ -101,7 +101,7 @@ export const BookRepairPage = () => {
         full_name: formData.customer_name,
         phone_number: phoneNumber,
         device_type: selectedBrand?.name ?? formData.device_brand,
-        device_model: selectedModel?.name ?? formData.device_model || undefined,
+        device_model: (selectedModel?.name ?? formData.device_model) || undefined,
         issue_description: formData.issue_description,
         fulfillment_type: 'dropoff',
         pickup_address: undefined,
