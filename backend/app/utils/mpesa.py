@@ -46,3 +46,19 @@ def stk_push(phone: str, amount: int, reference: str, description: str) -> dict:
     resp = requests.post(f"{BASE_URL}/mpesa/stkpush/v1/processrequest", json=payload, headers=headers, timeout=15)
     resp.raise_for_status()
     return resp.json()
+
+
+def stk_query(checkout_request_id: str) -> dict:
+    """Query the status of an STK push transaction."""
+    token = get_access_token()
+    password, timestamp = get_password_and_timestamp()
+    payload = {
+        "BusinessShortCode": SHORTCODE,
+        "Password": password,
+        "Timestamp": timestamp,
+        "CheckoutRequestID": checkout_request_id,
+    }
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    resp = requests.post(f"{BASE_URL}/mpesa/stkpushquery/v1/query", json=payload, headers=headers, timeout=15)
+    resp.raise_for_status()
+    return resp.json()

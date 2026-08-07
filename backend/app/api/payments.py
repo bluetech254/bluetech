@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.utils.mpesa import stk_push
+from app.utils.mpesa import stk_push, stk_query
 from app.database import supabase_admin as supabase
 from app.api.admin_auth import get_current_admin
 from app.utils.audit import log_action
@@ -115,11 +115,32 @@ def mpesa_final_status(booking_id: str):
 @router.get("/mpesa/booking/{booking_id}/commitment/status")
 def mpesa_commitment_status(booking_id: str):
     resp = supabase.table("bookings").select(
-        "commitment_payment_status,commitment_receipt,commitment_fee"
+        "commitment_payment_status,commitment_receipt,commitment_fee,commitment_checkout_id"
     ).eq("id", booking_id).single().execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Booking not found")
-    return resp.data
+
+    data = resp.data
+    # If still pending, actively query Safaricom instead of waiting for callback
+    if data.get("commitment_payment_status") == "pending" and data.get("commitment_checkout_id"):
+        try:
+            result = stk_query(data["commitment_checkout_id"])
+            result_code = result.get("ResultCode")
+            if result_code == 0:
+                supabase.table("bookings").update({
+                    "commitment_payment_status": "paid",
+                }).eq("id", booking_id).execute()
+                data["commitment_payment_status"] = "paid"
+            elif result_code is not None and result_code != 0:
+                # 1032 = cancelled, 1037 = timeout, any non-zero = failed
+                supabase.table("bookings").update({
+                    "commitment_payment_status": "failed",
+                }).eq("id", booking_id).execute()
+                data["commitment_payment_status"] = "failed"
+        except Exception as e:
+            logger.warning(f"STK query failed (non-critical): {e}")
+
+    return data
 
 
 @router.post("/mpesa/booking/{booking_id}/request-final-payment")
