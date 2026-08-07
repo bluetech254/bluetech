@@ -150,6 +150,26 @@ def create_order(order_data: OrderCreate, user_id: str = None) -> dict:
         points_service._add_points(user_id, -int(points_discount), "redemption",
                                    f"Redeemed {int(points_discount)} points on order #{order_id[:8].upper()}", order_id)
 
+    # SMS confirmation
+    try:
+        from app.utils.sms_service import send_sms
+        short_id = order_id[:8].upper()
+        items_summary = ", ".join(f"{i['product_title']} x{i['quantity']}" for i in calc["line_items"])
+        msg = (
+            f"BlueTech Order Confirmed!\n"
+            f"Order #{short_id}\n"
+            f"Items: {items_summary}\n"
+            f"Subtotal: KES {float(subtotal):,.0f}\n"
+            f"Delivery: KES {float(delivery_fee):,.0f}\n"
+            f"Total: KES {float(total_amount):,.0f}\n"
+            f"Payment: {order_data.payment_method.replace('_', ' ').title()}\n"
+            f"Deliver to: {order_data.delivery_address}\n"
+            f"Thank you for shopping with BlueTech!"
+        )
+        send_sms(order_data.phone_number, msg)
+    except Exception:
+        pass
+
     return order
 
 def get_order_by_id(order_id: UUID) -> dict:

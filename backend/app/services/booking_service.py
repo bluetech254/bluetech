@@ -10,7 +10,28 @@ def create_booking(booking_data: BookingCreate) -> dict:
     data["status"] = "pending"
     
     response = supabase.table("bookings").insert(data).execute()
-    return response.data[0]
+    booking = response.data[0]
+
+    # SMS confirmation
+    try:
+        from app.utils.sms_service import send_sms
+        short_id = booking["id"][:8].upper()
+        fulfillment = booking_data.fulfillment_type.value if hasattr(booking_data.fulfillment_type, 'value') else str(booking_data.fulfillment_type)
+        device = f"{booking_data.device_type}" + (f" {booking_data.device_model}" if booking_data.device_model else "")
+        msg = (
+            f"BlueTech Repair Booking Confirmed!\n"
+            f"Booking #{short_id}\n"
+            f"Device: {device}\n"
+            f"Issue: {booking_data.issue_description}\n"
+            f"Type: {fulfillment.replace('_', ' ').title()}\n"
+            + (f"Pickup: {booking_data.pickup_address}\n" if booking_data.pickup_address else "")
+            + f"We'll contact you shortly to confirm. Thank you for choosing BlueTech!"
+        )
+        send_sms(booking_data.phone_number, msg)
+    except Exception:
+        pass
+
+    return booking
 
 def get_bookings(status: str = None) -> List[dict]:
     """Get all bookings"""
