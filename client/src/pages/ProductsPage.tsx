@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import FilterSidebar from '../components/products/FilterSidebar';
 import ProductCard from '../components/products/ProductCard';
 import SectionCarousel from '../components/products/SectionCarousel';
@@ -15,6 +16,7 @@ const parseSpecs = (p: Product) => {
 };
 
 export const ProductsPage = () => {
+  const location = useLocation();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export const ProductsPage = () => {
 
   // Filters
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(() => (new URLSearchParams(location.search).get('category') || '').toLowerCase());
   const [minPrice, setMinPrice] = useState<number | undefined>();
   const [maxPrice, setMaxPrice] = useState<number | undefined>();
   const [condition, setCondition] = useState('');
@@ -151,7 +153,7 @@ export const ProductsPage = () => {
           )}
 
           {loading && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-2 md:gap-4 animate-pulse">
+            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-3 gap-2 md:gap-4 animate-pulse">
               {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-xl border border-slate-100 p-4 space-y-3">
                   <div className="bg-slate-100 aspect-square w-full rounded-lg" />
@@ -180,18 +182,14 @@ export const ProductsPage = () => {
 
           {!loading && !error && paginated.length > 0 && (
             <div id="products-grid">
-              {/* Mobile: horizontal scroll */}
-              <div className="sm:hidden overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory">
-                <div className="flex gap-3 w-max">
-                  {paginated.map(product => (
-                    <div key={product.id} className="w-[80px] flex-shrink-0 snap-start">
-                      <ProductCard product={product} />
-                    </div>
-                  ))}
-                </div>
+              {/* Phone/tablet: fixed 100px cards */}
+              <div className="lg:hidden grid grid-cols-3 gap-2 animate-fade-in">
+                {paginated.map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
               </div>
-              {/* Tablet+: grid */}
-              <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 animate-fade-in">
+              {/* Desktop: 4-col grid */}
+              <div className="hidden lg:grid grid-cols-4 gap-4 animate-fade-in">
                 {paginated.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}

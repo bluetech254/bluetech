@@ -47,7 +47,7 @@ export const Hero = () => {
   const imageUrl = currentProduct?.images?.[0] || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=400&fit=crop';
 
   return (
-    <div className="relative overflow-hidden animate-fade-in w-full h-[220px] sm:h-[367px] md:h-[467px] lg:h-[600px] bg-slate-100 -mt-8">
+    <div className="relative overflow-hidden animate-fade-in w-full h-[220px] sm:h-[367px] md:h-[467px] lg:h-[400px] bg-slate-100 -mt-8">
       <img
         src={imageUrl}
         alt="BlueTech Hero"
@@ -67,17 +67,17 @@ export const Hero = () => {
       <div className="absolute inset-0 bg-black/40" />
       
       {/* Content */}
-      <div className="absolute inset-0 flex flex-col items-start justify-end px-4 sm:px-12 md:px-16 lg:px-20 pb-8 sm:pb-12 md:pb-16 lg:pb-20 text-white">
-        <div className="max-w-2xl space-y-2 sm:space-y-4">
-          <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+      <div className="absolute inset-0 flex flex-col items-start justify-end lg:justify-center px-4 sm:px-12 md:px-16 lg:px-20 pb-8 sm:pb-12 md:pb-16 lg:pb-0 text-white">
+        <div className="max-w-2xl space-y-2 sm:space-y-3">
+          <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-4xl font-black tracking-tight leading-tight">
             Latest Tech Gadgets & Accessories
           </h1>
-          <p className="hidden sm:block text-sm sm:text-lg md:text-xl text-white/90 font-medium max-w-xl leading-relaxed">
+          <p className="hidden sm:block text-sm sm:text-lg md:text-xl lg:text-base text-white/90 font-medium max-w-xl leading-relaxed">
             Discover premium electronics and expert repair services. Shop genuine products or book certified technicians for professional support.
           </p>
           
           {/* Buttons */}
-          <div className="flex items-center gap-3 sm:gap-4 pt-4 w-full sm:w-auto">
+          <div className="flex items-center gap-3 sm:gap-4 pt-2 lg:pt-3 w-full sm:w-auto">
             <button
               onClick={() => navigate('/products')}
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 bg-white/95 hover:bg-white text-slate-900 font-semibold py-1.5 px-4 sm:py-2.5 sm:px-6 text-sm sm:text-base rounded-lg transition-all backdrop-blur-sm border border-white/20 cursor-pointer hover:cursor-pointer"
