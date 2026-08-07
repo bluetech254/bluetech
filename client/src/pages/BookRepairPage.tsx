@@ -167,7 +167,7 @@ export const BookRepairPage = () => {
             clearInterval(pollRef.current!);
             setPaymentState('paid');
             setTimeout(() => navigate(`/booking-success/${paymentModal.bookingId}`), 1500);
-          } else if (status.commitment_payment_status === 'failed' || attempts >= 24) {
+          } else if (status.commitment_payment_status === 'failed' || attempts >= 6) {
             clearInterval(pollRef.current!);
             setPaymentState('failed');
           }
