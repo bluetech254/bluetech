@@ -14,7 +14,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div className="flex flex-col">
-      <Link to={`/products/${id}`} className="block overflow-hidden relative bg-slate-50 border border-slate-100 group mb-1 h-[62px] md:h-[110px] lg:h-[158px]">
+      <Link to={`/products/${id}`} className="block overflow-hidden relative bg-slate-50 border border-slate-100 group mb-1 h-28 md:h-40 lg:h-52">
         <img
           src={imageUrl}
           alt={name}

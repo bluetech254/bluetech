@@ -37,7 +37,7 @@ export const NewArrivals = () => {
       <div className="md:hidden overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory">
         <div className="flex gap-3 w-max">
           {products.map((product) => (
-            <div key={product.id} className="w-40 flex-shrink-0 snap-start">
+            <div key={product.id} className="w-[140px] flex-shrink-0 snap-start">
               <ProductCard product={product} />
             </div>
           ))}

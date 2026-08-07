@@ -39,6 +39,13 @@ def get_products(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/categories", response_model=list)
+def get_product_categories():
+    from app.database import supabase
+    r = supabase.table("products").select("category").eq("is_active", True).execute()
+    cats = sorted(set(p["category"] for p in r.data if p.get("category")))
+    return cats
+
 @router.get("/{product_id}", response_model=dict)
 def get_product(product_id: UUID):
     """Get single product by ID"""

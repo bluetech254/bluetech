@@ -77,7 +77,7 @@ export const PromotionalDealsCarousel = () => {
         >
           <div className="flex gap-4 w-max">
             {deals.map((deal) => (
-              <div key={deal.id} className="flex-shrink-0 w-40 snap-start group/card">
+              <div key={deal.id} className="flex-shrink-0 w-[130px] snap-start group/card">
                 <div className="relative h-40 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                   <img src={deal.image} alt={deal.title} className="w-full h-full object-cover" />
                   <div className="absolute top-3 right-3 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">

@@ -12,6 +12,8 @@ import ExpertServicesPoster from '../components/home/ExpertServicesPoster';
 import NewArrivals from '../components/home/NewArrivals';
 import HowItWorks from '../components/home/HowItWorks';
 
+import ProductCategoriesGrid from '../components/home/ProductCategoriesGrid';
+
 export const HomePage = () => {
   return (
     <div className="space-y-8 pt-0 pb-8 animate-fade-in text-left">
@@ -19,6 +21,9 @@ export const HomePage = () => {
       <div className="-mx-4 sm:-mx-6">
         <Hero />
       </div>
+
+      {/* Product Categories */}
+      <ProductCategoriesGrid />
 
       {/* 2. Products & Services Balance Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 -mb-2">

@@ -46,7 +46,7 @@ export const SectionCarousel = ({ title, emoji, products, badgeLabel, badgeColor
       {/* Scrollable row */}
       <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide scroll-smooth">
         {products.map(product => (
-          <div key={product.id} className="w-[112px] lg:w-[174px] shrink-0 relative">
+          <div key={product.id} className="w-[172px] lg:w-[204px] shrink-0 relative">
             {badgeLabel && (
               <span className={`absolute top-2 left-2 z-10 text-[10px] font-bold text-white px-2 py-0.5 rounded-full ${badgeColor}`}>
                 {badgeLabel}{product.discount_percent ? ` ${product.discount_percent}% OFF` : ''}
