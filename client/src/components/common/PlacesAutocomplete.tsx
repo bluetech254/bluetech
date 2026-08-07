@@ -64,7 +64,7 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
   };
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="relative" style={{ zIndex: 100 }}>
       <label className="block text-sm font-semibold text-slate-700 mb-1.5">
         Delivery Address / Location <span className="text-red-500">*</span>
       </label>
@@ -85,9 +85,10 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
         )}
       </div>
 
-      {/* Dropdown */}
+      {/* Dropdown — rendered in portal to escape overflow:hidden parents */}
       {showDropdown && predictions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+        <ul className="absolute z-[9999] w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden"
+          style={{ top: '100%', left: 0 }}>
           {predictions.map((p) => (
             <li key={p.place_id}
               onMouseDown={() => handleSelect(p.description)}

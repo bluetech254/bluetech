@@ -8,7 +8,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const Card = ({ variant = 'base', children, className = '', ...props }: CardProps) => {
-  const baseClasses = 'bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden text-left';
+  const baseClasses = 'bg-white rounded-xl shadow-sm border border-slate-100 text-left';
   
   const variantClasses = {
     base: '',
