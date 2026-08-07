@@ -242,7 +242,7 @@ export const CheckoutPage = () => {
                   id="customer_name"
                   label="Full Name (required)"
                   placeholder="e.g. Sarah Wangari"
-                  error={errors.customer_name?.message}
+                  error={errors.customer_name?.message ? String(errors.customer_name.message) : undefined}
                   {...register('customer_name')}
                 />
                 
@@ -250,7 +250,7 @@ export const CheckoutPage = () => {
                   id="phone_number"
                   label="Phone Number (required)"
                   placeholder="Format: 2547XXXXXXXX"
-                  error={errors.phone_number?.message}
+                  error={errors.phone_number?.message ? String(errors.phone_number.message) : undefined}
                   {...register('phone_number')}
                 />
               </div>
@@ -261,7 +261,7 @@ export const CheckoutPage = () => {
                   label="Email Address (optional)"
                   type="email"
                   placeholder="e.g. sarah@example.com"
-                  error={errors.email?.message}
+                  error={errors.email?.message ? String(errors.email.message) : undefined}
                   {...register('email')}
                 />
               </div>
@@ -280,16 +280,16 @@ export const CheckoutPage = () => {
                   label="Delivery Region (required)"
                   placeholder="-- Choose Shipping Zone --"
                   options={zones.map(z => ({ value: z.id, label: `${z.zone_name} (${formatCurrency(z.delivery_fee)})` }))}
-                  error={errors.delivery_zone?.message}
+                  error={errors.delivery_zone?.message ? String(errors.delivery_zone.message) : undefined}
                   {...register('delivery_zone')}
                 />
               </div>
 
               <div className="text-left pt-1">
                 <PlacesAutocomplete
-                  value={watch('delivery_address')}
+                  value={watch('delivery_address') ?? ''}
                   onChange={val => setValue('delivery_address', val, { shouldValidate: true })}
-                  error={errors.delivery_address?.message}
+                  error={errors.delivery_address?.message ? String(errors.delivery_address.message) : undefined}
                 />
               </div>
             </Card>
@@ -465,7 +465,7 @@ export const CheckoutPage = () => {
                 {errors.terms_accepted && (
                   <div className="flex items-center text-red-600 text-xs space-x-1">
                     <AlertCircle className="w-4 h-4" />
-                    <span>{errors.terms_accepted.message}</span>
+                    <span>{errors.terms_accepted?.message ? String(errors.terms_accepted.message) : ""}</span>
                   </div>
                 )}
               </div>
