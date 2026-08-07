@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -477,32 +478,32 @@ export const BookRepairPage = () => {
       </div>
 
       {/* Commitment Fee Payment Modal */}
-      {paymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-5 text-center" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+      {paymentModal && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', padding: '16px' }}>
+          <div style={{ background: '#fff', borderRadius: '1rem', padding: '1.5rem', width: '100%', maxWidth: '380px', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <CreditCard className="w-7 h-7 text-blue-600" />
             </div>
-            <div>
+            <div className="mb-4">
               <h2 className="text-lg font-black text-slate-900">Pay Commitment Fee</h2>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                 A 20% commitment fee of <span className="font-bold text-slate-800">{formatCurrency(paymentModal.amount)}</span> is required to confirm your booking.
               </p>
             </div>
-            <div className="bg-slate-50 rounded-xl p-3 text-xs text-slate-600 space-y-1 text-left">
+            <div className="bg-slate-50 rounded-xl p-3 text-xs text-slate-600 space-y-1 text-left mb-4">
               <div className="flex justify-between"><span>Commitment fee (20%)</span><span className="font-bold">{formatCurrency(paymentModal.amount)}</span></div>
               <div className="flex justify-between text-slate-400"><span>Remaining on completion</span><span>{formatCurrency(paymentModal.servicePrice - paymentModal.amount)}</span></div>
               <div className="flex justify-between font-bold text-slate-800 border-t border-slate-200 pt-1 mt-1"><span>Total service fee</span><span>{formatCurrency(paymentModal.servicePrice)}</span></div>
             </div>
             {paymentState === 'idle' && (
-              <Button variant="primary" className="w-full font-bold" onClick={sendCommitmentSTK}>
+              <Button variant="primary" className="w-full font-bold mb-3" onClick={sendCommitmentSTK}>
                 Pay {formatCurrency(paymentModal.amount)} via M-Pesa
               </Button>
             )}
             {(paymentState === 'sending' || paymentState === 'polling') && (
               <div className="flex flex-col items-center gap-2 py-2">
                 <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-                <p className="text-xs text-slate-500">{paymentState === 'sending' ? 'Sending M-Pesa prompt...' : `Check your phone and enter your M-Pesa PIN`}</p>
+                <p className="text-xs text-slate-500">{paymentState === 'sending' ? 'Sending M-Pesa prompt...' : 'Check your phone and enter your M-Pesa PIN'}</p>
               </div>
             )}
             {paymentState === 'paid' && (
@@ -524,7 +525,8 @@ export const BookRepairPage = () => {
               <button onClick={skipPayment} className="text-xs text-slate-400 hover:text-slate-600 underline">Skip — I'll pay later</button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
