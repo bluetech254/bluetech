@@ -6,7 +6,7 @@ export const registerSchema = z.object({
   full_name: z.string().min(3, 'Name must be at least 3 characters'),
   email: z.string().email('Invalid email address'),
   phone_number: z.string().regex(PHONE_REGEX, 'Invalid phone number (use 07... or 7...)'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   confirm_password: z.string(),
   referral_code: z.string().optional(),
 }).refine((data) => data.password === data.confirm_password, {
