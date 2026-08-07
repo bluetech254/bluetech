@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from app.config import settings
-from app.api import products, orders, bookings, tracking, delivery_zones, services, auth, payments, admin_auth, points, admin_ops, contact, places
+from app.api import products, orders, bookings, tracking, delivery_zones, services, auth, payments, admin_auth, points, admin_ops, contact, places, devices
 
 # Tag metadata — drives ReDoc sidebar grouping and descriptions
 tags_metadata = [
@@ -69,6 +69,7 @@ app.include_router(delivery_zones.router)
 app.include_router(tracking.router)
 app.include_router(contact.router)
 app.include_router(places.router)
+app.include_router(devices.router)
 
 @app.get("/", response_class=HTMLResponse)
 def root():
