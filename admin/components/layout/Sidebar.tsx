@@ -2,26 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import clsx from "clsx";
 import Image from "next/image";
 import {
-  LayoutGrid,
-  ShoppingBag,
-  Wrench,
-  Package,
-  MapPin,
-  ListChecks,
-  Users,
-  Gift,
-  BarChart3,
-  ShieldCheck,
-  LogOut,
-  Sparkles,
-  Bell,
-  DollarSign,
-  Receipt,
-  Cpu,
+  LayoutGrid, ShoppingBag, Wrench, Package, MapPin, ListChecks,
+  Users, Gift, BarChart3, ShieldCheck, LogOut, Sparkles, Bell,
+  DollarSign, Receipt, Cpu, Sun, Moon,
 } from "lucide-react";
 
 const NAV = [
@@ -44,6 +31,20 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [light, setLight] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") === "light";
+    setLight(saved);
+    document.documentElement.classList.toggle("light", saved);
+  }, []);
+
+  function toggleTheme() {
+    const next = !light;
+    setLight(next);
+    document.documentElement.classList.toggle("light", next);
+    localStorage.setItem("theme", next ? "light" : "dark");
+  }
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -97,6 +98,11 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
           View products
         </Link>
       </div>
+
+      <button onClick={toggleTheme} className="nav-item w-full mb-1">
+        {light ? <Moon size={17} strokeWidth={2} /> : <Sun size={17} strokeWidth={2} />}
+        {light ? "Dark Mode" : "Light Mode"}
+      </button>
 
       <button
         onClick={handleLogout}

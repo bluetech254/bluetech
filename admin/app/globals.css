@@ -12,6 +12,64 @@ html, body {
   color: #f0f4ff;
 }
 
+/* Light theme */
+html.light, html.light body {
+  background: #ffffff;
+  color: #0f172a;
+}
+html.light .card {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light .btn-primary {
+  background: #1a3fd4 !important;
+}
+html.light .btn-ghost {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+html.light .input-field,
+html.light .select-field {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html.light .nav-item {
+  color: #475569 !important;
+}
+html.light .nav-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+html.light .nav-item-active {
+  background: #1a3fd4 !important;
+  color: #ffffff !important;
+}
+html.light .th {
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+}
+html.light .td {
+  color: #0f172a !important;
+  border-color: #f1f5f9 !important;
+}
+html.light [class*="bg-base"] {
+  background-color: #f8fafc !important;
+}
+html.light [class*="border-base-border"] {
+  border-color: #e2e8f0 !important;
+}
+html.light [class*="text-ink-muted"] {
+  color: #64748b !important;
+}
+html.light [class*="text-ink-dim"] {
+  color: #94a3b8 !important;
+}
+html.light [class*="text-ink"] {
+  color: #0f172a !important;
+}
+
 body {
   font-family: var(--font-body);
 }
