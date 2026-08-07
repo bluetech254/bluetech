@@ -87,7 +87,7 @@ export const BookRepairPage = () => {
     setLoadingPrice(true);
     try {
       const [modelsRes, priceRes] = await Promise.all([
-        fetch(`${API_BASE}/devices/brands/${brand.id}/models`).then(r => r.json()),
+        fetch(`${API_BASE}/devices/brands/${brand.id}/models${selectedCategory ? `?device_type=${selectedCategory}` : ''}`).then(r => r.json()),
         fetch(`${API_BASE}/devices/services/${serviceId}/price?brand_id=${brand.id}`).then(r => r.json()),
       ]);
       setModels(modelsRes.data ?? []);

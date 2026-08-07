@@ -7,10 +7,10 @@ router = APIRouter(prefix="/api/v1/devices", tags=["Devices"])
 
 @router.get("/brands")
 def get_brands(device_type: str = Query(None)):
-    """Get all active device brands, optionally filtered by device_type"""
+    """Get all active device brands, optionally filtered by device_type (includes 'multi' brands)"""
     query = supabase.table("device_brands").select("id,name,device_type,is_popular,logo_url").eq("is_active", True)
     if device_type:
-        query = query.eq("device_type", device_type)
+        query = query.in_("device_type", [device_type, "multi"])
     resp = query.order("is_popular", desc=True).order("name").execute()
     return {"data": resp.data}
 
