@@ -68,19 +68,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await loginUser({ phone_number, password });
       loginWithToken(response.access_token, response.user, response.expires_in);
-      toast.success('Successfully logged in!');
     } catch (error: any) {
       if (error.response?.status === 403) {
         const detail = error.response.data?.detail;
         const phone = detail?.phone_number || phone_number;
-        toast.error(detail?.message || 'Phone not verified. Check your SMS.');
-        // Navigate is not available here — throw a special error for the caller
         const err: any = new Error('unverified');
         err.phone = phone;
         throw err;
       }
-      const msg = error.response?.data?.detail || error.response?.data?.message || 'Login failed. Please verify credentials.';
-      toast.error(msg);
       throw error;
     } finally {
       setIsLoading(false);

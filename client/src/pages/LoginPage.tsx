@@ -6,8 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../utils/validation';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Loader2, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import AuthShell from '../components/common/AuthShell';
 import { normalizePhone } from '../utils/phone';
 
@@ -17,6 +16,8 @@ export const LoginPage = () => {
   const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [inlineError, setInlineError] = useState('');
+  const [inlineSuccess, setInlineSuccess] = useState('');
 
   const from = (location.state as any)?.from?.pathname || '/profile';
 
@@ -30,15 +31,15 @@ export const LoginPage = () => {
   });
 
   const onSubmit = async (formData: any) => {
+    setInlineError('');
+    setInlineSuccess('');
     setSubmitting(true);
-    const toastId = toast.loading('Authenticating credentials...');
     try {
       const phoneNumber = normalizePhone(formData.phone_number);
       await login(phoneNumber, formData.password);
-      toast.success('Successfully logged in!', { id: toastId });
+      setInlineSuccess('Logged in successfully! Redirecting…');
     } catch (err: any) {
       if (err.message === 'unverified') {
-        toast.dismiss(toastId);
         navigate('/verify-phone', { state: { phone: err.phone } });
         return;
       }
@@ -48,7 +49,7 @@ export const LoginPage = () => {
         : err.response?.data?.message
         ? String(err.response.data.message)
         : 'Invalid phone number or password.';
-      toast.error(msg, { id: toastId });
+      setInlineError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -68,6 +69,20 @@ export const LoginPage = () => {
             Log in to sync your repair status updates, checkout faster, and track historical receipts.
           </p>
         </div>
+
+        {/* Inline feedback */}
+        {inlineError && (
+          <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 text-sm font-medium px-4 py-3 rounded-xl">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            {inlineError}
+          </div>
+        )}
+        {inlineSuccess && (
+          <div className="flex items-start gap-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium px-4 py-3 rounded-xl">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+            {inlineSuccess}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
@@ -124,8 +139,6 @@ export const LoginPage = () => {
             <Link to="/privacy-policy" className="hover:text-blue-600 hover:underline">Privacy Policy</Link>.
           </p>
         </div>
-
-
 
       </div>
     </AuthShell>
