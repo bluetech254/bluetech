@@ -40,20 +40,27 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
 const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<any>(null);
-  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [mapsReady, setMapsReady] = useState(false);
 
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) { setReady(true); return; } // fallback to plain input if no key
+    if (!apiKey) return;
 
-    loadGoogleMaps(apiKey).then(() => setReady(true));
+    if (scriptLoaded) { setMapsReady(true); return; }
+
+    setLoading(true);
+    loadGoogleMaps(apiKey).then(() => {
+      setLoading(false);
+      setMapsReady(true);
+    });
   }, []);
 
   useEffect(() => {
-    if (!ready || !inputRef.current || !window.google) return;
+    if (!mapsReady || !inputRef.current || !window.google) return;
 
     autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: 'ke' }, // restrict to Kenya
+      componentRestrictions: { country: 'ke' },
       fields: ['formatted_address', 'geometry', 'name'],
       types: ['geocode', 'establishment'],
     });
@@ -69,7 +76,7 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
         window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
-  }, [ready, onChange]);
+  }, [mapsReady, onChange]);
 
   return (
     <div>
@@ -77,26 +84,25 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
         Delivery Address / Location <span className="text-red-500">*</span>
       </label>
       <div className="relative">
-        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-        {!ready && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 animate-spin" />
-        )}
+        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
         <input
           ref={inputRef}
           type="text"
           defaultValue={value}
           onChange={e => onChange(e.target.value)}
-          placeholder="Start typing your location…"
+          placeholder={loading ? 'Loading location search…' : 'Start typing your location…'}
           autoComplete="off"
-          className={`w-full pl-9 pr-4 py-3 border-2 rounded-lg outline-none transition-all text-sm bg-white
+          disabled={loading}
+          className={`w-full pl-9 pr-10 py-3 border-2 rounded-lg outline-none transition-all text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400
             ${error ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-blue-500'}`}
         />
+        {loading && (
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 animate-spin" />
+        )}
       </div>
-      {error && (
-        <p className="text-xs text-red-500 mt-1">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
       <p className="text-[11px] text-slate-400 mt-1">
-        {window.google ? '📍 Powered by Google Maps — select a suggestion for accuracy' : 'Type your full delivery address'}
+        {mapsReady ? '📍 Powered by Google Maps — select a suggestion for accuracy' : 'Type your full delivery address'}
       </p>
     </div>
   );
