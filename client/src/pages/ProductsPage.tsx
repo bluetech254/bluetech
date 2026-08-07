@@ -184,7 +184,7 @@ export const ProductsPage = () => {
               <div className="sm:hidden overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory">
                 <div className="flex gap-3 w-max">
                   {paginated.map(product => (
-                    <div key={product.id} className="w-40 flex-shrink-0 snap-start">
+                    <div key={product.id} className="w-[130px] flex-shrink-0 snap-start">
                       <ProductCard product={product} />
                     </div>
                   ))}

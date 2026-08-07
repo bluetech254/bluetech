@@ -24,13 +24,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         />
       </Link>
 
-      <div className="flex items-center justify-between gap-1">
-        <h3 className="text-xs md:text-sm lg:text-base font-semibold text-slate-900 line-clamp-1 flex-1">
+      <div className="flex flex-col gap-0.5">
+        <h3 className="text-xs md:text-sm lg:text-base font-semibold text-slate-900 line-clamp-1">
           <Link to={`/products/${id}`} className="hover:text-blue-600 transition-colors">
             {name.split(' ').slice(0, 4).join(' ')}
           </Link>
         </h3>
-        <div className="text-xs md:text-sm lg:text-base font-bold text-blue-600 whitespace-nowrap">
+        <div className="text-xs md:text-sm lg:text-base font-bold text-blue-600">
           {formatCurrency(price)}
         </div>
       </div>
