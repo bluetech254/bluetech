@@ -12,8 +12,17 @@ import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import { ChevronLeft, Calendar, User, Smartphone, AlertCircle, FileText, CheckCircle, ShieldAlert, CreditCard, Loader2, Tag } from 'lucide-react';
+import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, CreditCard, Loader2, Tag, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const DEVICE_CATEGORIES = [
+  { type: 'smartphone', label: 'Phone', icon: Smartphone },
+  { type: 'laptop',     label: 'Laptop', icon: Laptop },
+  { type: 'tv',         label: 'TV',     icon: Tv },
+  { type: 'camera',     label: 'Camera', icon: Camera },
+  { type: 'sound_system', label: 'Speaker', icon: Speaker },
+  { type: 'small_gadget', label: 'Gadget', icon: Cpu },
+];
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
@@ -24,12 +33,14 @@ export const BookRepairPage = () => {
   const [loadingService, setLoadingService] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Device brand/model state
+  // Device selection state — progressive: category → brand → model
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [brands, setBrands] = useState<any[]>([]);
   const [models, setModels] = useState<any[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<any>(null);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [loadingBrands, setLoadingBrands] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
   const [loadingPrice, setLoadingPrice] = useState(false);
 
@@ -46,12 +57,24 @@ export const BookRepairPage = () => {
       .catch(() => { toast.error('Service not found.'); navigate('/services'); })
       .finally(() => setLoadingService(false));
 
-    // Load brands
-    fetch(`${API_BASE}/devices/brands`)
-      .then(r => r.json())
-      .then(d => setBrands(d.data ?? []))
-      .catch(() => {});
+    // brands loaded on category select, not here
   }, [serviceId, navigate]);
+
+  const handleCategorySelect = async (type: string) => {
+    setSelectedCategory(type);
+    setSelectedBrand(null);
+    setSelectedModel(null);
+    setEstimatedPrice(null);
+    setBrands([]);
+    setModels([]);
+    setLoadingBrands(true);
+    try {
+      const r = await fetch(`${API_BASE}/devices/brands?device_type=${type}`);
+      const d = await r.json();
+      setBrands(d.data ?? []);
+    } catch {}
+    finally { setLoadingBrands(false); }
+  };
 
   const handleBrandSelect = async (brand: any) => {
     setSelectedBrand(brand);
@@ -228,50 +251,77 @@ export const BookRepairPage = () => {
         <div className="lg:col-span-2 lg:order-1 space-y-4">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-            {/* Step 1: Contact */}
+            {/* Step 1: Device */}
             <Card className="p-4 sm:p-6 space-y-4">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-600" />Step 1: Contact Information
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input id="customer_name" label="Full Name (required)" placeholder="e.g. Dennis Mutua"
-                  error={errors.customer_name?.message} {...register('customer_name')} />
-                <Input id="customer_phone" label="Phone Number (required)" placeholder="07XXXXXXXX"
-                  error={errors.customer_phone?.message} {...register('customer_phone')} />
-              </div>
-              <Input id="customer_email" label="Email Address (optional)" type="email"
-                placeholder="e.g. dennis@example.com"
-                error={errors.customer_email?.message} {...register('customer_email')} />
-            </Card>
-
-            {/* Step 2: Device */}
-            <Card className="p-4 sm:p-6 space-y-4">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-blue-600" />Step 2: Select Your Device
+                <Smartphone className="w-4 h-4 text-blue-600" />Step 1: Select Your Device
               </h2>
 
-              {/* Brand picker */}
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-2">Device Brand <span className="text-red-500">*</span></p>
-                {brands.length === 0 ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="w-4 h-4 animate-spin" />Loading brands...</div>
-                ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                    {brands.map(brand => (
-                      <button key={brand.id} type="button" onClick={() => handleBrandSelect(brand)}
-                        className={`px-2 py-2.5 rounded-xl border-2 text-xs font-bold text-center transition-all truncate ${
-                          selectedBrand?.id === brand.id
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-slate-100 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600'
-                        }`}>
-                        {brand.name}
+              {/* Selected device breadcrumb */}
+              {(selectedCategory || selectedBrand) && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 flex-wrap">
+                  {selectedCategory && (
+                    <button type="button" onClick={() => { setSelectedCategory(null); setSelectedBrand(null); setSelectedModel(null); setEstimatedPrice(null); setBrands([]); setModels([]); }}
+                      className="text-blue-600 font-semibold hover:underline">
+                      {DEVICE_CATEGORIES.find(c => c.type === selectedCategory)?.label}
+                    </button>
+                  )}
+                  {selectedBrand && (
+                    <>
+                      <ChevronRight className="w-3 h-3" />
+                      <button type="button" onClick={() => { setSelectedBrand(null); setSelectedModel(null); setEstimatedPrice(null); setModels([]); }}
+                        className="text-blue-600 font-semibold hover:underline">
+                        {selectedBrand.name}
+                      </button>
+                    </>
+                  )}
+                  {selectedModel && (
+                    <>
+                      <ChevronRight className="w-3 h-3" />
+                      <span className="font-semibold text-slate-700">{selectedModel.name}</span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Step A: Device category */}
+              {!selectedCategory && (
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-3">What type of device? <span className="text-red-500">*</span></p>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {DEVICE_CATEGORIES.map(({ type, label, icon: Icon }) => (
+                      <button key={type} type="button" onClick={() => handleCategorySelect(type)}
+                        className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 border-slate-100 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                        <Icon className="w-5 h-5" />
+                        <span className="text-[11px] font-bold">{label}</span>
                       </button>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Model dropdown */}
+              {/* Step B: Brand picker */}
+              {selectedCategory && !selectedBrand && (
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-3">Select Brand <span className="text-red-500">*</span></p>
+                  {loadingBrands ? (
+                    <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="w-4 h-4 animate-spin" />Loading brands...</div>
+                  ) : brands.length === 0 ? (
+                    <p className="text-sm text-slate-400">No brands found for this category.</p>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                      {brands.map(brand => (
+                        <button key={brand.id} type="button" onClick={() => handleBrandSelect(brand)}
+                          className="px-2 py-2.5 rounded-xl border-2 border-slate-100 bg-white text-xs font-bold text-slate-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all truncate text-center">
+                          {brand.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step C: Model dropdown */}
               {selectedBrand && (
                 <div>
                   <p className="text-sm font-semibold text-slate-700 mb-2">
@@ -326,6 +376,22 @@ export const BookRepairPage = () => {
                   </div>
                 )}
               </div>
+            </Card>
+
+            {/* Step 2: Contact */}
+            <Card className="p-4 sm:p-6 space-y-4">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600" />Step 2: Contact Information
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input id="customer_name" label="Full Name (required)" placeholder="e.g. Dennis Mutua"
+                  error={errors.customer_name?.message} {...register('customer_name')} />
+                <Input id="customer_phone" label="Phone Number (required)" placeholder="07XXXXXXXX"
+                  error={errors.customer_phone?.message} {...register('customer_phone')} />
+              </div>
+              <Input id="customer_email" label="Email Address (optional)" type="email"
+                placeholder="e.g. dennis@example.com"
+                error={errors.customer_email?.message} {...register('customer_email')} />
             </Card>
 
             {/* Step 3: Appointment */}
