@@ -82,18 +82,20 @@ export const BookRepairPage = () => {
     setSelectedBrand(brand);
     setSelectedModel(null);
     setEstimatedPrice(null);
+    setPriceLevel(null);
     setModels([]);
     setLoadingModels(true);
     setLoadingPrice(true);
     try {
+      const categoryParam = selectedCategory ? `?device_type=${selectedCategory}` : '';
       const [modelsRes, priceRes] = await Promise.all([
-        fetch(`${API_BASE}/devices/brands/${brand.id}/models${selectedCategory ? `?device_type=${selectedCategory}` : ''}`).then(r => r.json()),
+        fetch(`${API_BASE}/devices/brands/${brand.id}/models${categoryParam}`).then(r => r.json()),
         fetch(`${API_BASE}/devices/services/${serviceId}/price?brand_id=${brand.id}`).then(r => r.json()),
       ]);
       setModels(modelsRes.data ?? []);
       setEstimatedPrice(priceRes.price ?? null);
       setPriceLevel(priceRes.level ?? null);
-    } catch {}
+    } catch (e) { console.error('Brand select error:', e); }
     finally { setLoadingModels(false); setLoadingPrice(false); }
   };
 
