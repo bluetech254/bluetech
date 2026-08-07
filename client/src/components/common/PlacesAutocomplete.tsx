@@ -42,6 +42,8 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
   const autocompleteRef = useRef<any>(null);
   const [loading, setLoading] = useState(false);
   const [mapsReady, setMapsReady] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -68,6 +70,7 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
     autocompleteRef.current.addListener('place_changed', () => {
       const place = autocompleteRef.current.getPlace();
       const address = place.formatted_address || place.name || inputRef.current?.value || '';
+      setSearching(false);
       onChange(address);
     });
 
@@ -75,6 +78,7 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
       if (window.google?.maps?.event) {
         window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
   }, [mapsReady, onChange]);
 
@@ -89,14 +93,23 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
           ref={inputRef}
           type="text"
           defaultValue={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => {
+            onChange(e.target.value);
+            if (mapsReady && e.target.value.length > 1) {
+              setSearching(true);
+              if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+              searchTimerRef.current = setTimeout(() => setSearching(false), 1500);
+            } else {
+              setSearching(false);
+            }
+          }}
           placeholder={loading ? 'Loading location search…' : 'Start typing your location…'}
           autoComplete="off"
           disabled={loading}
           className={`w-full pl-9 pr-10 py-3 border-2 rounded-lg outline-none transition-all text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400
             ${error ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-blue-500'}`}
         />
-        {loading && (
+        {(loading || searching) && (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 animate-spin" />
         )}
       </div>
