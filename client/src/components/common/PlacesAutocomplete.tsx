@@ -7,116 +7,100 @@ interface Props {
   error?: string;
 }
 
-declare global {
-  interface Window {
-    google: any;
-    initGoogleMaps: () => void;
-  }
+interface Prediction {
+  description: string;
+  place_id: string;
 }
 
-let scriptLoaded = false;
-let scriptLoading = false;
-const callbacks: (() => void)[] = [];
-
-function loadGoogleMaps(apiKey: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (scriptLoaded) { resolve(); return; }
-    callbacks.push(resolve);
-    if (scriptLoading) return;
-    scriptLoading = true;
-    window.initGoogleMaps = () => {
-      scriptLoaded = true;
-      callbacks.forEach(cb => cb());
-      callbacks.length = 0;
-    };
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-  });
-}
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [mapsReady, setMapsReady] = useState(false);
+  const [inputVal, setInputVal] = useState(value);
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [searching, setSearching] = useState(false);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // Close dropdown on outside click
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return;
-
-    if (scriptLoaded) { setMapsReady(true); return; }
-
-    setLoading(true);
-    loadGoogleMaps(apiKey).then(() => {
-      setLoading(false);
-      setMapsReady(true);
-    });
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  useEffect(() => {
-    if (!mapsReady || !inputRef.current || !window.google) return;
-
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: 'ke' },
-      fields: ['formatted_address', 'geometry', 'name'],
-      types: ['geocode', 'establishment'],
-    });
-
-    autocompleteRef.current.addListener('place_changed', () => {
-      const place = autocompleteRef.current.getPlace();
-      const address = place.formatted_address || place.name || inputRef.current?.value || '';
+  const fetchPredictions = async (input: string) => {
+    if (input.length < 2) { setPredictions([]); setSearching(false); return; }
+    setSearching(true);
+    try {
+      const res = await fetch(`${API_BASE}/places/autocomplete?input=${encodeURIComponent(input)}`);
+      const data = await res.json();
+      setPredictions(data.predictions ?? []);
+      setShowDropdown(true);
+    } catch {
+      setPredictions([]);
+    } finally {
       setSearching(false);
-      onChange(address);
-    });
+    }
+  };
 
-    return () => {
-      if (window.google?.maps?.event) {
-        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
-      }
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    };
-  }, [mapsReady, onChange]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputVal(val);
+    onChange(val);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => fetchPredictions(val), 350);
+  };
+
+  const handleSelect = (description: string) => {
+    setInputVal(description);
+    onChange(description);
+    setPredictions([]);
+    setShowDropdown(false);
+  };
 
   return (
-    <div>
+    <div ref={wrapperRef} className="relative">
       <label className="block text-sm font-semibold text-slate-700 mb-1.5">
         Delivery Address / Location <span className="text-red-500">*</span>
       </label>
       <div className="relative">
         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
         <input
-          ref={inputRef}
           type="text"
-          defaultValue={value}
-          onChange={e => {
-            onChange(e.target.value);
-            if (e.target.value.length > 1) {
-              setSearching(true);
-              if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-              searchTimerRef.current = setTimeout(() => setSearching(false), 1500);
-            } else {
-              setSearching(false);
-            }
-          }}
-          placeholder={loading ? 'Loading location search…' : 'Start typing your location…'}
+          value={inputVal}
+          onChange={handleChange}
+          onFocus={() => predictions.length > 0 && setShowDropdown(true)}
+          placeholder="Start typing your location…"
           autoComplete="off"
-          disabled={loading}
-          className={`w-full pl-9 pr-10 py-3 border-2 rounded-lg outline-none transition-all text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400
+          className={`w-full pl-9 pr-10 py-3 border-2 rounded-lg outline-none transition-all text-sm bg-white
             ${error ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-blue-500'}`}
         />
-        {(loading || searching) && (
+        {searching && (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 animate-spin" />
         )}
       </div>
+
+      {/* Dropdown */}
+      {showDropdown && predictions.length > 0 && (
+        <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+          {predictions.map((p) => (
+            <li key={p.place_id}
+              onMouseDown={() => handleSelect(p.description)}
+              className="flex items-start gap-2.5 px-4 py-3 text-sm text-slate-700 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-none">
+              <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+              {p.description}
+            </li>
+          ))}
+        </ul>
+      )}
+
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-      <p className="text-[11px] text-slate-400 mt-1">
-        {mapsReady ? '📍 Powered by Google Maps — select a suggestion for accuracy' : 'Type your full delivery address'}
-      </p>
+      <p className="text-[11px] text-slate-400 mt-1">📍 Powered by Google Maps — select a suggestion for accuracy</p>
     </div>
   );
 };
