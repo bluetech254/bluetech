@@ -92,10 +92,7 @@ const ServiceCard = ({ service }: { service: RepairService }) => {
         {service.description}
       </p>
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-bold text-blue-600">
-            {formatCurrency(service.price)}
-          </span>
+        <div className="flex items-center justify-end">
           <span className="text-xs text-slate-400">
             {service.estimated_duration}
           </span>

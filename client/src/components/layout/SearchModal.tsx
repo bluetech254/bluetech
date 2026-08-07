@@ -225,8 +225,8 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                               Duration: {service.estimated_duration} • Warranty: {service.warranty_period || 'None'}
                             </p>
                           </div>
-                          <div className="ml-4 font-bold text-sm text-purple-600 whitespace-nowrap">
-                            {formatCurrency(service.price)}
+                          <div className="ml-4 text-xs text-slate-400 whitespace-nowrap">
+                            {service.estimated_duration}
                           </div>
                         </div>
                       ))}

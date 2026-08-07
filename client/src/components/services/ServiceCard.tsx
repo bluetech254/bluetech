@@ -52,14 +52,6 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
         </span>
       </div>
 
-      {/* Price section */}
-      <div className="my-1.5 md:my-2">
-        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Price</p>
-        <div className="text-sm md:text-base lg:text-lg font-black text-blue-600">
-          {formatCurrency(price)}
-        </div>
-      </div>
-
       {/* Badges / metadata */}
       <div className="border-t border-b border-slate-50 py-1.5 md:py-2 my-0.5 grid grid-cols-2 gap-1 md:gap-1.5 text-xs text-slate-500 text-left font-medium">
         <div className="flex items-center space-x-0.5">
