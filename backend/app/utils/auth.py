@@ -1,11 +1,12 @@
 import hashlib
 import secrets
 import random
+import os
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
 
-SECRET_KEY = "your-secret-key-change-in-production-123456789"
+SECRET_KEY = os.getenv("JWT_SECRET", secrets.token_hex(32))
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60  # 30 days
 
