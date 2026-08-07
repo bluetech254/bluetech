@@ -55,7 +55,7 @@ def get_service_price(service_id: UUID, brand_id: UUID = Query(None), model_id: 
             return {"price": float(r.data[0]["price"]), "level": "brand"}
 
     # 3. Fallback to service default price
-    r = sb.table("services").select("price").eq("id", str(service_id)).single().execute()
+    r = sb.table("repair_services").select("price").eq("id", str(service_id)).single().execute()
     if not r.data:
         raise HTTPException(status_code=404, detail="Service not found")
     return {"price": float(r.data["price"] or 0), "level": "default"}

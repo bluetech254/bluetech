@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS device_models (
 -- Service pricing table (smart fallback: model > brand > service default)
 CREATE TABLE IF NOT EXISTS service_pricing (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+  service_id UUID NOT NULL REFERENCES repair_services(id) ON DELETE CASCADE,
   brand_id UUID REFERENCES device_brands(id) ON DELETE CASCADE,
   model_id UUID REFERENCES device_models(id) ON DELETE CASCADE,
   price NUMERIC(10,2) NOT NULL,
