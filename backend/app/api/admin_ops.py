@@ -448,3 +448,88 @@ def get_audit_log(
         q = q.eq("admin_id", admin_id)
     r = q.order("created_at", desc=True).limit(limit).execute()
     return {"data": r.data or [], "count": len(r.data or [])}
+
+
+# ── 9. DEVICE BRANDS / MODELS / SERVICE PRICING ───────────────────────────────
+
+class BrandBody(BaseModel):
+    name: str
+    device_type: str = "multi"
+    country_of_origin: Optional[str] = None
+    is_popular: bool = False
+    logo_url: Optional[str] = None
+    is_active: bool = True
+
+class ModelBody(BaseModel):
+    brand_id: str
+    name: str
+    device_type: str
+    release_year: Optional[int] = None
+    is_active: bool = True
+
+class PricingBody(BaseModel):
+    service_id: str
+    brand_id: Optional[str] = None
+    model_id: Optional[str] = None
+    price: float
+
+@router.get("/devices/brands")
+def admin_get_brands(admin: dict = Depends(get_current_admin)):
+    r = supabase_admin.table("device_brands").select("*").order("name").execute()
+    return {"data": r.data or []}
+
+@router.post("/devices/brands")
+def admin_create_brand(body: BrandBody, admin: dict = Depends(get_current_admin)):
+    r = supabase_admin.table("device_brands").insert(body.model_dump()).execute()
+    return {"data": r.data[0] if r.data else {}}
+
+@router.put("/devices/brands/{brand_id}")
+def admin_update_brand(brand_id: str, body: BrandBody, admin: dict = Depends(get_current_admin)):
+    r = supabase_admin.table("device_brands").update(body.model_dump()).eq("id", brand_id).execute()
+    return {"data": r.data[0] if r.data else {}}
+
+@router.delete("/devices/brands/{brand_id}")
+def admin_delete_brand(brand_id: str, admin: dict = Depends(get_current_admin)):
+    supabase_admin.table("device_brands").delete().eq("id", brand_id).execute()
+    return {"ok": True}
+
+@router.get("/devices/models")
+def admin_get_models(brand_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    q = supabase_admin.table("device_models").select("*, device_brands(name)")
+    if brand_id:
+        q = q.eq("brand_id", brand_id)
+    r = q.order("name").execute()
+    return {"data": r.data or []}
+
+@router.post("/devices/models")
+def admin_create_model(body: ModelBody, admin: dict = Depends(get_current_admin)):
+    r = supabase_admin.table("device_models").insert(body.model_dump()).execute()
+    return {"data": r.data[0] if r.data else {}}
+
+@router.put("/devices/models/{model_id}")
+def admin_update_model(model_id: str, body: ModelBody, admin: dict = Depends(get_current_admin)):
+    r = supabase_admin.table("device_models").update(body.model_dump()).eq("id", model_id).execute()
+    return {"data": r.data[0] if r.data else {}}
+
+@router.delete("/devices/models/{model_id}")
+def admin_delete_model(model_id: str, admin: dict = Depends(get_current_admin)):
+    supabase_admin.table("device_models").delete().eq("id", model_id).execute()
+    return {"ok": True}
+
+@router.get("/devices/pricing")
+def admin_get_pricing(admin: dict = Depends(get_current_admin)):
+    r = supabase_admin.table("service_pricing")\
+        .select("*, repair_services(service_name), device_brands(name), device_models(name)")\
+        .order("created_at", desc=True).execute()
+    return {"data": r.data or []}
+
+@router.post("/devices/pricing")
+def admin_upsert_pricing(body: PricingBody, admin: dict = Depends(get_current_admin)):
+    data = body.model_dump()
+    r = supabase_admin.table("service_pricing").upsert(data, on_conflict="service_id,brand_id,model_id").execute()
+    return {"data": r.data[0] if r.data else {}}
+
+@router.delete("/devices/pricing/{pricing_id}")
+def admin_delete_pricing(pricing_id: str, admin: dict = Depends(get_current_admin)):
+    supabase_admin.table("service_pricing").delete().eq("id", pricing_id).execute()
+    return {"ok": True}

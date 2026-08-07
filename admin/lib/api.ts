@@ -137,6 +137,19 @@ export const adminApi = {
   getUserPoints: (user_id: string) => request(`/api/proxy/points/admin/user/${user_id}`),
   awardPoints: (user_id: string, points: number, reason: string) =>
     request(`/api/proxy/points/admin/award/${user_id}${qs({ points, reason })}`, { method: "POST" }),
+
+  // Devices — brands, models, service pricing
+  getBrands: () => request<{ data: any[] }>("/api/proxy/admin/devices/brands"),
+  createBrand: (body: any) => request("/api/proxy/admin/devices/brands", { method: "POST", body: JSON.stringify(body) }),
+  updateBrand: (id: string, body: any) => request(`/api/proxy/admin/devices/brands/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteBrand: (id: string) => request(`/api/proxy/admin/devices/brands/${id}`, { method: "DELETE" }),
+  getModels: (brand_id?: string) => request<{ data: any[] }>(`/api/proxy/admin/devices/models${qs({ brand_id })}`),
+  createModel: (body: any) => request("/api/proxy/admin/devices/models", { method: "POST", body: JSON.stringify(body) }),
+  updateModel: (id: string, body: any) => request(`/api/proxy/admin/devices/models/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteModel: (id: string) => request(`/api/proxy/admin/devices/models/${id}`, { method: "DELETE" }),
+  getServicePricing: () => request<{ data: any[] }>("/api/proxy/admin/devices/pricing"),
+  upsertServicePricing: (body: any) => request("/api/proxy/admin/devices/pricing", { method: "POST", body: JSON.stringify(body) }),
+  deleteServicePricing: (id: string) => request(`/api/proxy/admin/devices/pricing/${id}`, { method: "DELETE" }),
 };
 
 export const formatKES = (n: number) => `KES ${Math.round(n).toLocaleString("en-KE")}`;

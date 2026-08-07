@@ -21,6 +21,7 @@ import {
   Bell,
   DollarSign,
   Receipt,
+  Cpu,
 } from "lucide-react";
 
 const NAV = [
@@ -29,6 +30,7 @@ const NAV = [
   { href: "/repairs", label: "Repair Bookings", icon: Wrench },
   { href: "/transactions", label: "Transactions", icon: Receipt },
   { href: "/products", label: "Products", icon: Package },
+  { href: "/devices", label: "Devices & Pricing", icon: Cpu },
   { href: "/zones", label: "Delivery Zones", icon: MapPin },
   { href: "/services", label: "Repair Services", icon: ListChecks },
   { href: "/users", label: "Users", icon: Users },
