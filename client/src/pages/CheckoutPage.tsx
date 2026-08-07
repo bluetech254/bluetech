@@ -18,6 +18,7 @@ import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import MpesaWaitingModal from '../components/cart/MpesaWaitingModal';
 import { ChevronLeft, CreditCard, DollarSign, Loader2, ClipboardCheck, AlertCircle, Phone, MapPin, Sparkles, CheckCircle, FileText, Star, Zap } from 'lucide-react';
+import PlacesAutocomplete from '../components/common/PlacesAutocomplete';
 import toast from 'react-hot-toast';
 
 export const CheckoutPage = () => {
@@ -285,25 +286,11 @@ export const CheckoutPage = () => {
               </div>
 
               <div className="text-left pt-1">
-                <label htmlFor="delivery_address" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Delivery Address / Location (required)
-                </label>
-                <textarea
-                  id="delivery_address"
-                  rows={3}
-                  placeholder="Provide precise details (apartment building, house number, floor, or crossroad landmark)..."
-                  className={`
-                    w-full py-3 px-4 border-2 rounded-lg outline-none transition-all duration-200 text-sm bg-white
-                    ${errors.delivery_address ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-blue-500'}
-                  `}
-                  {...register('delivery_address')}
+                <PlacesAutocomplete
+                  value={watch('delivery_address')}
+                  onChange={val => setValue('delivery_address', val, { shouldValidate: true })}
+                  error={errors.delivery_address?.message}
                 />
-                {errors.delivery_address && (
-                  <div className="flex items-center text-red-600 text-xs mt-1.5 space-x-1">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{errors.delivery_address.message}</span>
-                  </div>
-                )}
               </div>
             </Card>
 
