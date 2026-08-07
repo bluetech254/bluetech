@@ -14,17 +14,8 @@ export default function Topbar({ fullName }: { fullName?: string }) {
     if (q.trim()) router.push(`/?q=${encodeURIComponent(q.trim())}`);
   }
 
-  const firstName = fullName?.split(" ")[0] ?? "there";
-
   return (
     <header className="flex items-center justify-between gap-4 mb-6">
-      <div className="hidden sm:block shrink-0">
-        <h1 className="font-display font-semibold text-xl text-ink">
-          Hello, {firstName} <span aria-hidden>👋</span>
-        </h1>
-        <p className="text-sm text-ink-muted mt-0.5">Welcome to the BlueTech admin panel</p>
-      </div>
-
       <form onSubmit={handleSearch} className="flex-1 max-w-md">
         <div className="relative">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-dim" />
