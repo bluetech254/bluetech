@@ -47,7 +47,7 @@ export const Hero = () => {
   const imageUrl = currentProduct?.images?.[0] || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=400&fit=crop';
 
   return (
-    <div className="relative overflow-hidden animate-fade-in w-full h-80 sm:h-[367px] md:h-[467px] lg:h-[600px] bg-slate-100 -mt-8">
+    <div className="relative overflow-hidden animate-fade-in w-full h-[220px] sm:h-[367px] md:h-[467px] lg:h-[600px] bg-slate-100 -mt-8">
       <img
         src={imageUrl}
         alt="BlueTech Hero"

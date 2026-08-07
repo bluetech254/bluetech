@@ -157,7 +157,6 @@ export const ProductsPage = () => {
                   <div className="bg-slate-100 aspect-square w-full rounded-lg" />
                   <div className="bg-slate-100 h-4 w-2/3 rounded" />
                   <div className="bg-slate-100 h-4 w-1/3 rounded" />
-                  <div className="bg-slate-100 h-8 w-full rounded-lg" />
                 </div>
               ))}
             </div>
