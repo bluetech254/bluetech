@@ -19,6 +19,12 @@ const MpesaWaitingModal = ({ orderId, phone, amount, onCancel }: Props) => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    // Lock body scroll while modal is open
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  useEffect(() => {
     intervalRef.current = setInterval(async () => {
       try {
         const data = await getMpesaPaymentStatus(orderId);
@@ -37,8 +43,10 @@ const MpesaWaitingModal = ({ orderId, phone, amount, onCancel }: Props) => {
   }, [orderId, navigate]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm text-center space-y-5 shadow-2xl"
+        style={{ maxHeight: '90vh', margin: 'auto' }}>
         {status === 'waiting' && (
           <>
             <div className="flex justify-center">
