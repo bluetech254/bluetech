@@ -34,7 +34,7 @@ export const ProductCategoriesGrid = () => {
     <button onClick={() => go(name)}
       className="relative overflow-hidden rounded-xl h-20 group cursor-pointer">
       {img
-        ? <img src={img} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        ? <img src={img} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"  loading="lazy" />
         : <div className="w-full h-full bg-slate-300" />}
       <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition-colors" />
       <span className="absolute bottom-2 left-0 right-0 text-center text-white font-bold text-xs sm:text-sm px-1 leading-tight">

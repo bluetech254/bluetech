@@ -1,41 +1,41 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 
-// Import Pages
-import HomePage from './pages/HomePage';
-import ProductsPage from './pages/ProductsPage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import ServicesPage from './pages/ServicesPage';
-import BookRepairPage from './pages/BookRepairPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import BookingSuccessPage from './pages/BookingSuccessPage';
-import TrackOrderPage from './pages/TrackOrderPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ProfilePage from './pages/ProfilePage';
-import VerifyPhonePage from './pages/VerifyPhonePage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import PointsPage from './pages/PointsPage';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import BookingDetailPage from './pages/BookingDetailPage';
-import ContactPage from './pages/ContactPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsOfServicePage from './pages/TermsOfServicePage';
-import CookiePolicyPage from './pages/CookiePolicyPage';
-import AboutPage from './pages/AboutPage';
-import ReturnsPage from './pages/ReturnsPage';
-import WarrantyPage from './pages/WarrantyPage';
-import FAQsPage from './pages/FAQsPage';
-import HotDealsPage from './pages/HotDealsPage';
-import BlogPage from './pages/BlogPage';
-import CareersPage from './pages/CareersPage';
+const HomePage = lazy(() => import('./pages/HomePage'));
+const ProductsPage = lazy(() => import('./pages/ProductsPage'));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
+const ServicesPage = lazy(() => import('./pages/ServicesPage'));
+const BookRepairPage = lazy(() => import('./pages/BookRepairPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
+const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const VerifyPhonePage = lazy(() => import('./pages/VerifyPhonePage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const PointsPage = lazy(() => import('./pages/PointsPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
+const BookingDetailPage = lazy(() => import('./pages/BookingDetailPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
+const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ReturnsPage = lazy(() => import('./pages/ReturnsPage'));
+const WarrantyPage = lazy(() => import('./pages/WarrantyPage'));
+const FAQsPage = lazy(() => import('./pages/FAQsPage'));
+const HotDealsPage = lazy(() => import('./pages/HotDealsPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const CareersPage = lazy(() => import('./pages/CareersPage'));
 
 export const AppRoutes = () => {
   return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/products" element={<ProductsPage />} />
@@ -71,6 +71,7 @@ export const AppRoutes = () => {
       {/* Catch-all fallback redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 };
 

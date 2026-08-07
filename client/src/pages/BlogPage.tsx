@@ -72,7 +72,7 @@ export const BlogPage = () => (
       {posts.map(post => (
         <div key={post.slug} className="bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
           <div className="h-44 overflow-hidden">
-            <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
           </div>
           <div className="p-5 space-y-3">
             <div className="flex items-center justify-between">

@@ -21,7 +21,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
         salt, pwd_hash = hashed_password.split('$')
         return hashlib.sha256((plain_password + salt).encode()).hexdigest() == pwd_hash
-    except:
+    except Exception:
         return False
 
 def generate_verification_code() -> str:
