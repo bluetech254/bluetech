@@ -466,7 +466,8 @@ export const BookRepairPage = () => {
                 </div>
               )}
               <Button type="submit" variant="primary" disabled={submitting}
-                className="w-full py-3.5 text-sm font-bold tracking-wide uppercase">
+                className="w-full py-3.5 text-sm font-bold tracking-wide uppercase flex items-center justify-center gap-2">
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {submitting ? 'Submitting...' : 'Schedule Repair Booking'}
               </Button>
             </Card>
