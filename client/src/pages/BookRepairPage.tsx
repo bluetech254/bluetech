@@ -78,7 +78,7 @@ export const BookRepairPage = () => {
     finally { setLoadingBrands(false); }
   };
 
-  const handleBrandSelect = async (brand: any) => {
+  const handleBrandSelect = async (brand: any, category: string | null) => {
     setSelectedBrand(brand);
     setSelectedModel(null);
     setEstimatedPrice(null);
@@ -87,7 +87,7 @@ export const BookRepairPage = () => {
     setLoadingModels(true);
     setLoadingPrice(true);
     try {
-      const categoryParam = selectedCategory ? `?device_type=${selectedCategory}` : '';
+      const categoryParam = category ? `?device_type=${category}` : '';
       const [modelsRes, priceRes] = await Promise.all([
         fetch(`${API_BASE}/devices/brands/${brand.id}/models${categoryParam}`).then(r => r.json()),
         fetch(`${API_BASE}/devices/services/${serviceId}/price?brand_id=${brand.id}`).then(r => r.json()),
@@ -329,7 +329,7 @@ export const BookRepairPage = () => {
                   ) : (
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                       {brands.map(brand => (
-                        <button key={brand.id} type="button" onClick={() => handleBrandSelect(brand)}
+                        <button key={brand.id} type="button" onClick={() => handleBrandSelect(brand, selectedCategory)}
                           className="px-2 py-2.5 rounded-xl border-2 border-slate-100 bg-white text-xs font-bold text-slate-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all truncate text-center">
                           {brand.name}
                         </button>
