@@ -40,6 +40,7 @@ export const BookRepairPage = () => {
   const [selectedBrand, setSelectedBrand] = useState<any>(null);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [priceLevel, setPriceLevel] = useState<'model' | 'brand' | 'default' | null>(null);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
   const [loadingPrice, setLoadingPrice] = useState(false);
@@ -65,6 +66,7 @@ export const BookRepairPage = () => {
     setSelectedBrand(null);
     setSelectedModel(null);
     setEstimatedPrice(null);
+    setPriceLevel(null);
     setBrands([]);
     setModels([]);
     setLoadingBrands(true);
@@ -82,12 +84,17 @@ export const BookRepairPage = () => {
     setEstimatedPrice(null);
     setModels([]);
     setLoadingModels(true);
+    setLoadingPrice(true);
     try {
-      const r = await fetch(`${API_BASE}/devices/brands/${brand.id}/models`);
-      const d = await r.json();
-      setModels(d.data ?? []);
+      const [modelsRes, priceRes] = await Promise.all([
+        fetch(`${API_BASE}/devices/brands/${brand.id}/models`).then(r => r.json()),
+        fetch(`${API_BASE}/devices/services/${serviceId}/price?brand_id=${brand.id}`).then(r => r.json()),
+      ]);
+      setModels(modelsRes.data ?? []);
+      setEstimatedPrice(priceRes.price ?? null);
+      setPriceLevel(priceRes.level ?? null);
     } catch {}
-    finally { setLoadingModels(false); }
+    finally { setLoadingModels(false); setLoadingPrice(false); }
   };
 
   const handleModelSelect = async (model: any) => {
@@ -98,6 +105,7 @@ export const BookRepairPage = () => {
       const r = await fetch(`${API_BASE}/devices/services/${serviceId}/price?brand_id=${selectedBrand.id}&model_id=${model.id}`);
       const d = await r.json();
       setEstimatedPrice(d.price ?? null);
+      setPriceLevel(d.level ?? null);
     } catch {}
     finally { setLoadingPrice(false); }
   };
@@ -205,16 +213,24 @@ export const BookRepairPage = () => {
             <div className="border-t border-b border-slate-100 py-3 space-y-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="font-semibold text-slate-500">
-                  {estimatedPrice ? 'Estimated Price' : 'Base Price'}
+                  {priceLevel === 'model' ? 'Model Price' : priceLevel === 'brand' ? 'Brand Price' : 'Base Price'}
                 </span>
                 <div className="text-right">
                   {loadingPrice ? (
                     <Loader2 className="w-4 h-4 animate-spin text-blue-400 ml-auto" />
                   ) : (
-                    <span className="font-black text-blue-600 text-lg">{formatCurrency(displayPrice)}</span>
+                    <span className={`font-black text-lg ${priceLevel && priceLevel !== 'default' ? 'text-emerald-600' : 'text-blue-600'}`}>
+                      {formatCurrency(displayPrice)}
+                    </span>
                   )}
-                  {estimatedPrice && selectedModel && (
+                  {priceLevel === 'model' && selectedModel && (
                     <p className="text-[10px] text-emerald-600 font-semibold">for {selectedModel.name}</p>
+                  )}
+                  {priceLevel === 'brand' && selectedBrand && (
+                    <p className="text-[10px] text-amber-600 font-semibold">{selectedBrand.name} · pick model for exact price</p>
+                  )}
+                  {(!priceLevel || priceLevel === 'default') && !selectedBrand && (
+                    <p className="text-[10px] text-slate-400 font-semibold">select device for exact price</p>
                   )}
                 </div>
               </div>
@@ -349,11 +365,17 @@ export const BookRepairPage = () => {
 
               {/* Price estimate banner */}
               {estimatedPrice !== null && !loadingPrice && (
-                <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                  <Tag className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${priceLevel === 'model' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                  <Tag className={`w-4 h-4 shrink-0 ${priceLevel === 'model' ? 'text-emerald-600' : 'text-amber-600'}`} />
                   <div>
-                    <p className="text-sm font-black text-emerald-800">Estimated Price: {formatCurrency(estimatedPrice)}</p>
-                    <p className="text-xs text-emerald-600">For {service.name} on {selectedBrand.name} {selectedModel?.name}</p>
+                    <p className={`text-sm font-black ${priceLevel === 'model' ? 'text-emerald-800' : 'text-amber-800'}`}>
+                      {priceLevel === 'model' ? 'Exact Price' : 'Estimated Price'}: {formatCurrency(estimatedPrice)}
+                    </p>
+                    <p className={`text-xs ${priceLevel === 'model' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {priceLevel === 'model'
+                        ? `For ${service.name} on ${selectedBrand?.name} ${selectedModel?.name}`
+                        : `For ${selectedBrand?.name} devices · select a model for exact price`}
+                    </p>
                   </div>
                 </div>
               )}
