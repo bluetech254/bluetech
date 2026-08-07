@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { getMpesaPaymentStatus } from '../../api/orders';
 import { Loader2, CheckCircle2, XCircle, Smartphone } from 'lucide-react';
@@ -42,11 +43,9 @@ const MpesaWaitingModal = ({ orderId, phone, amount, onCancel }: Props) => {
     return () => clearInterval(intervalRef.current!);
   }, [orderId, navigate]);
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-      <div className="bg-white rounded-2xl p-8 w-full max-w-sm text-center space-y-5 shadow-2xl"
-        style={{ maxHeight: '90vh', margin: 'auto' }}>
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', padding: '16px' }}>
+      <div style={{ background: '#fff', borderRadius: '1rem', padding: '2rem', width: '100%', maxWidth: '360px', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}>
         {status === 'waiting' && (
           <>
             <div className="flex justify-center">
@@ -96,7 +95,8 @@ const MpesaWaitingModal = ({ orderId, phone, amount, onCancel }: Props) => {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
