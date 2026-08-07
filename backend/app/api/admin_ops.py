@@ -526,7 +526,18 @@ def admin_get_pricing(admin: dict = Depends(get_current_admin)):
 @router.post("/devices/pricing")
 def admin_upsert_pricing(body: PricingBody, admin: dict = Depends(get_current_admin)):
     data = body.model_dump()
-    r = supabase_admin.table("service_pricing").upsert(data, on_conflict="service_id,brand_id,model_id").execute()
+    # Delete any existing rule with same service+brand+model combo first (handles NULL uniqueness)
+    q = supabase_admin.table("service_pricing").delete().eq("service_id", data["service_id"])
+    if data["brand_id"]:
+        q = q.eq("brand_id", data["brand_id"])
+    else:
+        q = q.is_("brand_id", "null")
+    if data["model_id"]:
+        q = q.eq("model_id", data["model_id"])
+    else:
+        q = q.is_("model_id", "null")
+    q.execute()
+    r = supabase_admin.table("service_pricing").insert(data).execute()
     return {"data": r.data[0] if r.data else {}}
 
 @router.delete("/devices/pricing/{pricing_id}")

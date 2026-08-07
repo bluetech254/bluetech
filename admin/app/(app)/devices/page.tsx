@@ -55,8 +55,9 @@ function BrandsTab() {
   async function save() {
     setSaving(true);
     try {
-      if (modal?.id) await adminApi.updateBrand(modal.id, form);
-      else await adminApi.createBrand(form);
+      const payload = { name: form.name, device_type: form.device_type, country_of_origin: form.country_of_origin || null, logo_url: form.logo_url || null, is_popular: !!form.is_popular, is_active: !!form.is_active };
+      if (modal?.id) await adminApi.updateBrand(modal.id, payload);
+      else await adminApi.createBrand(payload);
       setModal(null); load();
     } finally { setSaving(false); }
   }
@@ -160,8 +161,9 @@ function ModelsTab() {
   async function save() {
     setSaving(true);
     try {
-      if (modal?.id) await adminApi.updateModel(modal.id, form);
-      else await adminApi.createModel(form);
+      const payload = { brand_id: form.brand_id, name: form.name, device_type: form.device_type, release_year: form.release_year || null, is_active: !!form.is_active };
+      if (modal?.id) await adminApi.updateModel(modal.id, payload);
+      else await adminApi.createModel(payload);
       setModal(null); load();
     } finally { setSaving(false); }
   }
