@@ -79,3 +79,4 @@ supabase/.temp/
 
 # Zip files
 *.zip
+admin/.next/
