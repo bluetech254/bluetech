@@ -95,7 +95,7 @@ const PlacesAutocomplete = ({ value, onChange, error }: Props) => {
           defaultValue={value}
           onChange={e => {
             onChange(e.target.value);
-            if (mapsReady && e.target.value.length > 1) {
+            if (e.target.value.length > 1) {
               setSearching(true);
               if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
               searchTimerRef.current = setTimeout(() => setSearching(false), 1500);
