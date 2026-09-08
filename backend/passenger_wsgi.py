@@ -1,12 +1,15 @@
 import sys
 import os
 
-# Add backend root to path so 'app' package is importable
-sys.path.insert(0, os.path.dirname(__file__))
+# Use abspath(__file__) — same technique that works in the diagnostic script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Load .env BEFORE importing the app so all settings are available
+# Add backend root to path so 'app' package is importable
+sys.path.insert(0, BASE_DIR)
+
+# Load .env using absolute path BEFORE importing app
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Import FastAPI app
 from app.main import app
