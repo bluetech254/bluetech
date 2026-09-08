@@ -25,7 +25,7 @@ jobs:
         working-directory: admin
         run: npm ci
 
-      - name: Build Next.js standalone
+      - name: Build Next.js
         working-directory: admin
         run: npm run build
         env:
@@ -35,34 +35,42 @@ jobs:
         run: |
           mkdir -p deploy-admin
 
-          # Next.js standalone output — self-contained Node server
-          cp -r admin/.next/standalone/. deploy-admin/
+          # Upload the built .next output
+          cp -r admin/.next deploy-admin/.next
 
-          # Static assets must live here for Next.js standalone to serve them
-          mkdir -p deploy-admin/.next/static
-          cp -r admin/.next/static/. deploy-admin/.next/static/
+          # Upload public assets
+          cp -r admin/public deploy-admin/public
 
-          # Public assets
-          mkdir -p deploy-admin/public
-          cp -r admin/public/. deploy-admin/public/
+          # Upload package files — cPanel uses these for "Run NPM Install"
+          cp admin/package.json deploy-admin/package.json
+          cp admin/package-lock.json deploy-admin/package-lock.json
 
-          # cPanel Passenger requires a package.json to recognise the app
-          # and to enable "Run NPM Install". Point main at server.js.
-          cat > deploy-admin/package.json << 'EOF'
-          {
-            "name": "bluetech-admin",
-            "version": "1.0.0",
-            "private": true,
-            "main": "server.js",
-            "scripts": {
-              "start": "node server.js"
-            }
-          }
-          EOF
+          # Optional config files needed at runtime
+          cp admin/next.config.js deploy-admin/next.config.js
 
-          # Passenger calls the file set as "Application startup file".
-          # Next standalone already emits server.js — just make sure it's there.
-          ls -la deploy-admin/server.js
+          # Create a startup script — cPanel startup file must be a .js file.
+          # This just invokes `next start` via the locally installed next binary.
+          cat > deploy-admin/server.js << 'EOF'
+process.chdir(__dirname);
+process.env.NODE_ENV = 'production';
+
+const { createServer } = require('http');
+const { parse } = require('url');
+const next = require('next');
+
+const port = parseInt(process.env.PORT || '3000', 10);
+const app = next({ dev: false, dir: __dirname });
+const handle = app.getRequestHandler();
+
+app.prepare().then(() => {
+  createServer((req, res) => {
+    const parsedUrl = parse(req.url, true);
+    handle(req, res, parsedUrl);
+  }).listen(port, '0.0.0.0', () => {
+    console.log(`Admin ready on port ${port}`);
+  });
+});
+EOF
 
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -77,3 +85,4 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
+            **/node_modules/**
