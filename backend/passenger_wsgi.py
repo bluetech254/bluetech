@@ -51,7 +51,14 @@ try:
             }
 
             body = environ.get('wsgi.input', None)
-            request_body = body.read() if body else b''
+            try:
+                content_length = int(environ.get('CONTENT_LENGTH') or 0)
+            except (ValueError, TypeError):
+                content_length = 0
+            if body and content_length > 0:
+                request_body = body.read(content_length)
+            else:
+                request_body = b''
 
             response_started = []
             response_body = []
