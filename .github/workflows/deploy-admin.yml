@@ -35,10 +35,11 @@ jobs:
         run: |
           mkdir -p deploy-admin
 
-          # Copy standalone server
+          # Next.js standalone output is a self-contained server
+          # The entry point is server.js at the root of standalone/
           cp -r admin/.next/standalone/. deploy-admin/
 
-          # Copy static assets into the right place
+          # Copy static assets into correct location expected by standalone server
           mkdir -p deploy-admin/.next/static
           cp -r admin/.next/static/. deploy-admin/.next/static/
 
@@ -46,34 +47,8 @@ jobs:
           mkdir -p deploy-admin/public
           cp -r admin/public/. deploy-admin/public/
 
-          # Create a simple start script for cPanel Node.js app
-          cat > deploy-admin/start.js << 'EOF'
-          const { createServer } = require('http');
-          const { parse } = require('url');
-          const next = require('./node_modules/next');
-
-          const dev = false;
-          const hostname = '0.0.0.0';
-          const port = parseInt(process.env.PORT || '3000', 10);
-
-          const app = next({ dev, hostname, port, dir: __dirname });
-          const handle = app.getRequestHandler();
-
-          app.prepare().then(() => {
-            createServer(async (req, res) => {
-              try {
-                const parsedUrl = parse(req.url, true);
-                await handle(req, res, parsedUrl);
-              } catch (err) {
-                console.error('Error:', err);
-                res.statusCode = 500;
-                res.end('Internal Server Error');
-              }
-            }).listen(port, hostname, () => {
-              console.log(`Admin panel ready on http://${hostname}:${port}`);
-            });
-          });
-          EOF
+          # Verify server.js exists
+          ls -la deploy-admin/server.js
 
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
