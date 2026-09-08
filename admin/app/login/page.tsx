@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
 
+const API = "https://api.fixit-bluetechnology.co.ke";
+
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -18,17 +20,32 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth", {
+      const res = await fetch(`${API}/api/v1/admin/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.detail ?? "Invalid username or password");
       }
+
+      const { access_token, admin } = data;
+      const session = {
+        id: admin.id,
+        username: admin.username,
+        full_name: admin.full_name,
+        email: admin.email,
+        role: admin.role,
+        token: access_token,
+        exp: Date.now() + 8 * 60 * 60 * 1000,
+      };
+
+      // Set a JS-readable cookie (no httpOnly — required for static/client-side auth)
+      const maxAge = 8 * 60 * 60;
+      document.cookie = `admin_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+
       router.push("/");
-      router.refresh();
     } catch (err: any) {
       setError(err.message ?? "Something went wrong");
     } finally {
