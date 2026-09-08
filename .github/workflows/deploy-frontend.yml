@@ -50,7 +50,7 @@ jobs:
           port: 21
           protocol: ftp
           local-dir: ./client/dist/
-          server-dir: /frontend/
+          server-dir: /public_html/
           exclude: |
             **/.git*
             **/.git*/**
