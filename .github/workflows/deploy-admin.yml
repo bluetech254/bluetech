@@ -35,19 +35,33 @@ jobs:
         run: |
           mkdir -p deploy-admin
 
-          # Next.js standalone output is a self-contained server
-          # The entry point is server.js at the root of standalone/
+          # Next.js standalone output — self-contained Node server
           cp -r admin/.next/standalone/. deploy-admin/
 
-          # Copy static assets into correct location expected by standalone server
+          # Static assets must live here for Next.js standalone to serve them
           mkdir -p deploy-admin/.next/static
           cp -r admin/.next/static/. deploy-admin/.next/static/
 
-          # Copy public folder
+          # Public assets
           mkdir -p deploy-admin/public
           cp -r admin/public/. deploy-admin/public/
 
-          # Verify server.js exists
+          # cPanel Passenger requires a package.json to recognise the app
+          # and to enable "Run NPM Install". Point main at server.js.
+          cat > deploy-admin/package.json << 'EOF'
+          {
+            "name": "bluetech-admin",
+            "version": "1.0.0",
+            "private": true,
+            "main": "server.js",
+            "scripts": {
+              "start": "node server.js"
+            }
+          }
+          EOF
+
+          # Passenger calls the file set as "Application startup file".
+          # Next standalone already emits server.js — just make sure it's there.
           ls -la deploy-admin/server.js
 
       - name: Deploy to cPanel via FTP
