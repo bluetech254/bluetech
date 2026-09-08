@@ -1,0 +1,47 @@
+name: Deploy Backend to cPanel
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    name: FTP Deploy Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy backend to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftp
+          # Upload only the backend folder contents to /backend/ on server
+          local-dir: ./backend/
+          server-dir: /backend/
+          # Exclude dev/local-only files
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/venv/**
+            **/__pycache__/**
+            **/*.pyc
+            **/*.pyo
+            **/backend_test.log
+            **/backend.log
+            **/server.log
+            **/backend.pid
+            **/.env
+            **/tests/**
+            **/Dockerfile
+            **/fly.toml
+            **/railway.json
+            **/.dockerignore
