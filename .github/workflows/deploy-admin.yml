@@ -1,0 +1,90 @@
+name: Deploy Admin to cPanel
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    name: Build & FTP Deploy Admin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install dependencies
+        working-directory: admin
+        run: npm ci
+
+      - name: Build Next.js standalone
+        working-directory: admin
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.fixit-bluetechnology.co.ke
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy-admin
+
+          # Copy standalone server
+          cp -r admin/.next/standalone/. deploy-admin/
+
+          # Copy static assets into the right place
+          mkdir -p deploy-admin/.next/static
+          cp -r admin/.next/static/. deploy-admin/.next/static/
+
+          # Copy public folder
+          mkdir -p deploy-admin/public
+          cp -r admin/public/. deploy-admin/public/
+
+          # Create a simple start script for cPanel Node.js app
+          cat > deploy-admin/start.js << 'EOF'
+          const { createServer } = require('http');
+          const { parse } = require('url');
+          const next = require('./node_modules/next');
+
+          const dev = false;
+          const hostname = '0.0.0.0';
+          const port = parseInt(process.env.PORT || '3000', 10);
+
+          const app = next({ dev, hostname, port, dir: __dirname });
+          const handle = app.getRequestHandler();
+
+          app.prepare().then(() => {
+            createServer(async (req, res) => {
+              try {
+                const parsedUrl = parse(req.url, true);
+                await handle(req, res, parsedUrl);
+              } catch (err) {
+                console.error('Error:', err);
+                res.statusCode = 500;
+                res.end('Internal Server Error');
+              }
+            }).listen(port, hostname, () => {
+              console.log(`Admin panel ready on http://${hostname}:${port}`);
+            });
+          });
+          EOF
+
+      - name: Deploy to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftp
+          local-dir: ./deploy-admin/
+          server-dir: /Admin/
+          exclude: |
+            **/.git*
+            **/.git*/**
