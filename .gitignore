@@ -34,6 +34,7 @@ build/
 client/dist/
 admin/dist/
 admin/.next/
+admin/out/
 
 # IDE
 .vscode/
@@ -62,7 +63,7 @@ server.pid
 # Test files
 api-test/
 
-# CSV data files (optional - remove if you want to commit these)
+# CSV data files
 *.csv
 
 # Temporary files
@@ -79,5 +80,3 @@ supabase/.temp/
 
 # Zip files
 *.zip
-admin/.next/
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━.md
