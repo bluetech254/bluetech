@@ -15,7 +15,7 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     
     # CORS
-    CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173,https://bluetechadmin.vercel.app").split(",")
+    CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173,https://bluetechadmin.vercel.app,https://fixit-bluetechnology.co.ke,https://www.fixit-bluetechnology.co.ke,https://admin.fixit-bluetechnology.co.ke").split(",")
     
     # Admin
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "")
