@@ -25,52 +25,20 @@ jobs:
         working-directory: admin
         run: npm ci
 
-      - name: Build Next.js
+      - name: Build static export
         working-directory: admin
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: https://api.fixit-bluetechnology.co.ke
 
-      - name: Prepare deployment package
+      - name: Add .htaccess for client-side routing
         run: |
-          mkdir -p deploy-admin
-
-          # Upload the built .next output
-          cp -r admin/.next deploy-admin/.next
-
-          # Upload public assets
-          cp -r admin/public deploy-admin/public
-
-          # Upload package files — cPanel uses these for "Run NPM Install"
-          cp admin/package.json deploy-admin/package.json
-          cp admin/package-lock.json deploy-admin/package-lock.json
-
-          # Optional config files needed at runtime
-          cp admin/next.config.js deploy-admin/next.config.js
-
-          # Create a startup script — cPanel startup file must be a .js file.
-          # This just invokes `next start` via the locally installed next binary.
-          cat > deploy-admin/server.js << 'EOF'
-process.chdir(__dirname);
-process.env.NODE_ENV = 'production';
-
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
-
-const port = parseInt(process.env.PORT || '3000', 10);
-const app = next({ dev: false, dir: __dirname });
-const handle = app.getRequestHandler();
-
-app.prepare().then(() => {
-  createServer((req, res) => {
-    const parsedUrl = parse(req.url, true);
-    handle(req, res, parsedUrl);
-  }).listen(port, '0.0.0.0', () => {
-    console.log(`Admin ready on port ${port}`);
-  });
-});
-EOF
+          cat > admin/out/.htaccess << 'EOF'
+          Options -MultiViews
+          RewriteEngine On
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteRule ^ index.html [QSA,L]
+          EOF
 
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -80,9 +48,8 @@ EOF
           password: ${{ secrets.FTP_PASSWORD }}
           port: 21
           protocol: ftp
-          local-dir: ./deploy-admin/
+          local-dir: ./admin/out/
           server-dir: /Admin/
           exclude: |
             **/.git*
             **/.git*/**
-            **/node_modules/**
