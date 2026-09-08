@@ -1,13 +1,17 @@
 import sys
 import os
 
-# Use abspath(__file__) — same technique that works in the diagnostic script
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Hardcoded absolute path — confirmed via diagnostics
+BASE_DIR = '/home2/fixitblu/backend'
 
-# Add backend root to path so 'app' package is importable
-sys.path.insert(0, BASE_DIR)
+# Ensure app package is importable
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
-# Load .env using absolute path BEFORE importing app
+# Set working directory explicitly
+os.chdir(BASE_DIR)
+
+# Load .env with absolute path before any app imports
 from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
