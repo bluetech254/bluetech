@@ -302,3 +302,27 @@ def _handle_delivery_rewards(order: dict):
 def track_orders_by_phone(phone: str) -> List[dict]:
     resp = supabase.table("orders").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
     return resp.data or []
+
+
+def cancel_order_by_client(order_id: UUID, user_id: Optional[str]) -> dict:
+    """Client cancels their own order. Only allowed when status is 'pending'."""
+    resp = supabase_admin.table("orders").select("status, user_id").eq("id", str(order_id)).single().execute()
+    if not resp.data:
+        raise OrderNotFoundException(f"Order {order_id} not found")
+
+    order = resp.data
+    if user_id and order.get("user_id") and str(order["user_id"]) != str(user_id):
+        raise PermissionError("Access denied")
+    if order["status"] != "pending":
+        raise ValueError(f"Cannot cancel an order with status '{order['status']}'")
+
+    supabase_admin.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
+    return {"message": "Order cancelled"}
+
+
+def cancel_order_by_admin(order_id: UUID) -> dict:
+    """Admin cancels any order."""
+    resp = supabase_admin.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
+    if not resp.data:
+        raise OrderNotFoundException(f"Order {order_id} not found")
+    return {"message": "Order cancelled"}

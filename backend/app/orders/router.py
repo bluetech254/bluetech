@@ -106,18 +106,13 @@ def update_order_status(
 def cancel_order_client(order_id: UUID, user_id: Optional[str] = Depends(get_optional_user)):
     """Client: cancel their own pending order."""
     try:
-        from core.database import supabase_admin as sb
-        order = sb.table("orders").select("status, user_id").eq("id", str(order_id)).single().execute()
-        if not order.data:
-            raise HTTPException(status_code=404, detail="Order not found")
-        if user_id and order.data.get("user_id") and str(order.data["user_id"]) != str(user_id):
-            raise HTTPException(status_code=403, detail="Access denied")
-        if order.data["status"] != "pending":
-            raise HTTPException(status_code=400, detail=f"Cannot cancel an order with status '{order.data['status']}'")
-        sb.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
-        return {"message": "Order cancelled"}
-    except HTTPException:
-        raise
+        return service.cancel_order_by_client(order_id, user_id)
+    except OrderNotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Cancel order error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -127,14 +122,11 @@ def cancel_order_client(order_id: UUID, user_id: Optional[str] = Depends(get_opt
 def cancel_order_admin(order_id: UUID, admin: dict = Depends(get_current_admin)):
     """Admin: cancel/delete an order."""
     try:
-        from core.database import supabase_admin as sb
-        resp = sb.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
-        if not resp.data:
-            raise HTTPException(status_code=404, detail="Order not found")
+        result = service.cancel_order_by_admin(order_id)
         log_action(admin, "order.cancelled", f"order:{order_id}")
-        return {"message": "Order cancelled"}
-    except HTTPException:
-        raise
+        return result
+    except OrderNotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Admin cancel order error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
