@@ -11,25 +11,23 @@ All business logic delegated to auth/service.py — this file only
 handles HTTP concerns (request parsing, response shaping, error mapping).
 """
 import logging
-from fastapi import APIRouter, HTTPException, Request, Depends
 
+from auth import service
+from auth.dependencies import get_current_user as get_current_user_dep
+from auth.models import (
+    AuthResponse,
+    ForgotPassword,
+    MessageResponse,
+    ResendCode,
+    ResetPassword,
+    UserLogin,
+    UserSignup,
+    VerifyPhone,
+)
+from core.exceptions import AuthException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-
-from core.exceptions import AuthException
-from auth.models import (
-    UserSignup,
-    UserLogin,
-    ForgotPassword,
-    ResetPassword,
-    VerifyPhone,
-    VerifyEmail,
-    ResendCode,
-    AuthResponse,
-    MessageResponse,
-)
-from auth.dependencies import get_current_user as get_current_user_dep
-from auth import service
 
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
@@ -184,7 +182,7 @@ def update_profile(body: dict, user_id: str = Depends(get_current_user_dep)):
 def change_own_password(body: dict, user_id: str = Depends(get_current_user_dep)):
     """Change the authenticated user's own password."""
     from core.database import supabase_admin
-    from core.security import verify_and_rehash, hash_password
+    from core.security import hash_password, verify_and_rehash
     current_pw = body.get("current_password")
     new_pw     = body.get("new_password")
     if not current_pw or not new_pw:

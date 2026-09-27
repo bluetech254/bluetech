@@ -5,6 +5,7 @@ Single public function: send_sms(mobile, message) -> bool
 All other code in the backend imports from here — never from utils/.
 """
 import logging
+
 import requests
 from core.config import settings
 

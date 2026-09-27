@@ -9,23 +9,22 @@ Admin:          GET  /api/v1/bookings
                 PUT  /api/v1/bookings/{id}/cost
 """
 import logging
-from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Query, Depends
 
-from core.exceptions import BookingNotFoundException
-from core.audit import log_action
 from admin_auth.dependencies import get_current_admin
 from auth.dependencies import get_optional_user
-from bookings.models import BookingCreate, StatusUpdate, CostUpdate
 from bookings import service
+from bookings.models import BookingCreate, CostUpdate, StatusUpdate
+from core.audit import log_action
+from core.exceptions import BookingNotFoundException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/bookings", tags=["Repair Bookings"])
 
 
 @router.post("")
-def create_booking(body: BookingCreate, user_id: Optional[str] = Depends(get_optional_user)):
+def create_booking(body: BookingCreate, user_id: str | None = Depends(get_optional_user)):
     """Create a new repair booking. Works for guests and authenticated users."""
     try:
         return service.create_booking(body, user_id=user_id)
@@ -36,7 +35,7 @@ def create_booking(body: BookingCreate, user_id: Optional[str] = Depends(get_opt
 
 @router.get("")
 def get_bookings(
-    status: Optional[str] = Query(None),
+    status: str | None = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     admin: dict = Depends(get_current_admin),
@@ -54,7 +53,7 @@ def track_bookings(phone: str):
 
 
 @router.get("/{booking_id}")
-def get_booking(booking_id: UUID, user_id: Optional[str] = Depends(get_optional_user)):
+def get_booking(booking_id: UUID, user_id: str | None = Depends(get_optional_user)):
     """Get a single booking by ID."""
     try:
         booking = service.get_booking_by_id(booking_id)

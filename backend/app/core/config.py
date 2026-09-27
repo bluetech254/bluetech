@@ -4,9 +4,9 @@ core/config.py — All environment variables validated at startup.
 Uses pydantic-settings so the app crashes immediately with a clear error
 if any required variable is missing, rather than failing silently at runtime.
 """
-from pydantic_settings import BaseSettings
+
 from pydantic import field_validator
-from typing import List
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # ── Optional with safe defaults ───────────────────────────────────────────
     MPESA_ENV: str = "sandbox"          # "sandbox" | "production"
     DEBUG: bool = False                 # NEVER default True in production
-    API_HOST: str = "0.0.0.0"
+    API_HOST: str = "0.0.0.0"  # nosec B104 — intentional, required for containerised deployment
     API_PORT: int = 8000
 
     # CORS — comma-separated list of allowed origins
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
 
     # ── Computed helpers ──────────────────────────────────────────────────────
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         """Return CORS origins as a list, stripping whitespace."""
         origins = [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
         # Always add localhost in debug mode for local development

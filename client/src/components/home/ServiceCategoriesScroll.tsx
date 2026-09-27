@@ -83,8 +83,8 @@ export const ServiceCategories = () => {
 
       <div className="overflow-hidden">
         <div className={`flex gap-4 ${hoveredIdx === null ? 'animate-scroll-reverse' : ''}`}>
-          {services.map((s, i) => <Card key={i} service={s} id={`${i}`} />)}
-          {services.map((s, i) => <Card key={`dup-${i}`} service={s} id={`dup-${i}`} />)}
+          {services.map((s, i) => <React.Fragment key={i}><Card service={s} id={`${i}`} /></React.Fragment>)}
+          {services.map((s, i) => <React.Fragment key={`dup-${i}`}><Card service={s} id={`dup-${i}`} /></React.Fragment>)}
         </div>
       </div>
     </div>

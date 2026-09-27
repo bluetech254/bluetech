@@ -1,9 +1,9 @@
 """points/router.py — Loyalty points and referrals routes."""
 import logging
-from fastapi import APIRouter, HTTPException, Depends
-from core.exceptions import InsufficientPointsException
+
 from admin_auth.dependencies import get_current_admin
 from auth.dependencies import get_current_user
+from fastapi import APIRouter, Depends, HTTPException
 from points import service
 
 logger = logging.getLogger(__name__)

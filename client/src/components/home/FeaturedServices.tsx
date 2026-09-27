@@ -66,7 +66,9 @@ export const FeaturedServices = () => {
       {/* Desktop: Grid */}
       <div className="hidden md:grid grid-cols-5 gap-4">
         {services.map((service, idx) => (
-          <ServiceCard key={idx} service={service} />
+          <div key={idx}>
+            <ServiceCard service={service} />
+          </div>
         ))}
       </div>
     </div>

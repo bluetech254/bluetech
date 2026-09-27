@@ -79,7 +79,7 @@ export const FAQsPage = () => (
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{section.category}</h2>
           </div>
           <div className="px-4 sm:px-6">
-            {section.items.map(item => <Item key={item.q} {...item} />)}
+            {section.items.map(item => <React.Fragment key={item.q}><Item {...item} /></React.Fragment>)}
           </div>
         </div>
       ))}

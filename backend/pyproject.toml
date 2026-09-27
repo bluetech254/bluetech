@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C4", "RUF"]
+ignore = [
+    "B008",    # Depends() in function defaults — standard FastAPI pattern
+    "BLE001",  # broad Exception catches — intentional in API error handlers
+    "DTZ003",  # datetime.utcnow() — acceptable for Supabase ISO strings
+    "DTZ005",  # datetime.now() without tz — M-Pesa timestamp format
+    "S110",    # try/except/pass — intentional for non-critical operations
+    "RUF013",  # implicit Optional — minor, Python 3.10+ union syntax preferred
+    "C401",    # generator vs set comprehension — readability preference
+]

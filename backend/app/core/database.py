@@ -8,9 +8,9 @@ Two clients:
 Both are lazy singletons — initialized on first access, not at import time,
 so the app can start and validate config before opening DB connections.
 """
-from supabase import create_client, Client
 from core.config import settings
 
+from supabase import Client, create_client
 
 # ── Factory functions ─────────────────────────────────────────────────────────
 

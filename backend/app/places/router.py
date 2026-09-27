@@ -1,7 +1,8 @@
 """places/router.py — Google Places Autocomplete proxy restricted to Kenya."""
 import logging
-from fastapi import APIRouter, HTTPException, Query
+
 from core.config import settings
+from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])

@@ -8,18 +8,16 @@ Two dependencies:
 Import these in any router that needs to know who the client is.
 Never re-define auth logic in individual routers.
 """
-from typing import Optional
-
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from core.security import decode_token
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 _security = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_security),
 ) -> str:
     """
     Require a valid client JWT. Returns the user_id (str UUID).
@@ -47,8 +45,8 @@ def get_current_user(
 
 
 def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_security),
-) -> Optional[str]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(_security),
+) -> str | None:
     """
     Return user_id if a valid client token is present, otherwise None.
     Use on endpoints that support both authenticated and guest access

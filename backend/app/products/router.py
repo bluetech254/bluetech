@@ -5,14 +5,13 @@ Public:  GET /api/v1/products, GET /api/v1/products/{id}, GET /api/v1/products/c
 Admin:   POST, PUT, DELETE — require valid admin JWT
 """
 import logging
-from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Query, Depends
 
-from core.exceptions import ProductNotFoundException
 from admin_auth.dependencies import get_current_admin
-from products.models import ProductCreate, ProductUpdate
+from core.exceptions import ProductNotFoundException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from products import service
+from products.models import ProductCreate, ProductUpdate
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/products", tags=["Products"])
@@ -26,16 +25,16 @@ def get_categories():
 
 @router.get("")
 def get_products(
-    search: Optional[str] = Query(None),
+    search: str | None = Query(None),
     active_only: bool = Query(True),
-    is_flash_sale: Optional[bool] = Query(None),
-    is_discounted: Optional[bool] = Query(None),
-    is_clearance: Optional[bool] = Query(None),
-    is_weekly_deal: Optional[bool] = Query(None),
-    is_featured: Optional[bool] = Query(None),
-    is_new_arrival: Optional[bool] = Query(None),
-    is_best_seller: Optional[bool] = Query(None),
-    is_trending: Optional[bool] = Query(None),
+    is_flash_sale: bool | None = Query(None),
+    is_discounted: bool | None = Query(None),
+    is_clearance: bool | None = Query(None),
+    is_weekly_deal: bool | None = Query(None),
+    is_featured: bool | None = Query(None),
+    is_new_arrival: bool | None = Query(None),
+    is_best_seller: bool | None = Query(None),
+    is_trending: bool | None = Query(None),
     limit: int = Query(200, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):

@@ -6,7 +6,6 @@ what and when. Failures are silently logged — audit writes must never
 break the operation they're recording.
 """
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +13,8 @@ logger = logging.getLogger(__name__)
 def log_action(
     admin: dict,
     action: str,
-    target: Optional[str] = None,
-    detail: Optional[dict] = None,
+    target: str | None = None,
+    detail: dict | None = None,
 ) -> None:
     """
     Write a single audit log entry to admin_audit_log table.

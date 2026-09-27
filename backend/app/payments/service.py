@@ -6,8 +6,9 @@ lives here. mpesa.py handles raw API calls; this file handles
 business rules (ownership, idempotency, status updates).
 """
 import logging
-from core.database import supabase_admin as db
+
 from core.audit import log_action
+from core.database import supabase_admin as db
 from payments.mpesa import stk_push, stk_query
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
         phone       = order["phone_number"],
         amount      = int(order["total_amount"]),
         reference   = f"ORD-{order_id[:10].upper()}",
-        description = f"BlueTech Order",
+        description = "BlueTech Order",
     )
     checkout_id = result.get("CheckoutRequestID")
     db.table("orders").update({"checkout_request_id": checkout_id}).eq("id", order_id).execute()

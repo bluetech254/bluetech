@@ -8,10 +8,9 @@ Two dependencies:
 The type='admin' check blocks client tokens from being used on admin
 endpoints — a client JWT will always be rejected here even if valid.
 """
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 from core.security import decode_token
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 _security = HTTPBearer()
 

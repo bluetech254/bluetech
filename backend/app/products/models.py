@@ -1,11 +1,11 @@
 """
 products/models.py — Pydantic schemas for the products domain.
 """
-from pydantic import BaseModel, Field
-from typing import Optional
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 
 class ProductCreate(BaseModel):
@@ -15,9 +15,9 @@ class ProductCreate(BaseModel):
     stock_quantity: int = Field(default=10, ge=0)
     low_stock_threshold: int = Field(default=5, ge=0)
     specifications: dict = Field(default_factory=dict)
-    image_url: Optional[str] = None
-    category: Optional[str] = None
-    brand: Optional[str] = None
+    image_url: str | None = None
+    category: str | None = None
+    brand: str | None = None
     is_active: bool = True
     # Merchandising flags
     is_flash_sale: bool = False
@@ -37,7 +37,6 @@ class ProductCreate(BaseModel):
 
 class ProductUpdate(ProductCreate):
     """Same fields as create — full replacement update."""
-    pass
 
 
 class ProductResponse(ProductCreate):

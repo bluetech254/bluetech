@@ -10,18 +10,17 @@ Imports from:
 Points logic is called here but lives in points/ — we import the
 function directly. No inline DB queries for points.
 """
-import math
 import logging
-from typing import List, Optional
-from uuid import UUID
+import math
 from decimal import Decimal
+from uuid import UUID
 
 from core.database import supabase, supabase_admin
 from core.exceptions import (
-    ProductNotFoundException,
-    InsufficientStockException,
     DeliveryZoneNotFoundException,
+    InsufficientStockException,
     OrderNotFoundException,
+    ProductNotFoundException,
 )
 from notifications.sms import send_sms
 from orders.models import OrderCreate, OrderItemCreate
@@ -31,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-def _fetch_products(item_ids: List[str]) -> dict:
+def _fetch_products(item_ids: list[str]) -> dict:
     resp = supabase.table("products").select("*").in_("id", item_ids).execute()
     return {p["id"]: p for p in (resp.data or [])}
 
@@ -50,7 +49,7 @@ def _get_delivery_fee(zone_name: str) -> Decimal:
     return Decimal(str(resp.data["delivery_fee"]))
 
 
-def _check_stock(items: List[OrderItemCreate], products: dict):
+def _check_stock(items: list[OrderItemCreate], products: dict):
     for item in items:
         p = products.get(str(item.product_id))
         if not p:
@@ -62,7 +61,7 @@ def _check_stock(items: List[OrderItemCreate], products: dict):
             )
 
 
-def _decrement_stock(items: List[OrderItemCreate], products: dict):
+def _decrement_stock(items: list[OrderItemCreate], products: dict):
     for item in items:
         p = products[str(item.product_id)]
         new_qty = p["stock_quantity"] - item.quantity
@@ -71,7 +70,7 @@ def _decrement_stock(items: List[OrderItemCreate], products: dict):
         ).eq("id", str(item.product_id)).execute()
 
 
-def _resolve_referral(referral_code: Optional[str], user_id: Optional[str]) -> Optional[str]:
+def _resolve_referral(referral_code: str | None, user_id: str | None) -> str | None:
     """Return referrer user_id from code or from user profile. Never returns self."""
     referrer_id = None
 
@@ -95,7 +94,7 @@ def _resolve_referral(referral_code: Optional[str], user_id: Optional[str]) -> O
 
 # ── Public service functions ──────────────────────────────────────────────────
 
-def create_order(order_data: OrderCreate, user_id: Optional[str] = None) -> dict:
+def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
     """
     Create a new order.
     - Validates stock before insert
@@ -232,7 +231,7 @@ def get_order_by_id(order_id: UUID) -> dict:
     return resp.data
 
 
-def get_orders(status: Optional[str] = None, limit: int = 100, offset: int = 0) -> List[dict]:
+def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict]:
     q = supabase_admin.table("orders").select("*, order_items(*)")
     if status:
         q = q.eq("status", status)
@@ -299,12 +298,12 @@ def _handle_delivery_rewards(order: dict):
             }).execute()
 
 
-def track_orders_by_phone(phone: str) -> List[dict]:
+def track_orders_by_phone(phone: str) -> list[dict]:
     resp = supabase.table("orders").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
     return resp.data or []
 
 
-def cancel_order_by_client(order_id: UUID, user_id: Optional[str]) -> dict:
+def cancel_order_by_client(order_id: UUID, user_id: str | None) -> dict:
     """Client cancels their own order. Only allowed when status is 'pending'."""
     resp = supabase_admin.table("orders").select("status, user_id").eq("id", str(order_id)).single().execute()
     if not resp.data:

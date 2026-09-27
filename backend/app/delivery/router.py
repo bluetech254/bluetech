@@ -1,7 +1,8 @@
 """delivery/router.py — Delivery zones. Public read-only."""
 import logging
-from fastapi import APIRouter, HTTPException
+
 from core.database import supabase
+from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/delivery-zones", tags=["Delivery Zones"])

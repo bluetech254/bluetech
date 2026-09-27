@@ -1,11 +1,11 @@
 """devices/router.py — Device brands, models, and service pricing."""
 import logging
-from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Query, Depends
-from core.database import supabase, supabase_admin
+
 from admin_auth.dependencies import get_current_admin
+from core.database import supabase, supabase_admin
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Devices"])
@@ -16,29 +16,29 @@ router = APIRouter(tags=["Devices"])
 class BrandBody(BaseModel):
     name: str
     device_type: str = "multi"
-    country_of_origin: Optional[str] = None
+    country_of_origin: str | None = None
     is_popular: bool = False
-    logo_url: Optional[str] = None
+    logo_url: str | None = None
     is_active: bool = True
 
 class ModelBody(BaseModel):
     brand_id: str
     name: str
     device_type: str
-    release_year: Optional[int] = None
+    release_year: int | None = None
     is_active: bool = True
 
 class PricingBody(BaseModel):
     service_id: str
-    brand_id: Optional[str] = None
-    model_id: Optional[str] = None
+    brand_id: str | None = None
+    model_id: str | None = None
     price: float
 
 
 # ── Public: device lookup for booking form ────────────────────────────────────
 
 @router.get("/api/v1/devices/brands")
-def get_brands(device_type: Optional[str] = Query(None)):
+def get_brands(device_type: str | None = Query(None)):
     """Get active device brands. Optionally filter by device_type (includes 'multi' brands)."""
     q = supabase.table("device_brands").select("id,name,device_type,is_popular,logo_url").eq("is_active", True)
     if device_type:
@@ -48,7 +48,7 @@ def get_brands(device_type: Optional[str] = Query(None)):
 
 
 @router.get("/api/v1/devices/brands/{brand_id}/models")
-def get_models(brand_id: UUID, device_type: Optional[str] = Query(None)):
+def get_models(brand_id: UUID, device_type: str | None = Query(None)):
     """Get active models for a brand."""
     q = supabase.table("device_models").select("id,name,device_type,release_year")\
         .eq("brand_id", str(brand_id)).eq("is_active", True)
@@ -61,8 +61,8 @@ def get_models(brand_id: UUID, device_type: Optional[str] = Query(None)):
 @router.get("/api/v1/devices/services/{service_id}/price")
 def get_service_price(
     service_id: UUID,
-    brand_id:   Optional[UUID] = Query(None),
-    model_id:   Optional[UUID] = Query(None),
+    brand_id:   UUID | None = Query(None),
+    model_id:   UUID | None = Query(None),
 ):
     """Smart price lookup: model-specific → brand-specific → service default."""
     sb = supabase
@@ -112,7 +112,7 @@ def admin_delete_brand(brand_id: str, admin: dict = Depends(get_current_admin)):
 # ── Admin: model CRUD ─────────────────────────────────────────────────────────
 
 @router.get("/api/v1/admin/devices/models")
-def admin_get_models(brand_id: Optional[str] = Query(None), admin: dict = Depends(get_current_admin)):
+def admin_get_models(brand_id: str | None = Query(None), admin: dict = Depends(get_current_admin)):
     q = supabase_admin.table("device_models").select("*, device_brands(name)")
     if brand_id:
         q = q.eq("brand_id", brand_id)

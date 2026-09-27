@@ -1,8 +1,8 @@
 """
 admin_auth/models.py — Pydantic schemas for admin authentication.
 """
+
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class AdminLoginRequest(BaseModel):

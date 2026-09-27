@@ -8,11 +8,18 @@ import { normalizeProduct, unwrapList } from '../utils/normalizers';
 
 export interface ProductFilters {
   search?: string;
+  category?: string;
+  brand?: string;
+  min_price?: number;
+  max_price?: number;
+  sort_by?: string;
+  order?: 'asc' | 'desc';
   is_flash_sale?: boolean;
   is_discounted?: boolean;
   is_clearance?: boolean;
   is_weekly_deal?: boolean;
   is_featured?: boolean;
+  featured?: boolean;
   is_new_arrival?: boolean;
   is_best_seller?: boolean;
   is_trending?: boolean;

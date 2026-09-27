@@ -5,9 +5,8 @@ All input validation lives here. Phone normalization is applied at schema
 level so services always receive a clean 254XXXXXXXXX format number.
 """
 import re
-from pydantic import BaseModel, Field, EmailStr, field_validator
-from typing import Optional
 
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 # ── Phone normalizer (reused across schemas) ──────────────────────────────────
 
@@ -17,8 +16,7 @@ def _normalize_kenya_phone(phone: str) -> str:
     Accepts: 0712345678, +254712345678, 254712345678
     """
     phone = re.sub(r"[\s\-\(\)]", "", phone)
-    if phone.startswith("+"):
-        phone = phone[1:]
+    phone = phone.removeprefix("+")
     if phone.startswith("0"):
         phone = "254" + phone[1:]
     if not re.match(r"^254[0-9]{9}$", phone):
@@ -31,9 +29,9 @@ def _normalize_kenya_phone(phone: str) -> str:
 class UserSignup(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=100)
     phone_number: str
-    email: Optional[EmailStr] = None
+    email: EmailStr | None = None
     password: str = Field(..., min_length=6)
-    referral_code: Optional[str] = None
+    referral_code: str | None = None
 
     @field_validator("phone_number")
     @classmethod

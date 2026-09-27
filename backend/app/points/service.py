@@ -6,11 +6,10 @@ Constants:
   REFERRAL_POINTS = 50 pts to referrer on referee's first delivered order
   POINTS_TO_KES   = 0.10  (10 pts = KES 1)
 """
+import logging
 import math
 import secrets
 import string
-import logging
-from typing import Optional
 
 from core.database import supabase, supabase_admin
 from core.exceptions import InsufficientPointsException
@@ -103,7 +102,7 @@ def admin_award_points(user_id: str, points: int, reason: str) -> dict:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def resolve_referral_code(code: str) -> Optional[str]:
+def resolve_referral_code(code: str) -> str | None:
     """Return user_id of the referral code owner, or None."""
     resp = supabase.table("users").select("id").eq("referral_code", code.upper()).execute()
     return resp.data[0]["id"] if resp.data else None

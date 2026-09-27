@@ -6,19 +6,18 @@ All business logic delegated to admin_auth/service.py.
 Superadmin-only endpoints enforce role via require_superadmin dependency.
 """
 import logging
-from fastapi import APIRouter, HTTPException, Request, Depends
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-from core.exceptions import AuthException
+from admin_auth import service
+from admin_auth.dependencies import get_current_admin, require_superadmin
 from admin_auth.models import (
-    AdminLoginRequest,
     AdminChangePasswordRequest,
     AdminCreateRequest,
+    AdminLoginRequest,
 )
-from admin_auth.dependencies import get_current_admin, require_superadmin
-from admin_auth import service
+from core.exceptions import AuthException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)

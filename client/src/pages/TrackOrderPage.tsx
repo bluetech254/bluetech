@@ -166,7 +166,7 @@ export const TrackOrderPage = () => {
     const bookingStatuses: { key: Booking['status']; title: string; desc: string }[] = [
       { key: 'pending', title: 'Booking Logged', desc: 'Repair appointment scheduled. Awaiting device dropoff or courier pickup.' },
       { key: 'confirmed', title: 'Appointment Confirmed', desc: 'Hardware received and registered into our diagnostics intake lab.' },
-      { key: 'in_progress', title: 'Repairs Active', desc: 'Diagnostics complete. Technician active in micro-soldering and spares replacement.' },
+      { key: 'in_repair', title: 'Repairs Active', desc: 'Diagnostics complete. Technician active in micro-soldering and spares replacement.' },
       { key: 'completed', title: 'Device Ready & Returned', desc: 'Post-repair benchmark stress tests passed. Device returned to client with active warranty.' },
     ];
 
@@ -181,7 +181,7 @@ export const TrackOrderPage = () => {
           </div>
           <div className="flex items-center space-x-2.5">
             <span className="text-xs bg-slate-100 text-slate-800 font-bold px-2 py-0.5 rounded uppercase font-mono capitalize">
-              {bk.device_brand}
+              {bk.device_type}
             </span>
             <Badge variant="info" className="capitalize">
               {bk.status}
@@ -228,14 +228,14 @@ export const TrackOrderPage = () => {
         <div className="border-t border-slate-150 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600 text-left">
           <div className="space-y-1.5">
             <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Device & Issue Summary</p>
-            <p className="font-bold text-slate-800 text-sm capitalize">{bk.device_brand} {bk.device_model}</p>
+            <p className="font-bold text-slate-800 text-sm capitalize">{bk.device_type} {bk.device_model}</p>
             <p className="leading-relaxed"><strong className="text-slate-700">Problem:</strong> "{bk.issue_description}"</p>
             {bk.notes && <p className="leading-relaxed italic text-slate-500"><strong className="text-slate-700">Client Note:</strong> {bk.notes}</p>}
           </div>
           <div className="space-y-1.5 sm:text-right">
-            <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px] sm:text-right">Appointment Slot</p>
-            <p className="font-extrabold text-slate-900 flex items-center sm:justify-end"><Calendar className="w-3.5 h-3.5 mr-1 text-slate-400" /> {new Date(bk.preferred_date).toLocaleDateString()}</p>
-            <p className="font-bold text-blue-600 capitalize">{bk.preferred_time} slot</p>
+            <p className="font-bold text-slate-400 uppercase tracking-wider text-[10px] sm:text-right">Fulfillment</p>
+            <p className="font-extrabold text-slate-900 capitalize">{bk.fulfillment_type?.replace('_', ' ')}</p>
+            {bk.pickup_address && <p className="text-slate-500 text-xs">{bk.pickup_address}</p>}
             <p className="text-slate-400 text-[10px]">Booked on: {new Date(bk.created_at).toLocaleString()}</p>
           </div>
         </div>

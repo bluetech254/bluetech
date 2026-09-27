@@ -11,20 +11,25 @@ Security fixes applied here:
 """
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
+from auth.models import (
+    ForgotPassword,
+    ResetPassword,
+    UserLogin,
+    UserSignup,
+    VerifyPhone,
+)
 from core.database import supabase, supabase_admin
+from core.exceptions import AuthException
 from core.security import (
-    hash_password,
-    verify_and_rehash,
     create_client_token,
     generate_otp,
     hash_otp,
+    hash_password,
+    verify_and_rehash,
     verify_otp,
 )
-from core.exceptions import AuthException
 from notifications.sms import send_sms
-from auth.models import UserSignup, UserLogin, ForgotPassword, ResetPassword, VerifyPhone, ResendCode
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +261,7 @@ def _sanitize_user(user: dict) -> dict:
     return user
 
 
-def _check_otp_expiry(expires_at: Optional[str]) -> None:
+def _check_otp_expiry(expires_at: str | None) -> None:
     """Raise AuthException if the OTP expiry timestamp has passed."""
     if not expires_at:
         return
@@ -277,7 +282,7 @@ def _generate_referral_code() -> str:
     return "".join(secrets.choice(chars) for _ in range(8))
 
 
-def _resolve_referral_code(code: str) -> Optional[str]:
+def _resolve_referral_code(code: str) -> str | None:
     """Return user_id of the referral code owner, or None if not found."""
     resp = supabase.table("users").select("id").eq("referral_code", code.upper()).execute()
     return resp.data[0]["id"] if resp.data else None

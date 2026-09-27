@@ -6,6 +6,7 @@ Falls back gracefully if AWS credentials are not configured — signup
 still works without email, just the verification email won't send.
 """
 import logging
+
 from core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,6 @@ def send_verification_email(recipient_email: str, code: str) -> bool:
 
     try:
         import boto3
-        from botocore.exceptions import ClientError
 
         ses = boto3.client(
             "ses",

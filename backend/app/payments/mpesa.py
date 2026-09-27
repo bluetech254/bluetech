@@ -6,9 +6,9 @@ in the payments domain goes through service.py.
 """
 import base64
 import logging
-import requests
 from datetime import datetime
 
+import requests
 from core.config import settings
 
 logger = logging.getLogger(__name__)

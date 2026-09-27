@@ -7,16 +7,12 @@ Covers:
 - OTP generation and hashing
 """
 import hashlib
-import secrets
 import random
-import os
 from datetime import datetime, timedelta
-from typing import Optional
-
-from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from core.config import settings
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 # ── bcrypt context ────────────────────────────────────────────────────────────
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -114,7 +110,7 @@ def create_admin_token(admin_id: str, username: str, role: str) -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=ALGORITHM)
 
 
-def decode_token(token: str) -> Optional[dict]:
+def decode_token(token: str) -> dict | None:
     """
     Decode and verify a JWT. Returns the payload dict or None if invalid/expired.
     Never raises — callers check for None.

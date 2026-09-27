@@ -5,7 +5,6 @@ All DB access goes through core/database.
 Admin writes use supabase_admin (bypasses RLS).
 Public reads use supabase (respects RLS).
 """
-from typing import Optional, List
 from uuid import UUID
 
 from core.database import supabase, supabase_admin
@@ -14,19 +13,19 @@ from products.models import ProductCreate, ProductUpdate
 
 
 def get_products(
-    search: Optional[str] = None,
+    search: str | None = None,
     active_only: bool = True,
-    is_flash_sale: Optional[bool] = None,
-    is_discounted: Optional[bool] = None,
-    is_clearance: Optional[bool] = None,
-    is_weekly_deal: Optional[bool] = None,
-    is_featured: Optional[bool] = None,
-    is_new_arrival: Optional[bool] = None,
-    is_best_seller: Optional[bool] = None,
-    is_trending: Optional[bool] = None,
+    is_flash_sale: bool | None = None,
+    is_discounted: bool | None = None,
+    is_clearance: bool | None = None,
+    is_weekly_deal: bool | None = None,
+    is_featured: bool | None = None,
+    is_new_arrival: bool | None = None,
+    is_best_seller: bool | None = None,
+    is_trending: bool | None = None,
     limit: int = 200,
     offset: int = 0,
-) -> List[dict]:
+) -> list[dict]:
     query = supabase.table("products").select("*")
 
     if active_only:
@@ -60,7 +59,7 @@ def get_product_by_id(product_id: UUID) -> dict:
     return response.data
 
 
-def get_product_categories() -> List[str]:
+def get_product_categories() -> list[str]:
     r = supabase.table("products").select("category").eq("is_active", True).execute()
     return sorted(set(p["category"] for p in (r.data or []) if p.get("category")))
 

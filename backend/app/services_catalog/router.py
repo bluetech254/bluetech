@@ -1,8 +1,8 @@
 """services_catalog/router.py — Repair services catalog. Public read-only."""
 import logging
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
+
 from core.database import supabase
+from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/repair-services", tags=["Repair Services"])
@@ -22,9 +22,9 @@ def get_categories():
 
 @router.get("")
 def get_repair_services(
-    category: Optional[str] = Query(None),
-    search:   Optional[str] = Query(None),
-    limit:    Optional[int] = Query(None, ge=1),
+    category: str | None = Query(None),
+    search:   str | None = Query(None),
+    limit:    int | None = Query(None, ge=1),
 ):
     """Get active repair services with optional category/search filter."""
     try:

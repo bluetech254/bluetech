@@ -8,14 +8,12 @@ Imports from:
 """
 import logging
 import math
-from typing import List, Optional
 from uuid import UUID
-from decimal import Decimal
 
+from bookings.models import BookingCreate, CostUpdate
 from core.database import supabase, supabase_admin
 from core.exceptions import BookingNotFoundException
 from notifications.sms import send_sms
-from bookings.models import BookingCreate, CostUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +28,7 @@ _STATUS_SMS = {
 }
 
 
-def create_booking(data: BookingCreate, user_id: Optional[str] = None) -> dict:
+def create_booking(data: BookingCreate, user_id: str | None = None) -> dict:
     """Create a new repair booking and send SMS confirmation."""
     row = data.model_dump()
     row["status"]  = "pending"
@@ -65,7 +63,7 @@ def get_booking_by_id(booking_id: UUID) -> dict:
     return resp.data
 
 
-def get_bookings(status: Optional[str] = None, limit: int = 100, offset: int = 0) -> List[dict]:
+def get_bookings(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict]:
     q = supabase_admin.table("bookings").select("*")
     if status:
         q = q.eq("status", status)
@@ -73,7 +71,7 @@ def get_bookings(status: Optional[str] = None, limit: int = 100, offset: int = 0
     return resp.data or []
 
 
-def track_bookings_by_phone(phone: str) -> List[dict]:
+def track_bookings_by_phone(phone: str) -> list[dict]:
     resp = supabase.table("bookings").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
     return resp.data or []
 

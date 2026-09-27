@@ -10,28 +10,27 @@ Admin:          GET  /api/v1/orders
                 DELETE /api/v1/orders/{id}
 """
 import logging
-from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Query, Depends
 
-from core.exceptions import (
-    OrderNotFoundException,
-    ProductNotFoundException,
-    InsufficientStockException,
-    DeliveryZoneNotFoundException,
-)
-from core.audit import log_action
 from admin_auth.dependencies import get_current_admin
 from auth.dependencies import get_optional_user
-from orders.models import OrderCreate, StatusUpdate
+from core.audit import log_action
+from core.exceptions import (
+    DeliveryZoneNotFoundException,
+    InsufficientStockException,
+    OrderNotFoundException,
+    ProductNotFoundException,
+)
+from fastapi import APIRouter, Depends, HTTPException, Query
 from orders import service
+from orders.models import OrderCreate, StatusUpdate
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 
 
 @router.post("")
-def create_order(body: OrderCreate, user_id: Optional[str] = Depends(get_optional_user)):
+def create_order(body: OrderCreate, user_id: str | None = Depends(get_optional_user)):
     """
     Create a new order. Works for guests and authenticated users.
     Authenticated users earn loyalty points on delivery.
@@ -52,7 +51,7 @@ def create_order(body: OrderCreate, user_id: Optional[str] = Depends(get_optiona
 
 @router.get("")
 def get_orders(
-    status: Optional[str] = Query(None),
+    status: str | None = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     admin: dict = Depends(get_current_admin),
@@ -70,7 +69,7 @@ def track_orders(phone: str):
 
 
 @router.get("/{order_id}")
-def get_order(order_id: UUID, user_id: Optional[str] = Depends(get_optional_user)):
+def get_order(order_id: UUID, user_id: str | None = Depends(get_optional_user)):
     """
     Get a single order. If the caller is authenticated, enforces ownership.
     Guests can fetch any order by ID (for order success page).
@@ -103,7 +102,7 @@ def update_order_status(
 
 
 @router.post("/{order_id}/cancel")
-def cancel_order_client(order_id: UUID, user_id: Optional[str] = Depends(get_optional_user)):
+def cancel_order_client(order_id: UUID, user_id: str | None = Depends(get_optional_user)):
     """Client: cancel their own pending order."""
     try:
         return service.cancel_order_by_client(order_id, user_id)

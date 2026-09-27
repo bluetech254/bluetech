@@ -2,31 +2,30 @@
 app/main.py — Application factory. This file only mounts routers and
 configures middleware. Zero business logic here.
 """
+from admin_auth.router import router as admin_auth_router
+from admin_ops.router import router as admin_ops_router
+
+# ── Domain routers ────────────────────────────────────────────────────────────
+from auth.router import router as auth_router
+from bookings.router import router as bookings_router
+from contact.router import router as contact_router
+from core.config import settings
+from core.startup import validate_startup
+from delivery.router import router as delivery_router
+from devices.router import router as devices_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-
-from core.config import settings
-from core.startup import validate_startup
-
-# ── Domain routers ────────────────────────────────────────────────────────────
-from auth.router          import router as auth_router
-from admin_auth.router    import router as admin_auth_router
-from products.router      import router as products_router
-from orders.router        import router as orders_router
-from bookings.router      import router as bookings_router
-from payments.router      import router as payments_router
-from points.router        import router as points_router
+from orders.router import router as orders_router
+from payments.router import router as payments_router
+from places.router import router as places_router
+from points.router import router as points_router
+from products.router import router as products_router
 from services_catalog.router import router as services_router
-from delivery.router      import router as delivery_router
-from tracking.router      import router as tracking_router
-from admin_ops.router     import router as admin_ops_router
-from devices.router       import router as devices_router
-from contact.router       import router as contact_router
-from places.router        import router as places_router
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from tracking.router import router as tracking_router
 
 # ── Rate limiter ──────────────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address)

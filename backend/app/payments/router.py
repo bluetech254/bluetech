@@ -5,11 +5,10 @@ SECURITY FIX: /mpesa/callback enforces Safaricom IP whitelist.
 Anyone not from Safaricom's published IPs gets 403 — cannot fake a payment.
 """
 import logging
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Request, Depends
 
 from admin_auth.dependencies import get_current_admin
 from auth.dependencies import get_optional_user
+from fastapi import APIRouter, Depends, HTTPException, Request
 from payments import service
 
 logger = logging.getLogger(__name__)
@@ -36,7 +35,7 @@ def _verify_safaricom_ip(request: Request) -> None:
 # ── Order payment ─────────────────────────────────────────────────────────────
 
 @router.post("/mpesa/initiate")
-def initiate_order_payment(order_id: str, user_id: Optional[str] = Depends(get_optional_user)):
+def initiate_order_payment(order_id: str, user_id: str | None = Depends(get_optional_user)):
     """Initiate M-Pesa STK push for an order. Authenticated users must own the order."""
     try:
         return service.initiate_order_payment(order_id, user_id)

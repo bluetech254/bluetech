@@ -3,20 +3,18 @@ admin_ops/router.py — Admin operations: dashboard, stock, export, bulk actions
 referrals, customer history, global search, audit log, transactions.
 All endpoints require admin JWT.
 """
-import io
 import csv
+import io
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from admin_auth.dependencies import get_current_admin
+from core.audit import log_action
+from core.database import supabase_admin
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-
-from core.database import supabase_admin
-from core.audit import log_action
-from admin_auth.dependencies import get_current_admin
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin Operations"])
@@ -111,15 +109,18 @@ def set_stock_threshold(product_id: str, threshold: int, admin: dict = Depends(g
 
 @router.get("/export/orders")
 def export_orders_csv(
-    status:    Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to:   Optional[str] = None,
+    status:    str | None = None,
+    date_from: str | None = None,
+    date_to:   str | None = None,
     admin: dict = Depends(get_current_admin),
 ):
     q = supabase_admin.table("orders").select("*")
-    if status:    q = q.eq("status", status)
-    if date_from: q = q.gte("created_at", date_from)
-    if date_to:   q = q.lte("created_at", date_to + "T23:59:59")
+    if status:
+        q = q.eq("status", status)
+    if date_from:
+        q = q.gte("created_at", date_from)
+    if date_to:
+        q = q.lte("created_at", date_to + "T23:59:59")
     orders = q.order("created_at", desc=True).execute().data or []
 
     fields = ["id","full_name","phone_number","email","delivery_zone","delivery_address",
@@ -127,16 +128,18 @@ def export_orders_csv(
               "status","payment_status","payment_method","notes","created_at"]
     buf = io.StringIO()
     w   = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
-    w.writeheader(); w.writerows(orders)
+    w.writeheader()
+    w.writerows(orders)
     log_action(admin, "export.orders_csv", detail={"count": len(orders)})
     return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv",
                              headers={"Content-Disposition": "attachment; filename=orders.csv"})
 
 
 @router.get("/export/bookings")
-def export_bookings_csv(status: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+def export_bookings_csv(status: str | None = None, admin: dict = Depends(get_current_admin)):
     q = supabase_admin.table("bookings").select("*")
-    if status: q = q.eq("status", status)
+    if status:
+        q = q.eq("status", status)
     bookings = q.order("created_at", desc=True).execute().data or []
 
     fields = ["id","full_name","phone_number","device_type","device_model",
@@ -144,7 +147,8 @@ def export_bookings_csv(status: Optional[str] = None, admin: dict = Depends(get_
               "estimated_cost","final_cost","internal_notes","created_at"]
     buf = io.StringIO()
     w   = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
-    w.writeheader(); w.writerows(bookings)
+    w.writeheader()
+    w.writerows(bookings)
     log_action(admin, "export.bookings_csv", detail={"count": len(bookings)})
     return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv",
                              headers={"Content-Disposition": "attachment; filename=bookings.csv"})
@@ -194,7 +198,7 @@ def get_transactions(admin: dict = Depends(get_current_admin)):
 # ── Bulk order status ─────────────────────────────────────────────────────────
 
 class BulkStatusUpdate(BaseModel):
-    order_ids: List[str]
+    order_ids: list[str]
     status: str
 
 @router.post("/orders/bulk-status")
@@ -277,10 +281,11 @@ def global_search(q: str = Query(..., min_length=2), admin: dict = Depends(get_c
 @router.get("/audit-log")
 def get_audit_log(
     limit:    int = Query(50, le=200),
-    admin_id: Optional[str] = None,
+    admin_id: str | None = None,
     admin: dict = Depends(get_current_admin),
 ):
     q = supabase_admin.table("admin_audit_log").select("*")
-    if admin_id: q = q.eq("admin_id", admin_id)
+    if admin_id:
+        q = q.eq("admin_id", admin_id)
     r = q.order("created_at", desc=True).limit(limit).execute()
     return {"data": r.data or [], "count": len(r.data or [])}

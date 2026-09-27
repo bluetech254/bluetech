@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { verifyPhone, resendVerification } from '../api/auth';
-import { useAuthContext } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -10,7 +9,6 @@ import AuthShell from '../components/common/AuthShell';
 const VerifyPhonePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { loginWithToken } = useAuthContext();
   const phone = (location.state as any)?.phone || '';
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [submitting, setSubmitting] = useState(false);
@@ -61,10 +59,9 @@ const VerifyPhonePage = () => {
     if (code.length < 6 || submitting) return;
     setSubmitting(true);
     try {
-      const data = await verifyPhone(phone, code);
-      loginWithToken(data.access_token, data.user, data.expires_in);
-      toast.success('Phone verified! Welcome to BlueTech.');
-      navigate('/profile', { replace: true });
+      await verifyPhone(phone, code);
+      toast.success('Phone verified! Please log in to continue.');
+      navigate('/login', { replace: true });
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Verification failed.');
       setDigits(['', '', '', '', '', '']);

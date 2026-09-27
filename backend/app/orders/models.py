@@ -1,12 +1,10 @@
 """
 orders/models.py — Pydantic schemas for the orders domain.
 """
-from pydantic import BaseModel, Field
-from typing import Optional, List
-from decimal import Decimal
-from datetime import datetime
-from uuid import UUID
 from enum import Enum
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 
 class OrderStatus(str, Enum):
@@ -32,14 +30,14 @@ class OrderItemCreate(BaseModel):
 class OrderCreate(BaseModel):
     full_name:        str = Field(..., min_length=2)
     phone_number:     str = Field(..., pattern=r"^254[0-9]{9}$")
-    email:            Optional[str] = None
+    email:            str | None = None
     delivery_address: str = Field(..., min_length=5)
     delivery_zone:    str
-    items:            List[OrderItemCreate] = Field(..., min_length=1)
-    notes:            Optional[str] = None
+    items:            list[OrderItemCreate] = Field(..., min_length=1)
+    notes:            str | None = None
     payment_method:   str = "cash_on_delivery"
-    referral_code:    Optional[str] = None   # code entered at checkout
-    redeem_points:    Optional[int] = None   # points to redeem
+    referral_code:    str | None = None   # code entered at checkout
+    redeem_points:    int | None = None   # points to redeem
 
 
 class StatusUpdate(BaseModel):
