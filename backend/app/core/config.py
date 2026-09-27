@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = ""
     SES_SENDER_EMAIL: str = ""
 
+    # Google Maps (optional — Places autocomplete)
+    GOOGLE_MAPS_API_KEY: str = ""
+
     # ── Computed helpers ──────────────────────────────────────────────────────
     @property
     def cors_origins_list(self) -> List[str]:
