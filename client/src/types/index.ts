@@ -58,8 +58,12 @@ export interface Order {
   subtotal: number;
   delivery_fee: number;
   total_amount: number;
-  payment_method: 'mpesa' | 'cash_on_delivery';
+  payment_method: 'mpesa' | 'cash_on_delivery' | 'points_only';
+  payment_status: 'paid' | 'unpaid' | 'pending';
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  checkout_request_id?: string;
+  mpesa_receipt?: string;
+  points_redeemed?: number;
   notes?: string;
   created_at: string;
 }
@@ -76,18 +80,23 @@ export interface OrderItem {
 // Booking
 export interface Booking {
   id: string;
-  booking_number: string;
-  service_id: string;
-  service_name: string;
-  customer_name: string;
-  customer_email?: string;
-  customer_phone: string;
-  device_model: string;
-  device_brand: string;
+  full_name: string;
+  phone_number: string;
+  device_type: string;
+  device_model?: string;
   issue_description: string;
-  preferred_date: string;
-  preferred_time: string;
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  fulfillment_type: 'dropoff' | 'pickup';
+  pickup_address?: string;
+  status: 'pending' | 'confirmed' | 'picked_up' | 'in_diagnosis' | 'in_repair' | 'ready' | 'completed' | 'cancelled';
+  estimated_cost?: number;
+  final_cost?: number;
+  user_id?: string;
+  commitment_payment_status?: string;
+  commitment_checkout_id?: string;
+  commitment_receipt?: string;
+  commitment_fee?: number;
+  final_payment_status?: string;
+  final_checkout_id?: string;
   notes?: string;
   created_at: string;
 }
@@ -98,6 +107,8 @@ export interface User {
   full_name: string;
   email: string;
   phone_number: string;
+  points?: number;
+  referral_code?: string;
   created_at: string;
 }
 
