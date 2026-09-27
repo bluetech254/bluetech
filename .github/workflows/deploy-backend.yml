@@ -1,14 +1,17 @@
 name: Deploy Backend to cPanel
 
 on:
-  push:
-    branches:
-      - production
+  workflow_run:
+    workflows: ["CI"]
+    branches: [production]
+    types: [completed]
 
 jobs:
   deploy:
     name: FTP Deploy Backend
     runs-on: ubuntu-latest
+    # Only run if CI passed
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
@@ -22,10 +25,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 21
           protocol: ftp
-          # Upload only the backend folder contents to /backend/ on server
           local-dir: ./backend/
           server-dir: /backend/
-          # Exclude dev/local-only files
           exclude: |
             **/.git*
             **/.git*/**
@@ -41,5 +42,4 @@ jobs:
             **/tests/**
             **/Dockerfile
             **/fly.toml
-            **/railway.json
             **/.dockerignore

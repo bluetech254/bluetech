@@ -1,14 +1,16 @@
 name: Deploy Frontend to cPanel
 
 on:
-  push:
-    branches:
-      - production
+  workflow_run:
+    workflows: ["CI"]
+    branches: [production]
+    types: [completed]
 
 jobs:
   deploy:
     name: Build & FTP Deploy Frontend
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository

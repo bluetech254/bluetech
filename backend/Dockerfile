@@ -13,6 +13,11 @@ COPY . .
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
+# Set PYTHONPATH so 'core', 'auth', 'orders' etc. are importable directly
+# app/main.py does: from core.config import settings
+# Python must find core/ — it lives at /app/app/core/
+ENV PYTHONPATH=/app/app
+
 # Expose port
 EXPOSE 8000
 
