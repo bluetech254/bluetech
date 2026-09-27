@@ -98,8 +98,12 @@ jobs:
         run: pip install pip-audit==2.7.3
 
       - name: Audit dependencies
-        run: pip-audit -r backend/requirements.txt --ignore-vuln GHSA-wfm5-v35h-vwf4
-        # GHSA-wfm5-v35h-vwf4: python-jose known advisory, acceptable for now
+        run: |
+          pip-audit -r backend/requirements.txt \
+            --ignore-vuln GHSA-wfm5-v35h-vwf4 \
+            --ignore-vuln PYSEC-2026-1325
+        # GHSA-wfm5-v35h-vwf4: python-jose known advisory, acceptable
+        # PYSEC-2026-1325: ecdsa transitive dep via python-jose, no fix version available
 
   # ── Frontend (client) checks ────────────────────────────────────────────────
 
@@ -178,10 +182,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history for trufflehog
+          fetch-depth: 0
 
       - name: TruffleHog scan
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          extra_args: --only-verified --since-commit HEAD~1 || true
+          extra_args: --only-verified

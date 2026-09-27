@@ -10,8 +10,11 @@ export interface ProductFilters {
   search?: string;
   category?: string;
   brand?: string;
+  condition?: string;
+  in_stock?: boolean;
   min_price?: number;
   max_price?: number;
+  min_rating?: number;
   sort_by?: string;
   order?: 'asc' | 'desc';
   is_flash_sale?: boolean;
