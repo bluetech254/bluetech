@@ -11,7 +11,7 @@ All business logic delegated to auth/service.py — this file only
 handles HTTP concerns (request parsing, response shaping, error mapping).
 """
 import logging
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -28,6 +28,7 @@ from auth.models import (
     AuthResponse,
     MessageResponse,
 )
+from auth.dependencies import get_current_user as get_current_user_dep
 from auth import service
 
 logger = logging.getLogger(__name__)
@@ -136,3 +137,64 @@ def reset_password(body: ResetPassword):
     except Exception as e:
         logger.error(f"Reset password error: {e}")
         raise HTTPException(status_code=500, detail="Password reset failed.")
+
+
+# ── Logout ────────────────────────────────────────────────────────────────────
+
+@router.post("/logout", response_model=MessageResponse)
+def logout():
+    """
+    Stateless logout — instructs the client to discard the token.
+    Client must delete the token from sessionStorage on receipt.
+    """
+    return {"message": "Logged out successfully"}
+
+
+# ── User profile (client self-service) ────────────────────────────────────────
+
+@router.get("/users/me")
+def get_current_user(user_id: str = Depends(get_current_user_dep)):
+    """Return the authenticated user's profile."""
+    from core.database import supabase_admin
+    resp = supabase_admin.table("users").select(
+        "id, full_name, email, phone_number, points, referral_code, created_at"
+    ).eq("id", user_id).single().execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    return resp.data
+
+
+@router.put("/users/me")
+def update_profile(body: dict, user_id: str = Depends(get_current_user_dep)):
+    """Update the authenticated user's profile (full_name, email)."""
+    from core.database import supabase_admin
+    allowed = {k: v for k, v in body.items() if k in ("full_name", "email")}
+    if not allowed:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    resp = supabase_admin.table("users").update(allowed).eq("id", user_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = resp.data[0]
+    for f in ("password", "verification_code", "reset_code"):
+        user.pop(f, None)
+    return user
+
+
+@router.put("/users/me/password", response_model=MessageResponse)
+def change_own_password(body: dict, user_id: str = Depends(get_current_user_dep)):
+    """Change the authenticated user's own password."""
+    from core.database import supabase_admin
+    from core.security import verify_and_rehash, hash_password
+    current_pw = body.get("current_password")
+    new_pw     = body.get("new_password")
+    if not current_pw or not new_pw:
+        raise HTTPException(status_code=400, detail="current_password and new_password required")
+    if len(new_pw) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    resp = supabase_admin.table("users").select("password").eq("id", user_id).single().execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not verify_and_rehash(current_pw, resp.data["password"], user_id, "users"):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    supabase_admin.table("users").update({"password": hash_password(new_pw)}).eq("id", user_id).execute()
+    return {"message": "Password updated successfully"}

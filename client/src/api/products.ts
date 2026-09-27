@@ -1,20 +1,13 @@
+/**
+ * api/products.ts — Product catalog API calls.
+ * Normalization delegated to utils/normalizers.ts.
+ */
 import api from './axios';
 import { Product } from '../types';
+import { normalizeProduct, unwrapList } from '../utils/normalizers';
 
 export interface ProductFilters {
-  category?: string;
   search?: string;
-  min_price?: number;
-  max_price?: number;
-  condition?: string;
-  brand?: string;
-  in_stock?: boolean;
-  min_rating?: number;
-  featured?: boolean;
-  sort_by?: 'price' | 'name' | 'created_at';
-  order?: 'asc' | 'desc';
-  page?: number;
-  limit?: number;
   is_flash_sale?: boolean;
   is_discounted?: boolean;
   is_clearance?: boolean;
@@ -23,6 +16,8 @@ export interface ProductFilters {
   is_new_arrival?: boolean;
   is_best_seller?: boolean;
   is_trending?: boolean;
+  limit?: number;
+  offset?: number;
 }
 
 export interface ProductsResponse {
@@ -34,54 +29,24 @@ export interface ProductsResponse {
 
 export const getProducts = async (filters: ProductFilters = {}): Promise<ProductsResponse> => {
   const response = await api.get('/products', { params: filters });
-
-  const normalize = (product: any) => {
-    let specs: any = {};
-    try { specs = typeof product.specifications === 'string' ? JSON.parse(product.specifications) : (product.specifications || {}); } catch {}
-    return {
-      ...product,
-      name: product.title || product.name,
-      images: product.image_url ? [product.image_url] : [],
-      category: product.category || specs.category || '',
-      brand: product.brand || specs.brand || '',
-      specifications: specs,
-    };
+  const raw      = unwrapList<any>(response.data);
+  const products = raw.map(normalizeProduct);
+  const total    = response.data?.count ?? products.length;
+  const limit    = filters.limit || 200;
+  return {
+    products,
+    total,
+    page:  Math.floor((filters.offset || 0) / limit) + 1,
+    pages: Math.ceil(total / limit),
   };
-
-  if (response.data.data && Array.isArray(response.data.data)) {
-    const products = response.data.data.map(normalize);
-    return {
-      products,
-      total: response.data.count || products.length,
-      page: filters.page || 1,
-      pages: Math.ceil((response.data.count || products.length) / (filters.limit || 12))
-    };
-  }
-
-  if (Array.isArray(response.data)) {
-    const products = response.data.map(normalize);
-    return { products, total: products.length, page: 1, pages: 1 };
-  }
-
-  return response.data;
 };
 
 export const getProductById = async (id: string): Promise<Product> => {
   const response = await api.get(`/products/${id}`);
-  const product = response.data;
-  let specs: any = {};
-  try { specs = typeof product.specifications === 'string' ? JSON.parse(product.specifications) : (product.specifications || {}); } catch {}
-  return {
-    ...product,
-    name: product.title || product.name,
-    images: product.image_url ? [product.image_url] : [],
-    category: product.category || specs.category || '',
-    brand: product.brand || specs.brand || '',
-    specifications: specs,
-  };
+  return normalizeProduct(response.data);
 };
 
 export const getProductCategories = async (): Promise<string[]> => {
   const response = await api.get('/products/categories');
-  return response.data;
+  return Array.isArray(response.data) ? response.data : [];
 };

@@ -1,10 +1,17 @@
+/**
+ * api/users.ts — Client user self-service API calls.
+ *
+ * Endpoints map to backend auth/router.py:
+ *   GET  /users/me         → get current user profile
+ *   PUT  /users/me         → update full_name / email
+ *   PUT  /users/me/password → change own password
+ */
 import api from './axios';
 import { User } from '../types';
 
 export interface UpdateProfileData {
   full_name?: string;
   email?: string;
-  phone_number?: string;
 }
 
 export interface UpdatePasswordData {
