@@ -213,11 +213,14 @@ export const ProfilePage = () => {
               <div key={ord.id} className="flex items-center justify-between px-5 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
                 <div>
                   <p className="text-xs font-black text-slate-800">{ord.order_number || ord.id.slice(0, 8).toUpperCase()}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{new Date(ord.created_at).toLocaleDateString()} · {ord.items?.length || 0} item(s)</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{new Date(ord.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${statusColor[ord.status] || statusColor.pending}`}>{ord.status}</span>
                   <span className="text-sm font-black text-blue-600">{formatCurrency(ord.total_amount)}</span>
+                  <Link to={`/orders/${ord.id}`} className="text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1">
+                    View <ArrowRight className="w-3 h-3" />
+                  </Link>
                 </div>
               </div>
             ))}
@@ -267,13 +270,13 @@ export const ProfilePage = () => {
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${statusColor[ord.status] || statusColor.pending}`}>{ord.status}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${statusColor[(ord as any).payment_status] || statusColor.unpaid}`}>{(ord as any).payment_status || 'unpaid'}</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">{new Date(ord.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })} · {ord.items?.length || 0} item(s) · {ord.delivery_zone}</p>
+                  <p className="text-xs text-slate-500 mt-1">{new Date(ord.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}{ord.delivery_zone && !/^[0-9a-f]{8}-/.test(ord.delivery_zone) ? ` · ${ord.delivery_zone}` : ''}</p>
                   <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">📍 {ord.delivery_address}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-black text-blue-600">{formatCurrency(ord.total_amount)}</p>
-                  <Link to={`/track-order?type=order&id=${ord.id}`} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 justify-end mt-1">
-                    Track <ArrowRight className="w-3 h-3" />
+                  <Link to={`/orders/${ord.id}`} className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 justify-end mt-1">
+                    View <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
               </div>
