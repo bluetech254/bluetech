@@ -53,11 +53,13 @@ def get_products(
 
 
 def get_product_by_id(product_id: UUID) -> dict:
-    response = supabase.table("products").select("*").eq("id", str(product_id)).execute()
+    # Use supabase_admin so the lookup works regardless of is_active state and
+    # avoids any RLS edge-cases that can cause the anon client to throw instead
+    # of returning empty data.
+    response = supabase_admin.table("products").select("*").eq("id", str(product_id)).execute()
     if not response.data:
         raise ProductNotFoundException(f"Product {product_id} not found")
     return response.data[0]
-    return response.data
 
 
 def get_product_categories() -> list[str]:

@@ -63,6 +63,9 @@ def get_product(product_id: UUID):
         return service.get_product_by_id(product_id)
     except ProductNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Get product error ({product_id}): {e}")
+        raise HTTPException(status_code=404, detail="Product not found")
 
 
 @router.post("")
