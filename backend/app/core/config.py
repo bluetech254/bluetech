@@ -5,7 +5,12 @@ Uses pydantic-settings so the app crashes immediately with a clear error
 if any required variable is missing, rather than failing silently at runtime.
 """
 
+from pathlib import Path
 from pydantic_settings import BaseSettings
+
+# Resolve .env relative to this file so it works regardless of working directory.
+# config.py lives at backend/app/core/config.py → go up 3 levels to backend/
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
@@ -72,7 +77,7 @@ class Settings(BaseSettings):
         return "https://sandbox.safaricom.co.ke"
 
     class Config:
-        env_file = ".env"
+        env_file = str(_ENV_FILE)
         case_sensitive = True
         extra = "ignore"  # ignore unknown env vars silently
 

@@ -36,17 +36,23 @@ def _fetch_products(item_ids: list[str]) -> dict:
 
 
 def _get_delivery_fee(zone_name: str) -> Decimal:
-    resp = (
-        supabase.table("delivery_zones")
-        .select("delivery_fee")
-        .eq("zone_name", zone_name)
-        .eq("is_active", True)
-        .single()
-        .execute()
-    )
-    if not resp.data:
-        raise DeliveryZoneNotFoundException(f"Delivery zone '{zone_name}' not found")
-    return Decimal(str(resp.data["delivery_fee"]))
+    """Look up delivery fee by zone name OR UUID id."""
+    # Try by zone_name first
+    q = supabase.table("delivery_zones").select("delivery_fee").eq("is_active", True)
+    resp = q.eq("zone_name", zone_name).execute()
+    if resp.data:
+        return Decimal(str(resp.data[0]["delivery_fee"]))
+
+    # Fall back to id lookup (client may pass UUID instead of name)
+    try:
+        UUID(zone_name)  # validate it looks like a UUID
+        resp2 = supabase.table("delivery_zones").select("delivery_fee").eq("id", zone_name).eq("is_active", True).execute()
+        if resp2.data:
+            return Decimal(str(resp2.data[0]["delivery_fee"]))
+    except (ValueError, AttributeError):
+        pass
+
+    raise DeliveryZoneNotFoundException(f"Delivery zone '{zone_name}' not found")
 
 
 def _check_stock(items: list[OrderItemCreate], products: dict):

@@ -168,7 +168,7 @@ def list_admins() -> dict:
     resp = supabase_admin.table("admins").select(
         "id, username, full_name, email, role, is_active, created_at, last_login"
     ).order("created_at", desc=True).execute()
-    return {"data": resp.data or [], "count": len(resp.data or [])}
+    return resp.data or []
 
 
 # ── Toggle client user active state ──────────────────────────────────────────

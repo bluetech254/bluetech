@@ -98,6 +98,12 @@ def stock_alerts(admin: dict = Depends(get_current_admin)):
     for p in (r.data or []):
         if p["stock_quantity"] <= p.get("low_stock_threshold", 5):
             specs = p.get("specifications") or {}
+            if isinstance(specs, str):
+                import json
+                try:
+                    specs = json.loads(specs)
+                except Exception:
+                    specs = {}
             alerts.append({
                 "id":        p["id"],
                 "title":     p["title"],
