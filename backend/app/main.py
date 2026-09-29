@@ -1179,23 +1179,23 @@ def root():
   <script>
     // Tag → card icon + colour mapping
     const TAG_META = {
-      'Admin Authentication':   { icon: '\uD83D\uDD10', cls: 'icon-rose'    },
-      'Client Authentication':  { icon: '\uD83D\uDC64', cls: 'icon-blue'    },
-      'Products':               { icon: '\uD83D\uDCE6', cls: 'icon-indigo'  },
-      'Orders':                 { icon: '\uD83D\uDED2', cls: 'icon-emerald' },
-      'Repair Bookings':        { icon: '\uD83D\uDD27', cls: 'icon-purple'  },
-      'Payments \u2014 M-Pesa': { icon: '\uD83D\uDCB3', cls: 'icon-amber'   },
-      'Payments':               { icon: '\uD83D\uDCB3', cls: 'icon-amber'   },
-      'Loyalty & Referrals':    { icon: '\u2B50',        cls: 'icon-indigo'  },
-      'Repair Services':        { icon: '\uD83D\uDEE0\uFE0F', cls: 'icon-blue' },
-      'Delivery Zones':         { icon: '\uD83D\uDDFA\uFE0F', cls: 'icon-emerald' },
-      'Tracking':               { icon: '\uD83D\uDCCD', cls: 'icon-blue'    },
-      'Points':                 { icon: '\uD83C\uDF1F', cls: 'icon-amber'   },
-      'Admin Operations':       { icon: '\u2699\uFE0F', cls: 'icon-rose'    },
-      'Devices':                { icon: '\uD83D\uDCF1', cls: 'icon-purple'  },
-      'Contact':                { icon: '\uD83D\uDCEC', cls: 'icon-blue'    },
-      'Places':                 { icon: '\uD83D\uDCCC', cls: 'icon-emerald' },
-      'Health':                 { icon: '\u2764\uFE0F', cls: 'icon-emerald' },
+      'Admin Authentication':   { icon: '&#x1F510;', cls: 'icon-rose'    },
+      'Client Authentication':  { icon: '&#x1F464;', cls: 'icon-blue'    },
+      'Products':               { icon: '&#x1F4E6;', cls: 'icon-indigo'  },
+      'Orders':                 { icon: '&#x1F6D2;', cls: 'icon-emerald' },
+      'Repair Bookings':        { icon: '&#x1F527;', cls: 'icon-purple'  },
+      'Payments — M-Pesa': { icon: '&#x1F4B3;', cls: 'icon-amber'   },
+      'Payments':               { icon: '&#x1F4B3;', cls: 'icon-amber'   },
+      'Loyalty & Referrals':    { icon: '&#x2B50;',  cls: 'icon-indigo'  },
+      'Repair Services':        { icon: '&#x1F6E0;', cls: 'icon-blue'    },
+      'Delivery Zones':         { icon: '&#x1F5FA;', cls: 'icon-emerald' },
+      'Tracking':               { icon: '&#x1F4CD;', cls: 'icon-blue'    },
+      'Points':                 { icon: '&#x1F31F;', cls: 'icon-amber'   },
+      'Admin Operations':       { icon: '&#x2699;',  cls: 'icon-rose'    },
+      'Devices':                { icon: '&#x1F4F1;', cls: 'icon-purple'  },
+      'Contact':                { icon: '&#x1F4EC;', cls: 'icon-blue'    },
+      'Places':                 { icon: '&#x1F4CC;', cls: 'icon-emerald' },
+      'Health':                 { icon: '&#x2764;',  cls: 'icon-emerald' },
     };
 
     const METHOD_CLS = {
@@ -1204,7 +1204,7 @@ def root():
     };
 
     function tagMeta(tag) {
-      return TAG_META[tag] || { icon: '\uD83D\uDD17', cls: 'icon-blue' };
+      return TAG_META[tag] || { icon: '&#x1F517;', cls: 'icon-blue' };
     }
 
     function buildCard(tag, routes, tagDesc) {
