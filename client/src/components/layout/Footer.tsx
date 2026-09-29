@@ -83,8 +83,9 @@ export const Footer = () => {
 
           {/* Brand + Socials */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-black tracking-tight text-white">
+            <Link to="/" className="flex items-center gap-2">
+              <img src="/logo.png" alt="BlueTech" className="h-10 w-auto object-contain" />
+              <span className="text-xl font-black tracking-tight text-white">
                 Blue<span className="text-blue-500">Tech</span>
               </span>
             </Link>
