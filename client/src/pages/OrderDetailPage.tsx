@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
-import { getOrderById, cancelOrder } from '../api/orders';
+import { useAuth } from '../hooks/useAuth';
+import { getOrderById, cancelOrder, initiateMpesaPayment } from '../api/orders';
 import { formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
+import MpesaWaitingModal from '../components/cart/MpesaWaitingModal';
 import {
   ChevronLeft, MapPin, Phone, CreditCard, Star,
-  RotateCcw, X, Package, CheckCircle2, Circle, Truck, Box, Clock
+  RotateCcw, X, Package, CheckCircle2, Truck, Box, Clock, Smartphone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -37,9 +39,12 @@ export const OrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { user } = useAuth();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [mpesaModal, setMpesaModal] = useState<{ orderId: string; phone: string; amount: string } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -69,6 +74,30 @@ export const OrderDetailPage = () => {
     });
     toast.success('Items added to cart');
     navigate('/cart');
+  };
+
+  const handlePay = async () => {
+    if (!id) return;
+    setPaying(true);
+    try {
+      const phone = user?.phone_number || order.phone_number;
+      await initiateMpesaPayment(id);
+      setMpesaModal({
+        orderId: id,
+        phone,
+        amount: String(order.total_amount),
+      });
+    } catch (e: any) {
+      toast.error(e?.response?.data?.detail ?? 'Failed to initiate payment. Try again.');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const handlePaymentConfirmed = () => {
+    setMpesaModal(null);
+    setOrder((o: any) => ({ ...o, payment_status: 'paid' }));
+    toast.success('Payment confirmed!');
   };
 
   if (loading) return <Loading fullScreen message="Loading order…" />;
@@ -269,7 +298,26 @@ export const OrderDetailPage = () => {
             )}
           </div>
         )}
+
+        {/* Pay Now — shown when order is unpaid and not cancelled */}
+        {order.payment_status !== 'paid' && order.status !== 'cancelled' && order.payment_method === 'mpesa' && (
+          <button onClick={handlePay} disabled={paying}
+            className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200 disabled:opacity-60">
+            <Smartphone className="w-4 h-4" />
+            {paying ? 'Sending STK Push…' : `Pay Now · ${formatCurrency(order.total_amount)}`}
+          </button>
+        )}
       </div>
+
+      {/* M-Pesa waiting modal */}
+      {mpesaModal && (
+        <MpesaWaitingModal
+          orderId={mpesaModal.orderId}
+          phone={mpesaModal.phone}
+          amount={mpesaModal.amount}
+          onCancel={() => setMpesaModal(null)}
+        />
+      )}
     </div>
   );
 };
