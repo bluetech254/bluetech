@@ -270,8 +270,11 @@ class TestProducts:
         data = r.json()
         products = data if isinstance(data, list) else data.get("data", data.get("products", []))
         assert len(products) > 0, "No products returned"
-        state["product_id"] = products[0]["id"]
-        print(f"\n  ✓ Got {len(products)} products — saved id {state['product_id']}")
+        # Prefer a product with stock so test_create_order doesn't get a 422
+        in_stock = [p for p in products if (p.get("stock_quantity") or 0) > 0]
+        chosen = in_stock[0] if in_stock else products[0]
+        state["product_id"] = chosen["id"]
+        print(f"\n  ✓ Got {len(products)} products — saved id {state['product_id']} (stock={chosen.get('stock_quantity')})")
 
     def test_get_product(self):
         if not state["product_id"]:
