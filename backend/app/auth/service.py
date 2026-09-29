@@ -114,6 +114,7 @@ def login_user(data: UserLogin) -> dict:
     """
     Authenticate a client user.
     - Generic error message (no user enumeration)
+    - Account lockout: 5 failed attempts → 15 min lock
     - verify_and_rehash() transparently upgrades SHA-256 → bcrypt on first login
     - Updates last_login timestamp
     """
@@ -125,13 +126,51 @@ def login_user(data: UserLogin) -> dict:
 
     user = resp.data[0]
 
+    # ── Account lockout check ─────────────────────────────────────────────────
+    failed_attempts = user.get("failed_login_attempts") or 0
+    locked_until    = user.get("locked_until")
+
+    if locked_until:
+        try:
+            lock_expiry = datetime.fromisoformat(locked_until.replace("Z", "+00:00"))
+            # Compare naive datetimes
+            if datetime.utcnow() < lock_expiry.replace(tzinfo=None):
+                raise AuthException(
+                    "Account temporarily locked due to too many failed attempts. "
+                    "Try again in 15 minutes."
+                )
+            else:
+                # Lock expired — reset counters
+                supabase_admin.table("users").update({
+                    "failed_login_attempts": 0,
+                    "locked_until": None,
+                }).eq("id", user["id"]).execute()
+                failed_attempts = 0
+        except AuthException:
+            raise
+        except Exception:
+            pass
+
+    # ── Password check ────────────────────────────────────────────────────────
     if not verify_and_rehash(data.password, user.get("password", ""), user["id"], "users"):
+        # Increment failure counter
+        new_attempts = failed_attempts + 1
+        update = {"failed_login_attempts": new_attempts}
+        if new_attempts >= 5:
+            from datetime import timezone
+            update["locked_until"] = (
+                datetime.now(timezone.utc) + timedelta(minutes=15)
+            ).isoformat()
+            logger.warning(f"Account locked after {new_attempts} failed attempts: {user['id']}")
+        supabase_admin.table("users").update(update).eq("id", user["id"]).execute()
         raise AuthException("Invalid phone number or password")
 
-    # Update last_login
+    # ── Successful login — reset failure counter ──────────────────────────────
     try:
         supabase_admin.table("users").update({
-            "last_login": datetime.utcnow().isoformat()
+            "last_login":             datetime.utcnow().isoformat(),
+            "failed_login_attempts":  0,
+            "locked_until":           None,
         }).eq("id", user["id"]).execute()
     except Exception:
         pass  # non-critical

@@ -30,7 +30,7 @@ class UserSignup(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=100)
     phone_number: str
     email: EmailStr | None = None
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     referral_code: str | None = None
 
     @field_validator("phone_number")
@@ -61,7 +61,7 @@ class ForgotPassword(BaseModel):
 class ResetPassword(BaseModel):
     phone_number: str
     reset_code: str = Field(..., min_length=6, max_length=6)
-    new_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=8)
 
     @field_validator("phone_number")
     @classmethod

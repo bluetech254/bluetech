@@ -1,8 +1,20 @@
 """
-payments/router.py — M-Pesa payment routes.
+payments/router.py — Paystack payment routes.
 
-SECURITY FIX: /mpesa/callback enforces Safaricom IP whitelist.
-Anyone not from Safaricom's published IPs gets 403 — cannot fake a payment.
+Endpoints:
+  POST /payments/order/{order_id}/initiate         → get Paystack checkout URL for an order
+  POST /payments/order/{order_id}/verify/{ref}     → poll/verify order payment
+  GET  /payments/order/{order_id}/status           → DB payment status for an order
+  POST /payments/booking/{id}/commitment/initiate  → get checkout URL for 20% commitment fee
+  GET  /payments/booking/{id}/commitment/status    → commitment status
+  POST /payments/booking/{id}/final/request        → admin triggers final payment link
+  GET  /payments/booking/{id}/final/status         → final payment status
+  POST /payments/webhook                           → Paystack webhook (HMAC-verified)
+
+Rate limiting:
+  - initiate endpoints: 5/minute (prevents spam checkout creation)
+  - verify:             10/minute
+  - webhook:            none (Paystack IPs only, verified by signature)
 """
 import logging
 
@@ -10,33 +22,29 @@ from admin_auth.dependencies import get_current_admin
 from auth.dependencies import get_optional_user
 from fastapi import APIRouter, Depends, HTTPException, Request
 from payments import service
+from payments.paystack import verify_webhook_signature
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
-logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/payments", tags=["Payments"])
-
-# Safaricom's published callback IP ranges (as of 2024)
-_SAFARICOM_IPS = {
-    "196.201.214.200", "196.201.214.206", "196.201.213.114",
-    "196.201.214.207", "196.201.214.208", "196.201.213.44",
-    "196.201.212.127", "196.201.212.138", "196.201.212.129",
-    "196.201.212.136", "196.201.212.74",  "196.201.212.69",
-}
+logger  = logging.getLogger(__name__)
+router  = APIRouter(prefix="/api/v1/payments", tags=["Payments"])
+limiter = Limiter(key_func=get_remote_address)
 
 
-def _verify_safaricom_ip(request: Request) -> None:
-    """Reject requests not from Safaricom's IP ranges."""
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "")
-    if client_ip not in _SAFARICOM_IPS:
-        logger.warning(f"M-Pesa callback blocked — unknown IP: {client_ip}")
-        raise HTTPException(status_code=403, detail="Forbidden")
+# ── Order payments ────────────────────────────────────────────────────────────
 
-
-# ── Order payment ─────────────────────────────────────────────────────────────
-
-@router.post("/mpesa/initiate")
-def initiate_order_payment(order_id: str, user_id: str | None = Depends(get_optional_user)):
-    """Initiate M-Pesa STK push for an order. Authenticated users must own the order."""
+@router.post("/order/{order_id}/initiate")
+@limiter.limit("5/minute")
+def initiate_order_payment(
+    request: Request,
+    order_id: str,
+    user_id: str | None = Depends(get_optional_user),
+):
+    """
+    Initialize Paystack payment for an order.
+    Returns authorization_url — redirect the customer to it to complete payment.
+    Authenticated users must own the order.
+    """
     try:
         return service.initiate_order_payment(order_id, user_id)
     except PermissionError as e:
@@ -44,13 +52,26 @@ def initiate_order_payment(order_id: str, user_id: str | None = Depends(get_opti
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"STK push failed: {e}")
-        raise HTTPException(status_code=502, detail="Failed to initiate M-Pesa payment. Try again.")
+        logger.error(f"Paystack initiate order failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to initialize payment. Try again.")
 
 
-@router.get("/mpesa/status/{order_id}")
+@router.post("/order/verify/{reference}")
+@limiter.limit("10/minute")
+def verify_order_payment(request: Request, reference: str):
+    """Verify an order payment by Paystack reference. Updates DB if paid."""
+    try:
+        return service.verify_order_payment(reference)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Paystack verify failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to verify payment.")
+
+
+@router.get("/order/{order_id}/status")
 def get_order_payment_status(order_id: str):
-    """Poll payment status for an order."""
+    """Get DB payment status for an order."""
     try:
         return service.get_order_payment_status(order_id)
     except ValueError as e:
@@ -59,21 +80,38 @@ def get_order_payment_status(order_id: str):
 
 # ── Booking commitment payment ────────────────────────────────────────────────
 
-@router.post("/mpesa/booking/{booking_id}/commitment")
-def initiate_commitment_payment(booking_id: str, service_price: int = 0):
-    """Initiate 20% commitment fee STK push for a repair booking."""
+@router.post("/booking/{booking_id}/commitment/initiate")
+@limiter.limit("5/minute")
+def initiate_commitment_payment(request: Request, booking_id: str, service_price: int = 0):
+    """
+    Initialize 20% commitment fee payment for a repair booking.
+    Returns authorization_url — redirect the customer to it.
+    """
     try:
         return service.initiate_commitment_payment(booking_id, service_price)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Commitment STK push failed: {e}")
-        raise HTTPException(status_code=502, detail="Failed to initiate payment. Try again.")
+        logger.error(f"Paystack commitment initiate failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to initialize commitment payment. Try again.")
 
 
-@router.get("/mpesa/booking/{booking_id}/commitment/status")
+@router.post("/booking/commitment/verify/{reference}")
+@limiter.limit("10/minute")
+def verify_commitment_payment(request: Request, reference: str):
+    """Verify a commitment payment by Paystack reference."""
+    try:
+        return service.verify_commitment_payment(reference)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Paystack verify commitment failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to verify payment.")
+
+
+@router.get("/booking/{booking_id}/commitment/status")
 def get_commitment_status(booking_id: str):
-    """Poll commitment payment status. Actively queries Safaricom if pending."""
+    """Get commitment payment status for a booking."""
     try:
         return service.get_commitment_status(booking_id)
     except ValueError as e:
@@ -82,45 +120,59 @@ def get_commitment_status(booking_id: str):
 
 # ── Booking final payment ─────────────────────────────────────────────────────
 
-@router.post("/mpesa/booking/{booking_id}/request-final-payment")
+@router.post("/booking/{booking_id}/final/request")
 def request_final_payment(booking_id: str, admin: dict = Depends(get_current_admin)):
-    """Admin triggers STK push for remaining repair balance. Admin only."""
+    """
+    Admin generates Paystack payment link for the remaining repair balance.
+    Returns authorization_url to send to the customer.
+    Admin only.
+    """
     try:
         return service.request_final_payment(booking_id, admin)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Final payment STK push failed: {e}")
-        raise HTTPException(status_code=502, detail="Failed to send payment prompt. Try again.")
+        logger.error(f"Paystack final payment failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to create payment link. Try again.")
 
 
-@router.get("/mpesa/booking/{booking_id}/final/status")
+@router.get("/booking/{booking_id}/final/status")
 def get_final_payment_status(booking_id: str):
-    """Poll final payment status."""
+    """Get final payment status for a booking."""
     try:
         return service.get_final_payment_status(booking_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("/mpesa/booking/status/{booking_id}")
-def get_booking_payment_status(booking_id: str):
-    """Poll general booking payment status."""
+# ── Paystack webhook ──────────────────────────────────────────────────────────
+
+@router.post("/webhook")
+async def paystack_webhook(request: Request):
+    """
+    Paystack event webhook.
+
+    SECURITY: Verifies HMAC-SHA512 signature before processing.
+    Paystack signs the raw body with your secret key and puts the hex
+    digest in the 'x-paystack-signature' header.
+    Any request without a valid signature gets 400 — cannot fake a payment.
+    """
+    raw_body  = await request.body()
+    signature = request.headers.get("x-paystack-signature", "")
+
+    if not signature:
+        logger.warning("Paystack webhook received with no signature header")
+        raise HTTPException(status_code=400, detail="Missing signature")
+
+    if not verify_webhook_signature(raw_body, signature):
+        logger.warning("Paystack webhook signature verification failed")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    import json
     try:
-        return service.get_booking_payment_status(booking_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        event = json.loads(raw_body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
 
-
-# ── Safaricom callback ────────────────────────────────────────────────────────
-
-@router.post("/mpesa/callback")
-def mpesa_callback(request: Request, payload: dict):
-    """
-    Safaricom STK push callback.
-    SECURITY: Validates source IP against Safaricom's published IP whitelist.
-    Fake callbacks from unknown IPs are rejected with 403.
-    """
-    _verify_safaricom_ip(request)
-    service.process_callback(payload)
-    return {"ResultCode": 0, "ResultDesc": "Accepted"}
+    service.process_webhook(event)
+    return {"status": "ok"}

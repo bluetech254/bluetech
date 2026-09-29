@@ -19,6 +19,7 @@ class OrderStatus(str, Enum):
 class PaymentMethod(str, Enum):
     cash_on_delivery = "cash_on_delivery"
     mpesa            = "mpesa"
+    paystack         = "paystack"
     points_only      = "points_only"
 
 
@@ -28,16 +29,16 @@ class OrderItemCreate(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    full_name:        str = Field(..., min_length=2)
+    full_name:        str = Field(..., min_length=2, max_length=100)
     phone_number:     str = Field(..., pattern=r"^254[0-9]{9}$")
-    email:            str | None = None
-    delivery_address: str = Field(..., min_length=5)
-    delivery_zone:    str
+    email:            str | None = Field(None, max_length=254)
+    delivery_address: str = Field(..., min_length=5, max_length=300)
+    delivery_zone:    str = Field(..., max_length=100)
     items:            list[OrderItemCreate] = Field(..., min_length=1)
-    notes:            str | None = None
+    notes:            str | None = Field(None, max_length=500)
     payment_method:   str = "cash_on_delivery"
-    referral_code:    str | None = None   # code entered at checkout
-    redeem_points:    int | None = None   # points to redeem
+    referral_code:    str | None = Field(None, max_length=20)
+    redeem_points:    int | None = None
 
 
 class StatusUpdate(BaseModel):

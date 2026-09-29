@@ -187,8 +187,8 @@ def change_own_password(body: dict, user_id: str = Depends(get_current_user_dep)
     new_pw     = body.get("new_password")
     if not current_pw or not new_pw:
         raise HTTPException(status_code=400, detail="current_password and new_password required")
-    if len(new_pw) < 6:
-        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    if len(new_pw) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
     resp = supabase_admin.table("users").select("password").eq("id", user_id).single().execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -196,3 +196,30 @@ def change_own_password(body: dict, user_id: str = Depends(get_current_user_dep)
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     supabase_admin.table("users").update({"password": hash_password(new_pw)}).eq("id", user_id).execute()
     return {"message": "Password updated successfully"}
+
+
+# ── Token refresh ──────────────────────────────────────────────────────────────
+
+@router.post("/refresh", response_model=AuthResponse)
+@limiter.limit("10/minute")
+def refresh_token(request: Request, user_id: str = Depends(get_current_user_dep)):
+    """
+    Issue a fresh client JWT using a still-valid token.
+    Client should call this before expiry to stay logged in without re-entering password.
+    Rate limited to 10/minute — cannot be used to brute-force new tokens.
+    """
+    from core.database import supabase_admin
+    resp = supabase_admin.table("users").select(
+        "id, full_name, email, phone_number, points, referral_code, created_at"
+    ).eq("id", user_id).single().execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = resp.data
+    from core.security import create_client_token, CLIENT_TOKEN_EXPIRE_MINUTES
+    token = create_client_token(user["id"], user["phone_number"])
+    return {
+        "access_token": token,
+        "token_type":   "bearer",
+        "expires_in":   CLIENT_TOKEN_EXPIRE_MINUTES * 60,
+        "user":         user,
+    }

@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from orders.router import router as orders_router
 from payments.router import router as payments_router
+from payments.mpesa.router import router as mpesa_router
 from places.router import router as places_router
 from points.router import router as points_router
 from products.router import router as products_router
@@ -57,7 +58,8 @@ app.include_router(admin_auth_router)
 app.include_router(products_router)
 app.include_router(orders_router)
 app.include_router(bookings_router)
-app.include_router(payments_router)
+app.include_router(mpesa_router)       # M-Pesa Daraja — default payment provider
+app.include_router(payments_router)    # Paystack — secondary (ready when needed)
 app.include_router(points_router)
 app.include_router(services_router)
 app.include_router(delivery_router)

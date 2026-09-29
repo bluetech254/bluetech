@@ -37,10 +37,11 @@ def _check_database() -> None:
 
 def _check_mpesa_production_config() -> None:
     """
-    In production M-Pesa mode, all payment credentials must be set.
+    In production M-Pesa mode, all Daraja credentials must be set.
     In sandbox mode this check is skipped so local dev works without them.
     """
     if settings.MPESA_ENV != "production":
+        logger.info("✓ M-Pesa in sandbox mode — skipping credential check")
         return
 
     required = {
@@ -53,7 +54,7 @@ def _check_mpesa_production_config() -> None:
     missing = [k for k, v in required.items() if not v]
     if missing:
         raise RuntimeError(
-            f"M-Pesa is set to 'production' but these vars are missing: "
+            f"MPESA_ENV is 'production' but these vars are missing: "
             f"{', '.join(missing)}"
         )
     logger.info("✓ M-Pesa production config OK")

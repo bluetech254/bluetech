@@ -1,23 +1,40 @@
 """
-payments/service.py — M-Pesa payment business logic.
+payments/service.py — Paystack payment business logic.
 
-All STK push initiation, callback processing, and status polling
-lives here. mpesa.py handles raw API calls; this file handles
-business rules (ownership, idempotency, status updates).
+Flow:
+  1. Client calls /payments/initiate  → we call Paystack, return authorization_url
+  2. Customer pays on Paystack hosted page
+  3. Paystack POSTs to /payments/webhook → we verify signature + update DB
+  4. Client can also call /payments/verify/{reference} to poll status
+
+paystack.py handles raw API calls; this file handles business rules
+(ownership, idempotency, DB updates).
 """
 import logging
+import uuid
 
 from core.audit import log_action
 from core.database import supabase_admin as db
-from payments.mpesa import stk_push, stk_query
+from payments.paystack import initialize_transaction, verify_transaction
 
 logger = logging.getLogger(__name__)
 
 
-# ── Order payments ────────────────────────────────────────────────────────────
+def _make_reference(prefix: str, entity_id: str) -> str:
+    """Generate a short unique Paystack transaction reference."""
+    short = entity_id[:8].upper()
+    rand  = uuid.uuid4().hex[:6].upper()
+    return f"{prefix}-{short}-{rand}"
+
+
+# ── Order payments ─────────────────────────────────────────────────────────────
 
 def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
-    """Initiate STK push for an order. Verifies ownership if user authenticated."""
+    """
+    Initialize a Paystack transaction for an order.
+    Returns { authorization_url, reference } — frontend redirects user to authorization_url.
+    Ownership check: if caller is authenticated they must own this order.
+    """
     resp = db.table("orders").select("*").eq("id", order_id).single().execute()
     if not resp.data:
         raise ValueError("Order not found")
@@ -26,32 +43,71 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
     if order["payment_status"] == "paid":
         raise ValueError("Order already paid")
 
-    # Ownership check — if caller is authenticated they must own this order
     if user_id and order.get("user_id") and str(order["user_id"]) != str(user_id):
         raise PermissionError("You do not own this order")
 
-    result = stk_push(
-        phone       = order["phone_number"],
-        amount      = int(order["total_amount"]),
-        reference   = f"ORD-{order_id[:10].upper()}",
-        description = "BlueTech Order",
+    # Use customer email if available, fall back to a phone-derived placeholder
+    email = order.get("email") or f"{order['phone_number']}@paystack.placeholder"
+
+    reference = _make_reference("ORD", order_id)
+    result = initialize_transaction(
+        email       = email,
+        amount_kes  = float(order["total_amount"]),
+        reference   = reference,
+        metadata    = {
+            "order_id":   order_id,
+            "type":       "order",
+            "phone":      order["phone_number"],
+        },
     )
-    checkout_id = result.get("CheckoutRequestID")
-    db.table("orders").update({"checkout_request_id": checkout_id}).eq("id", order_id).execute()
-    return {"checkout_request_id": checkout_id, "message": "STK push sent. Check your phone."}
+
+    # Store reference so the webhook can match it back
+    db.table("orders").update({
+        "payment_reference": reference,
+        "payment_status":    "pending",
+    }).eq("id", order_id).execute()
+
+    return {
+        "authorization_url": result["authorization_url"],
+        "reference":         reference,
+        "message":           "Redirect customer to authorization_url to complete payment.",
+    }
+
+
+def verify_order_payment(reference: str) -> dict:
+    """
+    Verify an order payment by reference (client polling).
+    Updates DB if Paystack says paid but our DB is still pending.
+    """
+    txn = verify_transaction(reference)
+    if txn.get("status") == "success":
+        db.table("orders").update({
+            "payment_status":    "paid",
+            "payment_receipt":   txn.get("reference", reference),
+        }).eq("payment_reference", reference).execute()
+    return {
+        "status":    txn.get("status"),
+        "reference": reference,
+        "amount":    txn.get("amount", 0) / 100,  # convert from kobo back to KES
+    }
 
 
 def get_order_payment_status(order_id: str) -> dict:
-    resp = db.table("orders").select("payment_status, mpesa_receipt").eq("id", order_id).single().execute()
+    resp = db.table("orders").select(
+        "payment_status, payment_receipt, payment_reference"
+    ).eq("id", order_id).single().execute()
     if not resp.data:
         raise ValueError("Order not found")
     return resp.data
 
 
-# ── Booking commitment payment ────────────────────────────────────────────────
+# ── Booking commitment payment ─────────────────────────────────────────────────
 
 def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:
-    """Initiate 20% commitment fee STK push after booking creation."""
+    """
+    Initialize 20% commitment fee payment after booking creation.
+    Returns { authorization_url, reference, amount }.
+    """
     resp = db.table("bookings").select("*").eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")
@@ -69,49 +125,62 @@ def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:
     if not booking.get("estimated_cost") and service_price > 0:
         db.table("bookings").update({"estimated_cost": float(service_price)}).eq("id", booking_id).execute()
 
-    result      = stk_push(
-        phone       = booking["phone_number"],
-        amount      = commitment_amount,
-        reference   = f"CMT-{booking_id[:10].upper()}",
-        description = "Repair Commitment",
+    email     = f"{booking['phone_number']}@paystack.placeholder"
+    reference = _make_reference("CMT", booking_id)
+
+    result = initialize_transaction(
+        email      = email,
+        amount_kes = float(commitment_amount),
+        reference  = reference,
+        metadata   = {
+            "booking_id": booking_id,
+            "type":       "commitment",
+            "phone":      booking["phone_number"],
+        },
     )
-    checkout_id = result.get("CheckoutRequestID")
+
     db.table("bookings").update({
-        "commitment_fee":            commitment_amount,
-        "commitment_checkout_id":    checkout_id,
-        "commitment_payment_status": "pending",
+        "commitment_fee":                commitment_amount,
+        "commitment_payment_reference":  reference,
+        "commitment_payment_status":     "pending",
     }).eq("id", booking_id).execute()
-    return {"checkout_request_id": checkout_id, "amount": commitment_amount, "message": "STK push sent. Check your phone."}
+
+    return {
+        "authorization_url": result["authorization_url"],
+        "reference":         reference,
+        "amount":            commitment_amount,
+        "message":           "Redirect customer to authorization_url to pay commitment fee.",
+    }
+
+
+def verify_commitment_payment(reference: str) -> dict:
+    """Verify commitment payment by reference (client polling)."""
+    txn = verify_transaction(reference)
+    if txn.get("status") == "success":
+        db.table("bookings").update({
+            "commitment_payment_status":  "paid",
+            "commitment_receipt":         txn.get("reference", reference),
+        }).eq("commitment_payment_reference", reference).execute()
+    return {
+        "status":    txn.get("status"),
+        "reference": reference,
+        "amount":    txn.get("amount", 0) / 100,
+    }
 
 
 def get_commitment_status(booking_id: str) -> dict:
-    """Poll commitment payment status. Actively queries Safaricom if still pending."""
     resp = db.table("bookings").select(
-        "commitment_payment_status, commitment_receipt, commitment_fee, commitment_checkout_id"
+        "commitment_payment_status, commitment_receipt, commitment_fee, commitment_payment_reference"
     ).eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")
-
-    data = resp.data
-    if data.get("commitment_payment_status") == "pending" and data.get("commitment_checkout_id"):
-        try:
-            result      = stk_query(data["commitment_checkout_id"])
-            result_code = result.get("ResultCode")
-            if result_code == 0:
-                db.table("bookings").update({"commitment_payment_status": "paid"}).eq("id", booking_id).execute()
-                data["commitment_payment_status"] = "paid"
-            elif result_code is not None and result_code != 0:
-                db.table("bookings").update({"commitment_payment_status": "failed"}).eq("id", booking_id).execute()
-                data["commitment_payment_status"] = "failed"
-        except Exception as e:
-            logger.warning(f"STK query failed (non-critical): {e}")
-    return data
+    return resp.data
 
 
-# ── Booking final payment ─────────────────────────────────────────────────────
+# ── Booking final payment ──────────────────────────────────────────────────────
 
 def request_final_payment(booking_id: str, admin: dict) -> dict:
-    """Admin triggers STK push for remaining balance after repair is done."""
+    """Admin initializes final payment (remaining balance after commitment)."""
     resp = db.table("bookings").select("*").eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")
@@ -127,103 +196,115 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     commitment = int(booking.get("commitment_fee") or 0)
     remaining  = max(1, total - commitment)
 
-    result      = stk_push(
-        phone       = booking["phone_number"],
-        amount      = remaining,
-        reference   = f"FNL-{booking_id[:10].upper()}",
-        description = "Repair Final Payment",
+    email     = f"{booking['phone_number']}@paystack.placeholder"
+    reference = _make_reference("FNL", booking_id)
+
+    result = initialize_transaction(
+        email      = email,
+        amount_kes = float(remaining),
+        reference  = reference,
+        metadata   = {
+            "booking_id": booking_id,
+            "type":       "final",
+            "phone":      booking["phone_number"],
+        },
     )
-    checkout_id = result.get("CheckoutRequestID")
+
     db.table("bookings").update({
-        "status":               "completed",
-        "final_checkout_id":    checkout_id,
-        "final_payment_status": "pending",
+        "status":                   "completed",
+        "final_payment_reference":  reference,
+        "final_payment_status":     "pending",
     }).eq("id", booking_id).execute()
+
     log_action(admin, "booking.final_payment_requested", f"booking:{booking_id}", {"amount": remaining})
-    return {"checkout_request_id": checkout_id, "amount": remaining,
-            "message": f"STK push of KES {remaining} sent to {booking['phone_number']}"}
+
+    return {
+        "authorization_url": result["authorization_url"],
+        "reference":         reference,
+        "amount":            remaining,
+        "message":           f"Send authorization_url to customer for KES {remaining} payment.",
+    }
 
 
 def get_final_payment_status(booking_id: str) -> dict:
     resp = db.table("bookings").select(
-        "final_payment_status, final_receipt, final_cost, commitment_fee"
+        "final_payment_status, final_receipt, final_cost, commitment_fee, final_payment_reference"
     ).eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")
     return resp.data
 
 
-def get_booking_payment_status(booking_id: str) -> dict:
-    resp = db.table("bookings").select("payment_status, mpesa_receipt").eq("id", booking_id).single().execute()
-    if not resp.data:
-        raise ValueError("Booking not found")
-    return resp.data
+# ── Webhook processor ──────────────────────────────────────────────────────────
 
-
-# ── Callback processor ────────────────────────────────────────────────────────
-
-def process_callback(payload: dict) -> None:
+def process_webhook(event: dict) -> None:
     """
-    Process Safaricom STK push callback.
-    Matches CheckoutRequestID to orders or bookings and updates payment status.
+    Process a verified Paystack webhook event.
+    Called AFTER signature has been verified in the router.
+    Only handles charge.success — ignores everything else.
     """
+    if event.get("event") != "charge.success":
+        return
+
     try:
-        stk             = payload.get("Body", {}).get("stkCallback", {})
-        checkout_id     = stk.get("CheckoutRequestID")
-        result_code     = stk.get("ResultCode")
+        data      = event.get("data", {})
+        reference = data.get("reference", "")
+        status    = data.get("status", "")
+        receipt   = data.get("reference", reference)   # Paystack reference IS the receipt
+        meta      = data.get("metadata") or {}
 
-        if not checkout_id:
+        if status != "success":
             return
 
-        if result_code == 0:
-            # Successful payment — extract receipt
-            items   = stk.get("CallbackMetadata", {}).get("Item", [])
-            meta    = {i["Name"]: i.get("Value") for i in items}
-            receipt = meta.get("MpesaReceiptNumber", "")
+        entity_type = meta.get("type", "")
 
-            # 1. Order payment
-            r = db.table("orders").select("id").eq("checkout_request_id", checkout_id).execute()
-            if r.data:
-                db.table("orders").update({"payment_status": "paid", "mpesa_receipt": receipt})\
-                    .eq("checkout_request_id", checkout_id).execute()
-                return
-
-            # 2. Booking commitment
-            r = db.table("bookings").select("id").eq("commitment_checkout_id", checkout_id).execute()
-            if r.data:
-                db.table("bookings").update({
-                    "commitment_payment_status": "paid",
-                    "commitment_receipt":        receipt,
-                }).eq("commitment_checkout_id", checkout_id).execute()
-                return
-
-            # 3. Booking final payment
-            r = db.table("bookings").select("id").eq("final_checkout_id", checkout_id).execute()
-            if r.data:
-                db.table("bookings").update({
-                    "final_payment_status": "paid",
-                    "final_receipt":        receipt,
-                }).eq("final_checkout_id", checkout_id).execute()
-                return
-
+        if entity_type == "order" or reference.startswith("ORD-"):
+            _handle_order_webhook(reference, receipt, meta)
+        elif entity_type == "commitment" or reference.startswith("CMT-"):
+            _handle_commitment_webhook(reference, receipt, meta)
+        elif entity_type == "final" or reference.startswith("FNL-"):
+            _handle_final_webhook(reference, receipt, meta)
         else:
-            # Failed/cancelled payment
-            r = db.table("orders").select("id").eq("checkout_request_id", checkout_id).execute()
-            if r.data:
-                db.table("orders").update({"payment_status": "failed"})\
-                    .eq("checkout_request_id", checkout_id).execute()
-                return
-
-            r = db.table("bookings").select("id").eq("commitment_checkout_id", checkout_id).execute()
-            if r.data:
-                db.table("bookings").update({"commitment_payment_status": "failed"})\
-                    .eq("commitment_checkout_id", checkout_id).execute()
-                return
-
-            r = db.table("bookings").select("id").eq("final_checkout_id", checkout_id).execute()
-            if r.data:
-                db.table("bookings").update({"final_payment_status": "failed"})\
-                    .eq("final_checkout_id", checkout_id).execute()
+            # Unknown type — try matching by reference in each table
+            if not _handle_order_webhook(reference, receipt, meta):
+                if not _handle_commitment_webhook(reference, receipt, meta):
+                    _handle_final_webhook(reference, receipt, meta)
 
     except Exception as e:
-        logger.error(f"Callback processing error: {e}")
+        logger.error(f"Webhook processing error: {e}")
+
+
+def _handle_order_webhook(reference: str, receipt: str, meta: dict) -> bool:
+    r = db.table("orders").select("id").eq("payment_reference", reference).execute()
+    if r.data:
+        db.table("orders").update({
+            "payment_status":  "paid",
+            "payment_receipt": receipt,
+        }).eq("payment_reference", reference).execute()
+        logger.info(f"Order paid via webhook: ref={reference}")
+        return True
+    return False
+
+
+def _handle_commitment_webhook(reference: str, receipt: str, meta: dict) -> bool:
+    r = db.table("bookings").select("id").eq("commitment_payment_reference", reference).execute()
+    if r.data:
+        db.table("bookings").update({
+            "commitment_payment_status": "paid",
+            "commitment_receipt":        receipt,
+        }).eq("commitment_payment_reference", reference).execute()
+        logger.info(f"Commitment paid via webhook: ref={reference}")
+        return True
+    return False
+
+
+def _handle_final_webhook(reference: str, receipt: str, meta: dict) -> bool:
+    r = db.table("bookings").select("id").eq("final_payment_reference", reference).execute()
+    if r.data:
+        db.table("bookings").update({
+            "final_payment_status": "paid",
+            "final_receipt":        receipt,
+        }).eq("final_payment_reference", reference).execute()
+        logger.info(f"Final payment paid via webhook: ref={reference}")
+        return True
+    return False

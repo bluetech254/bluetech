@@ -1,14 +1,15 @@
 """
-payments/mpesa.py — Raw Safaricom Daraja API calls.
+payments/mpesa/daraja.py — Raw Safaricom Daraja API calls.
 
 Only this file talks directly to Safaricom. Everything else
-in the payments domain goes through service.py.
+in the M-Pesa domain goes through service.py.
 """
 import base64
 import logging
 from datetime import datetime
 
 import requests
+
 from core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ def stk_push(phone: str, amount: int, reference: str, description: str) -> dict:
     Returns:
         Safaricom API response dict containing CheckoutRequestID
     """
-    token             = _get_access_token()
+    token               = _get_access_token()
     password, timestamp = _get_password_and_timestamp()
 
     payload = {
@@ -75,7 +76,7 @@ def stk_push(phone: str, amount: int, reference: str, description: str) -> dict:
 
 def stk_query(checkout_request_id: str) -> dict:
     """Query the status of a pending STK push transaction."""
-    token             = _get_access_token()
+    token               = _get_access_token()
     password, timestamp = _get_password_and_timestamp()
 
     payload = {

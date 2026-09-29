@@ -5,7 +5,6 @@ Uses pydantic-settings so the app crashes immediately with a clear error
 if any required variable is missing, rather than failing silently at runtime.
 """
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -15,14 +14,20 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_KEY: str
     JWT_SECRET: str
-    MPESA_CONSUMER_KEY: str
-    MPESA_CONSUMER_SECRET: str
-    MPESA_SHORTCODE: str
-    MPESA_PASSKEY: str
-    MPESA_CALLBACK_URL: str
+
+    # ── M-Pesa Daraja (default payment provider) ──────────────────────────────
+    MPESA_CONSUMER_KEY: str    = ""
+    MPESA_CONSUMER_SECRET: str = ""
+    MPESA_SHORTCODE: str       = ""
+    MPESA_PASSKEY: str         = ""
+    MPESA_CALLBACK_URL: str    = ""
+    MPESA_ENV: str             = "sandbox"   # "sandbox" | "production"
+
+    # ── Paystack (secondary — ready when needed) ──────────────────────────────
+    PAYSTACK_SECRET_KEY: str   = ""          # sk_live_... or sk_test_...
+    PAYSTACK_PUBLIC_KEY: str   = ""          # pk_live_... or pk_test_...
 
     # ── Optional with safe defaults ───────────────────────────────────────────
-    MPESA_ENV: str = "sandbox"          # "sandbox" | "production"
     DEBUG: bool = False                 # NEVER default True in production
     API_HOST: str = "0.0.0.0"  # nosec B104 — intentional, required for containerised deployment
     API_PORT: int = 8000
@@ -65,14 +70,6 @@ class Settings(BaseSettings):
         if self.MPESA_ENV == "production":
             return "https://api.safaricom.co.ke"
         return "https://sandbox.safaricom.co.ke"
-
-    # ── Validators ────────────────────────────────────────────────────────────
-    @field_validator("MPESA_ENV")
-    @classmethod
-    def validate_mpesa_env(cls, v: str) -> str:
-        if v not in ("sandbox", "production"):
-            raise ValueError("MPESA_ENV must be 'sandbox' or 'production'")
-        return v
 
     class Config:
         env_file = ".env"

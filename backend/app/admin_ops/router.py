@@ -166,7 +166,7 @@ def get_transactions(admin: dict = Depends(get_current_admin)):
                      "customer": o.get("full_name"), "phone": o.get("phone_number"),
                      "amount": float(o.get("total_amount") or 0),
                      "payment_status": o.get("payment_status", "unpaid"),
-                     "mpesa_receipt": o.get("mpesa_receipt"), "status": o.get("status"),
+                     "payment_receipt": o.get("payment_receipt"), "status": o.get("status"),
                      "payment_method": o.get("payment_method"), "created_at": o.get("created_at"),
                      "detail": {"subtotal": float(o.get("subtotal") or 0),
                                 "delivery_fee": float(o.get("delivery_fee") or 0),
@@ -177,8 +177,8 @@ def get_transactions(admin: dict = Depends(get_current_admin)):
                          "ref": f"CMT-{b['id'][:8].upper()}", "customer": b.get("full_name"),
                          "phone": b.get("phone_number"), "amount": float(b.get("commitment_fee") or 0),
                          "payment_status": b.get("commitment_payment_status"),
-                         "mpesa_receipt": b.get("commitment_receipt"), "status": b.get("status"),
-                         "payment_method": "mpesa", "created_at": b.get("created_at"),
+                         "payment_receipt": b.get("commitment_receipt"), "status": b.get("status"),
+                         "payment_method": "paystack", "created_at": b.get("created_at"),
                          "detail": {"device": f"{b.get('device_type','')} {b.get('device_model','')}".strip(),
                                     "booking_id": b["id"]}})
         if b.get("final_payment_status") in ("paid","pending","failed"):
@@ -187,8 +187,8 @@ def get_transactions(admin: dict = Depends(get_current_admin)):
                          "phone": b.get("phone_number"),
                          "amount": float(b.get("final_cost") or b.get("estimated_cost") or 0) - float(b.get("commitment_fee") or 0),
                          "payment_status": b.get("final_payment_status"),
-                         "mpesa_receipt": b.get("final_receipt"), "status": b.get("status"),
-                         "payment_method": "mpesa", "created_at": b.get("created_at"),
+                         "payment_receipt": b.get("final_receipt"), "status": b.get("status"),
+                         "payment_method": "paystack", "created_at": b.get("created_at"),
                          "detail": {"device": f"{b.get('device_type','')} {b.get('device_model','')}".strip(),
                                     "booking_id": b["id"]}})
     txns.sort(key=lambda x: x.get("created_at") or "", reverse=True)

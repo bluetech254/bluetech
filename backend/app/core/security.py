@@ -7,7 +7,7 @@ Covers:
 - OTP generation and hashing
 """
 import hashlib
-import random
+import secrets
 from datetime import datetime, timedelta
 
 from core.config import settings
@@ -124,8 +124,8 @@ def decode_token(token: str) -> dict | None:
 # ── OTP utilities ─────────────────────────────────────────────────────────────
 
 def generate_otp() -> str:
-    """Generate a 6-digit numeric OTP code."""
-    return "".join([str(random.randint(0, 9)) for _ in range(6)])
+    """Generate a cryptographically secure 6-digit numeric OTP code."""
+    return "".join([str(secrets.randbelow(10)) for _ in range(6)])
 
 
 def hash_otp(code: str) -> str:
