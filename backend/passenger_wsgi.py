@@ -3,16 +3,21 @@ import os
 import asyncio
 
 BASE_DIR = '/home2/fixitblu/backend'
+APP_DIR  = os.path.join(BASE_DIR, 'app')   # routers import from here
 
-if BASE_DIR not in sys.path:
-    sys.path.insert(0, BASE_DIR)
+# Both backend/ and backend/app/ must be on sys.path.
+# backend/     → so `from app.main import app` resolves
+# backend/app/ → so `from admin_auth.router import ...` resolves (flat imports)
+for d in (BASE_DIR, APP_DIR):
+    if d not in sys.path:
+        sys.path.insert(0, d)
 
 os.chdir(BASE_DIR)
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-from app.main import app
+from app.main import app  # noqa: E402
 
 
 class ASGIToWSGI:
@@ -20,8 +25,8 @@ class ASGIToWSGI:
     Minimal ASGI-to-WSGI bridge for Passenger/LiteSpeed.
 
     Key fix: always guard CONTENT_LENGTH — Passenger can pass -1 or
-    an empty string, both of which crash body.read(n) with
-    'Negative size passed to PyBytes_FromStringAndSize'.
+    an empty string, both of which crash body.read(n) with:
+      SystemError: Negative size passed to PyBytes_FromStringAndSize
     """
 
     def __init__(self, asgi_app):
@@ -56,15 +61,11 @@ class ASGIToWSGI:
             content_length = int(environ.get('CONTENT_LENGTH') or 0)
         except (ValueError, TypeError):
             content_length = 0
-
         if content_length < 0:
             content_length = 0
 
         body = environ.get('wsgi.input', None)
-        if body and content_length > 0:
-            request_body = body.read(content_length)
-        else:
-            request_body = b''
+        request_body = body.read(content_length) if (body and content_length > 0) else b''
         # ─────────────────────────────────────────────────────────────────────
 
         response_started = []
