@@ -71,10 +71,12 @@ def _prepare_product_data(data: dict) -> dict:
     """Normalise product data before writing to Supabase.
 
     - Converts Decimal price to float.
-    - 'category' is not a DB column; fold it into specifications so it is
-      persisted without causing a column-not-found error.
+    - 'category' and 'brand' are not DB columns; fold category into
+      specifications JSONB and drop brand entirely.
     """
     data["price"] = float(data["price"])
+    # brand is not a DB column — drop it silently
+    data.pop("brand", None)
     category = data.pop("category", None)
     if category:
         specs = data.get("specifications") or {}
