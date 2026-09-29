@@ -122,110 +122,98 @@ except Exception as e:
 # ─────────────────────────────────────────────────────────────────────────────
 print(f"\n{SEP}\n  3. Write passenger_wsgi.py\n{SEP}")
 
-WSGI_CONTENT = r"""import sys
-import os
-import asyncio
-
-BASE_DIR = '/home2/fixitblu/backend'
-APP_DIR  = os.path.join(BASE_DIR, 'app')
-
-# backend/app/ must be on sys.path so flat imports resolve:
-#   from admin_auth.router import ...
-#   from core.config import settings
-for d in (BASE_DIR, APP_DIR):
-    if d not in sys.path:
-        sys.path.insert(0, d)
-
-os.chdir(BASE_DIR)
-
-from dotenv import load_dotenv
-load_dotenv(os.path.join(BASE_DIR, '.env'))
-
-from app.main import app
-
-
-class ASGIToWSGI:
-    """Minimal ASGI-to-WSGI bridge for Passenger/LiteSpeed."""
-
-    def __init__(self, asgi_app):
-        self.asgi_app = asgi_app
-
-    def __call__(self, environ, start_response):
-        scope = {
-            'type': 'http',
-            'asgi': {'version': '3.0'},
-            'http_version': environ.get('SERVER_PROTOCOL', 'HTTP/1.1').split('/')[-1],
-            'method': environ['REQUEST_METHOD'].upper(),
-            'headers': [
-                (k[5:].lower().replace('_', '-').encode(), v.encode())
-                for k, v in environ.items()
-                if k.startswith('HTTP_')
-            ] + [
-                (b'content-type',   environ.get('CONTENT_TYPE', '').encode()),
-                (b'content-length', environ.get('CONTENT_LENGTH', '0').encode()),
-            ],
-            'path':         environ.get('PATH_INFO', '/'),
-            'query_string': environ.get('QUERY_STRING', '').encode(),
-            'root_path':    environ.get('SCRIPT_NAME', ''),
-            'scheme':       environ.get('wsgi.url_scheme', 'https'),
-            'server': (
-                environ.get('SERVER_NAME', 'localhost'),
-                int(environ.get('SERVER_PORT', 443)),
-            ),
-        }
-
-        try:
-            content_length = int(environ.get('CONTENT_LENGTH') or 0)
-        except (ValueError, TypeError):
-            content_length = 0
-        if content_length < 0:
-            content_length = 0
-
-        body = environ.get('wsgi.input', None)
-        request_body = body.read(content_length) if (body and content_length > 0) else b''
-
-        response_started = []
-        response_body    = []
-
-        async def run():
-            async def receive():
-                return {'type': 'http.request', 'body': request_body, 'more_body': False}
-
-            async def send(message):
-                if message['type'] == 'http.response.start':
-                    response_started.append((message['status'], message.get('headers', [])))
-                elif message['type'] == 'http.response.body':
-                    response_body.append(message.get('body', b''))
-
-            await self.asgi_app(scope, receive, send)
-
-        loop = asyncio.new_event_loop()
-        try:
-            loop.run_until_complete(run())
-        finally:
-            loop.close()
-
-        if response_started:
-            status_code, headers = response_started[0]
-            phrases = {
-                200:'OK', 201:'Created', 204:'No Content',
-                400:'Bad Request', 401:'Unauthorized', 403:'Forbidden',
-                404:'Not Found', 405:'Method Not Allowed',
-                422:'Unprocessable Entity', 429:'Too Many Requests',
-                500:'Internal Server Error',
-            }
-            start_response(
-                f"{status_code} {phrases.get(status_code, 'Unknown')}",
-                [(k.decode(), v.decode()) for k, v in headers],
-            )
-        else:
-            start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-
-        return response_body
-
-
-application = ASGIToWSGI(app)
-"""
+WSGI_CONTENT = (
+    "import sys\n"
+    "import os\n"
+    "import asyncio\n"
+    "\n"
+    "BASE_DIR = '/home2/fixitblu/backend'\n"
+    "APP_DIR  = os.path.join(BASE_DIR, 'app')\n"
+    "\n"
+    "for d in (BASE_DIR, APP_DIR):\n"
+    "    if d not in sys.path:\n"
+    "        sys.path.insert(0, d)\n"
+    "\n"
+    "os.chdir(BASE_DIR)\n"
+    "\n"
+    "from dotenv import load_dotenv\n"
+    "load_dotenv(os.path.join(BASE_DIR, '.env'))\n"
+    "\n"
+    "from app.main import app\n"
+    "\n"
+    "\n"
+    "class ASGIToWSGI:\n"
+    "    def __init__(self, asgi_app):\n"
+    "        self.asgi_app = asgi_app\n"
+    "\n"
+    "    def __call__(self, environ, start_response):\n"
+    "        scope = {\n"
+    "            'type': 'http',\n"
+    "            'asgi': {'version': '3.0'},\n"
+    "            'http_version': environ.get('SERVER_PROTOCOL', 'HTTP/1.1').split('/')[-1],\n"
+    "            'method': environ['REQUEST_METHOD'].upper(),\n"
+    "            'headers': [\n"
+    "                (k[5:].lower().replace('_', '-').encode(), v.encode())\n"
+    "                for k, v in environ.items()\n"
+    "                if k.startswith('HTTP_')\n"
+    "            ] + [\n"
+    "                (b'content-type',   environ.get('CONTENT_TYPE', '').encode()),\n"
+    "                (b'content-length', environ.get('CONTENT_LENGTH', '0').encode()),\n"
+    "            ],\n"
+    "            'path':         environ.get('PATH_INFO', '/'),\n"
+    "            'query_string': environ.get('QUERY_STRING', '').encode(),\n"
+    "            'root_path':    environ.get('SCRIPT_NAME', ''),\n"
+    "            'scheme':       environ.get('wsgi.url_scheme', 'https'),\n"
+    "            'server': (\n"
+    "                environ.get('SERVER_NAME', 'localhost'),\n"
+    "                int(environ.get('SERVER_PORT', 443)),\n"
+    "            ),\n"
+    "        }\n"
+    "        try:\n"
+    "            content_length = int(environ.get('CONTENT_LENGTH') or 0)\n"
+    "        except (ValueError, TypeError):\n"
+    "            content_length = 0\n"
+    "        if content_length < 0:\n"
+    "            content_length = 0\n"
+    "        body = environ.get('wsgi.input', None)\n"
+    "        request_body = body.read(content_length) if (body and content_length > 0) else b''\n"
+    "        response_started = []\n"
+    "        response_body    = []\n"
+    "\n"
+    "        async def run():\n"
+    "            async def receive():\n"
+    "                return {'type': 'http.request', 'body': request_body, 'more_body': False}\n"
+    "            async def send(message):\n"
+    "                if message['type'] == 'http.response.start':\n"
+    "                    response_started.append((message['status'], message.get('headers', [])))\n"
+    "                elif message['type'] == 'http.response.body':\n"
+    "                    response_body.append(message.get('body', b''))\n"
+    "            await self.asgi_app(scope, receive, send)\n"
+    "\n"
+    "        loop = asyncio.new_event_loop()\n"
+    "        try:\n"
+    "            loop.run_until_complete(run())\n"
+    "        finally:\n"
+    "            loop.close()\n"
+    "\n"
+    "        if response_started:\n"
+    "            status_code, headers = response_started[0]\n"
+    "            phrases = {200:'OK',201:'Created',204:'No Content',\n"
+    "                       400:'Bad Request',401:'Unauthorized',403:'Forbidden',\n"
+    "                       404:'Not Found',405:'Method Not Allowed',\n"
+    "                       422:'Unprocessable Entity',429:'Too Many Requests',\n"
+    "                       500:'Internal Server Error'}\n"
+    "            start_response(\n"
+    "                f\"{status_code} {phrases.get(status_code, 'Unknown')}\",\n"
+    "                [(k.decode(), v.decode()) for k, v in headers],\n"
+    "            )\n"
+    "        else:\n"
+    "            start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])\n"
+    "        return response_body\n"
+    "\n"
+    "\n"
+    "application = ASGIToWSGI(app)\n"
+)
 
 wsgi_path = os.path.join(BASE_DIR, 'passenger_wsgi.py')
 with open(wsgi_path, 'w') as f:
