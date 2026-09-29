@@ -18,10 +18,10 @@ import {
   setUser,
   clearSession,
   isTokenExpired,
-  getTokenExpiry,
   StoredUser,
 } from '../utils/tokenStore';
 import { SESSION_EXPIRED_EVENT } from '../api/axios';
+import { useTokenExpiry } from '../hooks/useTokenExpiry';
 import toast from 'react-hot-toast';
 
 interface AuthContextType {
@@ -57,24 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  // ── Auto-logout when token expires ──────────────────────────────────────────
-  useEffect(() => {
-    const expiry = getTokenExpiry();
-    if (!expiry || !token) return;
-
-    const remaining = expiry - Date.now();
-    if (remaining <= 0) {
-      _doLogout();
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      toast.error('Your session has expired. Please log in again.');
-      _doLogout(true);
-    }, remaining);
-
-    return () => clearTimeout(timer);
-  }, [token]);
+  // ── Auto-logout when token expires (via hook) ────────────────────────────────
+  useTokenExpiry(token, () => {
+    toast.error('Your session has expired. Please log in again.');
+    _doLogout();
+  });
 
   // ── Listen for 401 from axios interceptor ───────────────────────────────────
   useEffect(() => {
@@ -85,11 +72,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // ── Internal helpers ─────────────────────────────────────────────────────────
 
-  const _doLogout = (showToast = false) => {
+  const _doLogout = () => {
     setTokenState(null);
     setUserState(null);
     clearSession();
-    if (showToast) toast.error('Session expired. Please log in again.');
   };
 
   // ── Public API ───────────────────────────────────────────────────────────────

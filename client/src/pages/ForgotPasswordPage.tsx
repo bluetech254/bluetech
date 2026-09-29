@@ -1,119 +1,185 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { requestPasswordReset, resetPassword } from '../api/auth';
-import Card from '../components/common/Card';
+import { forgotPasswordSchema, resetPasswordSchema } from '../utils/validation';
+import { normalizePhone } from '../utils/phone';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-import { KeyRound, Loader2 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import AuthShell from '../components/common/AuthShell';
-import { normalizePhone } from '../utils/phone';
+import { KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const ForgotPasswordPage = () => {
-  const navigate = useNavigate();
-  const [step, setStep] = useState<'request' | 'reset'>('request');
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+// ── Step 1 — request reset code ───────────────────────────────────────────────
+
+type RequestForm = { phone_number: string };
+
+const RequestStep = ({ onSuccess }: { onSuccess: (phone: string) => void }) => {
   const [submitting, setSubmitting] = useState(false);
 
-  const parseError = (err: any, fallback: string) => {
-    const detail = err.response?.data?.detail;
-    if (!detail) return fallback;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) return detail.map((e: any) => e.msg).join(', ');
-    return fallback;
-  };
+  const { register, handleSubmit, formState: { errors } } = useForm<RequestForm>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { phone_number: '' },
+  });
 
-  const onRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async ({ phone_number }: RequestForm) => {
     setSubmitting(true);
     try {
-      await requestPasswordReset(normalizePhone(phone));
+      await requestPasswordReset(normalizePhone(phone_number));
       toast.success('Reset code sent to your phone.');
-      setStep('reset');
+      onSuccess(normalizePhone(phone_number));
     } catch (err: any) {
-      toast.error(parseError(err, 'Failed to send reset code.'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const onReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await resetPassword(normalizePhone(phone), code.trim(), newPassword);
-      toast.success('Password reset successfully!');
-      navigate('/login');
-    } catch (err: any) {
-      toast.error(parseError(err, 'Reset failed. Check your code.'));
+      const detail = err.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : 'Failed to send reset code.';
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Input
+        id="phone_number"
+        label="Phone Number"
+        placeholder="07XXXXXXXX"
+        error={errors.phone_number?.message}
+        {...register('phone_number')}
+      />
+      <Button type="submit" variant="primary" disabled={submitting} className="w-full py-3.5 font-bold">
+        {submitting && <Loader2 className="w-4 h-4 animate-spin inline mr-2" />}
+        {submitting ? 'Sending...' : 'Send Reset Code'}
+      </Button>
+    </form>
+  );
+};
+
+// ── Step 2 — submit code + new password ───────────────────────────────────────
+
+type ResetForm = { reset_code: string; new_password: string; confirm_password: string };
+
+const ResetStep = ({ phone, onBack }: { phone: string; onBack: () => void }) => {
+  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const { register, handleSubmit, formState: { errors } } = useForm<ResetForm>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { reset_code: '', new_password: '', confirm_password: '' },
+  });
+
+  const onSubmit = async ({ reset_code, new_password }: ResetForm) => {
+    setSubmitting(true);
+    try {
+      await resetPassword(phone, reset_code.trim(), new_password);
+      toast.success('Password reset successfully!');
+      navigate('/login');
+    } catch (err: any) {
+      const detail = err.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : 'Reset failed. Check your code.';
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Input
+        id="reset_code"
+        label="Reset Code"
+        placeholder="6-digit code"
+        inputMode="numeric"
+        error={errors.reset_code?.message}
+        {...register('reset_code')}
+      />
+
+      <div className="relative">
+        <Input
+          id="new_password"
+          label="New Password"
+          type={showPassword ? 'text' : 'password'}
+          placeholder="Min 8 chars, uppercase, number, symbol"
+          error={errors.new_password?.message}
+          {...register('new_password')}
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(p => !p)}
+          className="absolute right-3 top-8 text-slate-400 hover:text-slate-600"
+        >
+          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+
+      <div className="relative">
+        <Input
+          id="confirm_password"
+          label="Confirm Password"
+          type={showConfirm ? 'text' : 'password'}
+          placeholder="••••••••"
+          error={errors.confirm_password?.message}
+          {...register('confirm_password')}
+        />
+        <button
+          type="button"
+          onClick={() => setShowConfirm(p => !p)}
+          className="absolute right-3 top-8 text-slate-400 hover:text-slate-600"
+        >
+          {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+
+      <Button type="submit" variant="primary" disabled={submitting} className="w-full py-3.5 font-bold">
+        {submitting && <Loader2 className="w-4 h-4 animate-spin inline mr-2" />}
+        {submitting ? 'Resetting...' : 'Reset Password'}
+      </Button>
+      <button
+        type="button"
+        onClick={onBack}
+        className="w-full text-xs text-slate-500 hover:text-blue-600"
+      >
+        ← Back
+      </button>
+    </form>
+  );
+};
+
+// ── Page shell ────────────────────────────────────────────────────────────────
+
+const ForgotPasswordPage = () => {
+  const [step, setStep] = useState<'request' | 'reset'>('request');
+  const [phone, setPhone] = useState('');
+
+  return (
     <AuthShell>
-      <Card className="p-8 space-y-6 bg-white border border-slate-100 shadow-xl">
+      <div className="space-y-6">
         <div className="text-center space-y-1">
           <div className="flex justify-center mb-2">
             <KeyRound className="w-10 h-10 text-blue-600" />
           </div>
           <h1 className="text-2xl font-black text-slate-950">Reset Password</h1>
           <p className="text-xs text-slate-500">
-            {step === 'request' ? 'Enter your phone number to receive a reset code.' : 'Enter the code sent to your phone and your new password.'}
+            {step === 'request'
+              ? 'Enter your phone number to receive a reset code.'
+              : 'Enter the code sent to your phone and your new password.'}
           </p>
         </div>
 
         {step === 'request' ? (
-          <form onSubmit={onRequest} className="space-y-4">
-            <Input
-              id="phone"
-              label="Phone Number"
-              placeholder="07XXXXXXXX"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              required
-            />
-            <Button type="submit" variant="primary" disabled={submitting} className="w-full py-3.5 font-bold">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin inline mr-2" /> : null}
-              {submitting ? 'Sending...' : 'Send Reset Code'}
-            </Button>
-          </form>
+          <RequestStep onSuccess={(p) => { setPhone(p); setStep('reset'); }} />
         ) : (
-          <form onSubmit={onReset} className="space-y-4">
-            <Input
-              id="code"
-              label="Reset Code"
-              placeholder="6-digit code"
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              required
-            />
-            <Input
-              id="new_password"
-              label="New Password"
-              type="password"
-              placeholder="Min 8 chars, uppercase, number, symbol"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              required
-            />
-            <Button type="submit" variant="primary" disabled={submitting} className="w-full py-3.5 font-bold">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin inline mr-2" /> : null}
-              {submitting ? 'Resetting...' : 'Reset Password'}
-            </Button>
-            <button type="button" onClick={() => setStep('request')} className="w-full text-xs text-slate-500 hover:text-blue-600">
-              ← Back
-            </button>
-          </form>
+          <ResetStep phone={phone} onBack={() => setStep('request')} />
         )}
 
         <div className="text-center text-xs text-slate-500 pt-2">
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline">Back to Login</Link>
+          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+            Back to Login
+          </Link>
         </div>
-      </Card>
+      </div>
     </AuthShell>
   );
 };

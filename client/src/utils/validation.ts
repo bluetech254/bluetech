@@ -73,3 +73,25 @@ export const passwordSchema = z.object({
   path: ["new_password_confirm"],
 });
 
+// Forgot Password Schema (step 1 — request OTP)
+export const forgotPasswordSchema = z.object({
+  phone_number: z.string().regex(PHONE_REGEX, 'Invalid phone number (use 07... or 7...)'),
+});
+
+// Reset Password Schema (step 2 — submit OTP + new password)
+export const resetPasswordSchema = z.object({
+  reset_code: z.string()
+    .min(4, 'Code must be at least 4 characters')
+    .max(10, 'Code too long')
+    .regex(/^\d+$/, 'Code must be digits only'),
+  new_password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character'),
+  confirm_password: z.string(),
+}).refine((data) => data.new_password === data.confirm_password, {
+  message: "Passwords don't match",
+  path: ['confirm_password'],
+});
+
