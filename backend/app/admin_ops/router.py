@@ -92,9 +92,20 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
 @router.get("/stock/alerts")
 def stock_alerts(admin: dict = Depends(get_current_admin)):
     r = supabase_admin.table("products")\
-        .select("id,title,stock_quantity,low_stock_threshold,category,brand")\
+        .select("id,title,stock_quantity,low_stock_threshold,specifications")\
         .eq("is_active", True).execute()
-    alerts = [p for p in (r.data or []) if p["stock_quantity"] <= p.get("low_stock_threshold", 5)]
+    alerts = []
+    for p in (r.data or []):
+        if p["stock_quantity"] <= p.get("low_stock_threshold", 5):
+            specs = p.get("specifications") or {}
+            alerts.append({
+                "id":        p["id"],
+                "title":     p["title"],
+                "stock":     p["stock_quantity"],
+                "threshold": p["low_stock_threshold"],
+                "category":  specs.get("category"),
+                "brand":     specs.get("brand"),
+            })
     return {"data": alerts, "count": len(alerts)}
 
 
