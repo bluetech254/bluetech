@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import emailjs from '@emailjs/browser';
 import { contactSchema } from '../utils/validation';
 import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import { Mail, Phone, MapPin, Clock, Send, AlertCircle, Sparkles, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, AlertCircle, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../api/axios';
+
+const EMAILJS_SERVICE_ID  = (import.meta as any).env?.VITE_EMAILJS_SERVICE_ID  || '';
+const EMAILJS_TEMPLATE_ID = (import.meta as any).env?.VITE_EMAILJS_TEMPLATE_ID || '';
+const EMAILJS_PUBLIC_KEY  = (import.meta as any).env?.VITE_EMAILJS_PUBLIC_KEY  || '';
 
 export const ContactPage = () => {
   const [submitting, setSubmitting] = useState(false);
@@ -33,10 +37,22 @@ export const ContactPage = () => {
     setSubmitting(true);
     const toastId = toast.loading('Sending your message...');
     try {
-      await api.post('/contact', formData);
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          name:    formData.name,
+          email:   formData.email,
+          phone:   formData.phone,
+          subject: formData.subject,
+          message: formData.message,
+        },
+        EMAILJS_PUBLIC_KEY,
+      );
       toast.success('Your message has been sent! Our coordinators will reply within 24 hours.', { id: toastId });
       reset();
-    } catch {
+    } catch (err: any) {
+      console.error('EmailJS error:', err);
       toast.error('Failed to send message. Please try again.', { id: toastId });
     } finally {
       setSubmitting(false);
