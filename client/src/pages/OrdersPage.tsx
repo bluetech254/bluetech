@@ -99,39 +99,49 @@ export const OrdersPage = () => {
                 </Link>
               </div>
             ) : orders.map(order => (
-              <Link key={order.id} to={`/orders/${order.id}`}
-                className="group flex items-center gap-4 bg-white border border-slate-100 rounded-2xl px-4 py-4 hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                  <Package className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-black text-slate-900">
-                      #{(order.order_number || order.id).slice(0, 8).toUpperCase()}
-                    </p>
-                    <StatusBadge status={order.status} />
+              <div key={order.id}
+                className="bg-white border border-slate-100 rounded-2xl px-4 py-4 hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all">
+                <div className="flex items-start justify-between gap-3">
+                  {/* Left — icon + info */}
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
+                      <Package className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                        <p className="text-sm font-black text-slate-900">
+                          #{(order.order_number || order.id).slice(0, 8).toUpperCase()}
+                        </p>
+                        <StatusBadge status={order.status} />
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          order.payment_status === 'paid'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-amber-50 text-amber-600'
+                        }`}>
+                          {order.payment_status ?? 'unpaid'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        {new Date(order.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      {order.delivery_address && (
+                        <p className="text-xs text-slate-400 mt-0.5 truncate">
+                          📍 {order.delivery_address}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    {new Date(order.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {order.delivery_address && (
-                      <span className="ml-1">· 📍 {order.delivery_address}</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${
-                      order.payment_status === 'paid'
-                        ? 'bg-emerald-50 text-emerald-600'
-                        : 'bg-amber-50 text-amber-600'
-                    }`}>
-                      {order.payment_status ?? 'unpaid'}
-                    </span>
-                  </p>
+
+                  {/* Right — amount + view button */}
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span className="text-sm font-black text-slate-900">{formatCurrency(order.total_amount)}</span>
+                    <Link to={`/orders/${order.id}`}
+                      className="flex items-center gap-1 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors">
+                      View <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-black text-slate-900">{formatCurrency(order.total_amount)}</span>
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
-                </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
