@@ -16,8 +16,7 @@ class ProductCreate(BaseModel):
     low_stock_threshold: int = Field(default=5, ge=0)
     specifications: dict = Field(default_factory=dict)
     image_url: str | None = None
-    category: str | None = None
-    brand: str | None = None
+    category: str | None = None   # stored in specifications; passed for convenience
     is_active: bool = True
     # Merchandising flags
     is_flash_sale: bool = False
