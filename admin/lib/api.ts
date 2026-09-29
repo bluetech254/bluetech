@@ -1,4 +1,4 @@
-const BASE = "https://api.fixit-bluetechnology.co.ke";
+const BASE = process.env.NEXT_PUBLIC_API_URL || "https://bluetechnology-y1f8.onrender.com";
 
 function getToken(): string {
   if (typeof document === "undefined") return "";
