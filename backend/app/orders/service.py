@@ -231,10 +231,14 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
 
 
 def get_order_by_id(order_id: UUID) -> dict:
-    resp = supabase.table("orders").select("*, order_items(*)").eq("id", str(order_id)).single().execute()
-    if not resp.data:
+    try:
+        resp = supabase.table("orders").select("*, order_items(*)").eq("id", str(order_id)).single().execute()
+        data = resp.data
+    except Exception:
+        data = None
+    if not data:
         raise OrderNotFoundException(f"Order {order_id} not found")
-    return resp.data
+    return data
 
 
 def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict]:

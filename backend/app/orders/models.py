@@ -2,6 +2,7 @@
 orders/models.py — Pydantic schemas for the orders domain.
 """
 from enum import Enum
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -42,4 +43,4 @@ class OrderCreate(BaseModel):
 
 
 class StatusUpdate(BaseModel):
-    status: str
+    status: Literal["pending", "confirmed", "processing", "dispatched", "delivered", "cancelled"]

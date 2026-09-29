@@ -57,10 +57,14 @@ def create_booking(data: BookingCreate, user_id: str | None = None) -> dict:
 
 
 def get_booking_by_id(booking_id: UUID) -> dict:
-    resp = supabase.table("bookings").select("*").eq("id", str(booking_id)).single().execute()
-    if not resp.data:
+    try:
+        resp = supabase.table("bookings").select("*").eq("id", str(booking_id)).single().execute()
+        data = resp.data
+    except Exception:
+        data = None
+    if not data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
-    return resp.data
+    return data
 
 
 def get_bookings(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict]:

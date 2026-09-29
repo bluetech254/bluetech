@@ -8,13 +8,14 @@ import io
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 
 from admin_auth.dependencies import get_current_admin
 from core.audit import log_action
 from core.database import supabase_admin
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin Operations"])
@@ -215,8 +216,8 @@ def get_transactions(admin: dict = Depends(get_current_admin)):
 # ── Bulk order status ─────────────────────────────────────────────────────────
 
 class BulkStatusUpdate(BaseModel):
-    order_ids: list[str]
-    status: str
+    order_ids: list[str] = Field(..., min_length=1)
+    status: Literal["pending", "confirmed", "processing", "dispatched", "delivered", "cancelled"]
 
 @router.post("/orders/bulk-status")
 def bulk_update_order_status(body: BulkStatusUpdate, admin: dict = Depends(get_current_admin)):
@@ -257,23 +258,31 @@ def user_referral_detail(user_id: str, admin: dict = Depends(get_current_admin))
 
 @router.get("/customers/{user_id}/history")
 def customer_history(user_id: str, admin: dict = Depends(get_current_admin)):
-    user_r     = supabase_admin.table("users").select("*").eq("id", user_id).single().execute()
+    try:
+        user_r = supabase_admin.table("users").select("*").eq("id", user_id).single().execute()
+        user   = user_r.data
+    except Exception:
+        user = None
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     orders_r   = supabase_admin.table("orders").select("*, order_items(*)").eq("user_id", user_id).order("created_at", desc=True).execute()
     bookings_r = supabase_admin.table("bookings").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
     points_r   = supabase_admin.table("points_ledger").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-    if not user_r.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    user = user_r.data
-    for f in ("password","verification_code","reset_code"):
+    for f in ("password", "verification_code", "reset_code"):
         user.pop(f, None)
     orders = orders_r.data or []
-    return {"user": user,
-            "summary": {"total_orders": len(orders),
-                        "total_spent": sum(o.get("total_amount", 0) for o in orders if o.get("payment_status") == "paid"),
-                        "total_bookings": len(bookings_r.data or []),
-                        "points_balance": user.get("points", 0)},
-            "orders": orders, "bookings": bookings_r.data or [],
-            "points_history": points_r.data or []}
+    return {
+        "user": user,
+        "summary": {
+            "total_orders":    len(orders),
+            "total_spent":     sum(o.get("total_amount", 0) for o in orders if o.get("payment_status") == "paid"),
+            "total_bookings":  len(bookings_r.data or []),
+            "points_balance":  user.get("points", 0),
+        },
+        "orders":        orders,
+        "bookings":      bookings_r.data or [],
+        "points_history": points_r.data or [],
+    }
 
 
 # ── Global search ─────────────────────────────────────────────────────────────

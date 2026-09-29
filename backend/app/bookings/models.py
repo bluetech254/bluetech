@@ -3,6 +3,7 @@ bookings/models.py — Pydantic schemas for the bookings domain.
 """
 from decimal import Decimal
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -34,7 +35,7 @@ class BookingCreate(BaseModel):
 
 
 class StatusUpdate(BaseModel):
-    status: str
+    status: Literal["pending", "confirmed", "picked_up", "in_diagnosis", "in_repair", "ready", "completed", "cancelled"]
 
 
 class CostUpdate(BaseModel):

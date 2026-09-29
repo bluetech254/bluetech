@@ -60,7 +60,7 @@ client.pid
 admin.pid
 server.pid
 
-# Test files
+# Test files (external one-off API test folders only)
 api-test/
 
 # CSV data files
@@ -68,7 +68,6 @@ api-test/
 
 # Temporary files
 Untitled-*
-test_*.py
 
 # Database
 *.db
