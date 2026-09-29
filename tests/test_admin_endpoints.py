@@ -79,15 +79,19 @@ def sah() -> dict:
 
 
 def _req(method: str, path: str, **kwargs) -> requests.Response:
-    """Wrapper with 3-attempt SSL-EOF retry (Render rate-limits rapid connections)."""
+    """Wrapper with 3-attempt retry for transient Render connection errors.
+
+    Render's free tier drops connections under load (SSLError, RemoteDisconnected).
+    Retry up to 3 times with backoff before failing.
+    """
     full = url(path) if path.startswith("/") else path
     for attempt in range(3):
         try:
             return requests.request(method, full, **kwargs)
-        except requests.exceptions.SSLError:
+        except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
             if attempt == 2:
                 raise
-            time.sleep(3 + attempt * 3)
+            time.sleep(5 + attempt * 5)
 
 
 def get(path, **kw):    return _req("GET",    path, **kw)
