@@ -135,12 +135,13 @@ export const ContactPage = () => {
             </h3>
             <div className="space-y-2.5 text-xs">
               {[
-                { label: 'WhatsApp', href: 'https://wa.me/254707454182', color: 'text-green-600' },
-                { label: 'Instagram', href: 'https://instagram.com/bluetechnology58', color: 'text-pink-600' },
-                { label: 'Facebook', href: 'https://facebook.com/bluetechnology.co.ke', color: 'text-blue-700' },
-                { label: 'YouTube', href: 'https://youtube.com/@BlueTechnology58', color: 'text-red-600' },
-                { label: 'TikTok', href: 'https://www.tiktok.com/@bluetechnology58', color: 'text-slate-900' },
-                { label: 'Twitter / X', href: 'https://x.com/BLUETECHNOLOG58', color: 'text-slate-700' },
+                { label: 'WhatsApp',    href: 'https://wa.me/254707454182',                              color: 'text-green-600' },
+                { label: 'Instagram',   href: 'https://www.instagram.com/fixitbluetechnology58',         color: 'text-pink-600' },
+                { label: 'Facebook',    href: 'https://www.facebook.com/share/1HLEwcEx22/',              color: 'text-blue-700' },
+                { label: 'YouTube',     href: 'https://www.youtube.com/@BlueTechnology58',               color: 'text-red-600' },
+                { label: 'TikTok',      href: 'https://www.tiktok.com/@fixitbluetechnology58',           color: 'text-slate-900' },
+                { label: 'Threads',     href: 'https://www.threads.com/@fixitbluetechnology58',          color: 'text-slate-700' },
+                { label: 'Google Maps', href: 'https://share.google/iKWWoeTxXsnOqGA9U',                 color: 'text-yellow-600' },
               ].map(s => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   className={`flex items-center justify-between font-semibold hover:underline ${s.color}`}>
