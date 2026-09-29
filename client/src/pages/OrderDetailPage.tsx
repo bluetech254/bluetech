@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { getOrderById, cancelOrder, initiateMpesaPayment } from '../api/orders';
+import { getProductById } from '../api/products';
 import { formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
 import MpesaWaitingModal from '../components/cart/MpesaWaitingModal';
@@ -45,11 +46,25 @@ export const OrderDetailPage = () => {
   const [cancelling, setCancelling] = useState(false);
   const [paying, setPaying] = useState(false);
   const [mpesaModal, setMpesaModal] = useState<{ orderId: string; phone: string; amount: string } | null>(null);
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!id) return;
     getOrderById(id)
-      .then(setOrder)
+      .then(data => {
+        setOrder(data);
+        // Fetch images for each order item in parallel
+        const items = (data as any).order_items ?? (data as any).items ?? [];
+        const ids: string[] = Array.from(new Set<string>(
+          items.map((i: any) => i.product_id as string).filter((x: any): x is string => Boolean(x))
+        ));
+        Promise.all(ids.map(pid => getProductById(pid).catch(() => null)))
+          .then(products => {
+            const map: Record<string, string> = {};
+            products.forEach(p => { if (p?.id && p?.image_url) map[p.id] = p.image_url; });
+            setProductImages(map);
+          });
+      })
       .catch(() => toast.error('Order not found'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -185,20 +200,30 @@ export const OrderDetailPage = () => {
         <div className="bg-white border border-slate-100 rounded-2xl p-5">
           <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Order Items</p>
           <div className="divide-y divide-slate-50">
-            {items.map((item: any, i: number) => (
-              <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Package className="w-4 h-4 text-slate-300" />
+            {items.map((item: any, i: number) => {
+              const imgUrl = productImages[item.product_id];
+              return (
+                <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="w-12 h-12 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-100">
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={item.product_title ?? item.product_name}
+                        className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-5 h-5 text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-800 truncate">{item.product_title ?? item.product_name}</p>
+                    <p className="text-xs text-slate-400">Qty {item.quantity} × {formatCurrency(item.unit_price ?? item.price)}</p>
+                  </div>
+                  <p className="text-sm font-black text-slate-900 shrink-0">
+                    {formatCurrency((item.unit_price ?? item.price) * item.quantity)}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800 truncate">{item.product_title ?? item.product_name}</p>
-                  <p className="text-xs text-slate-400">Qty {item.quantity} × {formatCurrency(item.unit_price ?? item.price)}</p>
-                </div>
-                <p className="text-sm font-black text-slate-900 shrink-0">
-                  {formatCurrency((item.unit_price ?? item.price) * item.quantity)}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
