@@ -95,8 +95,14 @@ def admin_get_brands(admin: dict = Depends(get_current_admin)):
 
 @router.post("/api/v1/admin/devices/brands")
 def admin_create_brand(body: BrandBody, admin: dict = Depends(get_current_admin)):
-    resp = supabase_admin.table("device_brands").insert(body.model_dump()).execute()
-    return {"data": resp.data[0] if resp.data else {}}
+    try:
+        resp = supabase_admin.table("device_brands").insert(body.model_dump()).execute()
+        return {"data": resp.data[0] if resp.data else {}}
+    except Exception as e:
+        err = str(e)
+        if "23505" in err or "duplicate key" in err.lower():
+            raise HTTPException(status_code=409, detail=f"Brand '{body.name}' already exists")
+        raise HTTPException(status_code=500, detail=err)
 
 @router.put("/api/v1/admin/devices/brands/{brand_id}")
 def admin_update_brand(brand_id: str, body: BrandBody, admin: dict = Depends(get_current_admin)):

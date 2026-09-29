@@ -646,6 +646,15 @@ class TestAdminDevices:
             "name": "TestBrand_Pytest", "device_type": "smartphone",
             "is_popular": False, "is_active": True,
         })
+        if r.status_code == 409:
+            # Brand already exists from a previous run — look it up by name
+            brands_r = get("/api/v1/admin/devices/brands", headers=ah())
+            brands = brands_r.json().get("data", [])
+            match = next((b for b in brands if b["name"] == "TestBrand_Pytest"), None)
+            assert match, "409 duplicate but brand not found in list"
+            state["brand_id"] = match["id"]
+            print(f"\n  ✓ Brand already exists, reusing: {state['brand_id'][:8]}…")
+            return
         assert r.status_code in (200, 201), (
             f"Create brand failed {r.status_code}: {r.text[:300]}"
         )
