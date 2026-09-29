@@ -67,7 +67,7 @@ export const resetPassword = async (
 
 /**
  * Stateless logout — backend just returns {message: "Logged out"}.
- * Real logout is handled in AuthContext by clearing sessionStorage.
+ * Real logout is handled in AuthContext via tokenStore.clearSession().
  * This call is fire-and-forget: failure does not affect client-side logout.
  */
 export const logoutUser = async (): Promise<void> => {
