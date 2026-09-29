@@ -113,7 +113,18 @@ export const OrdersPage = () => {
                   </div>
                   <p className="text-xs text-slate-400">
                     {new Date(order.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    &nbsp;·&nbsp;{(order.items ?? []).length} item{(order.items ?? []).length !== 1 ? 's' : ''}
+                    {order.delivery_address && (
+                      <span className="ml-1">· 📍 {order.delivery_address}</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${
+                      order.payment_status === 'paid'
+                        ? 'bg-emerald-50 text-emerald-600'
+                        : 'bg-amber-50 text-amber-600'
+                    }`}>
+                      {order.payment_status ?? 'unpaid'}
+                    </span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

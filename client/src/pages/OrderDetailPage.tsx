@@ -228,7 +228,12 @@ export const OrderDetailPage = () => {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">{order.delivery_address}</p>
-                <p className="text-xs text-slate-400">{order.delivery_zone}</p>
+                <p className="text-xs text-slate-400">
+                  {/* Hide raw UUIDs — show zone name only if it's human-readable */}
+                  {order.delivery_zone && !/^[0-9a-f]{8}-/.test(order.delivery_zone)
+                    ? order.delivery_zone
+                    : 'Delivery zone'}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
