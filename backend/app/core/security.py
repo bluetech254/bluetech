@@ -10,12 +10,9 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta
 
+import bcrypt as _bcrypt
 from core.config import settings
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-
-# ── bcrypt context ────────────────────────────────────────────────────────────
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # ── JWT config ────────────────────────────────────────────────────────────────
 ALGORITHM = "HS256"
@@ -26,14 +23,14 @@ ADMIN_TOKEN_EXPIRE_MINUTES  = 8 * 60         # 8 hours
 # ── Password hashing ──────────────────────────────────────────────────────────
 
 def hash_password(plain: str) -> str:
-    """Hash a password with bcrypt. Use this for all new passwords."""
-    return pwd_context.hash(plain)
+    """Hash a password with bcrypt (rounds=12). Use this for all new passwords."""
+    return _bcrypt.hashpw(plain.encode(), _bcrypt.gensalt(rounds=12)).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
     """Verify a bcrypt password hash."""
     try:
-        return pwd_context.verify(plain, hashed)
+        return _bcrypt.checkpw(plain.encode(), hashed.encode())
     except Exception:
         return False
 
