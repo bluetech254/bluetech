@@ -8,7 +8,7 @@ import Image from "next/image";
 import {
   LayoutGrid, ShoppingBag, Wrench, Package, MapPin, ListChecks,
   Users, Gift, BarChart3, ShieldCheck, LogOut, Sparkles, Bell,
-  DollarSign, Receipt, Cpu, Sun, Moon,
+  DollarSign, Receipt, Cpu, Sun, Moon, ScrollText,
 } from "lucide-react";
 
 const NAV = [
@@ -46,9 +46,10 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
     localStorage.setItem("theme", next ? "light" : "dark");
   }
 
-  async function handleLogout() {
+  function handleLogout() {
     setLoggingOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
+    // Clear the admin session cookie directly — no server route needed
+    document.cookie = "admin_session=; path=/; max-age=0; SameSite=Lax; Secure";
     router.push("/login");
     router.refresh();
   }
@@ -77,13 +78,22 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
         })}
 
         {role === "superadmin" && (
-          <Link
-            href="/admins"
-            className={clsx("nav-item", pathname.startsWith("/admins") && "nav-item-active")}
-          >
-            <ShieldCheck size={17} strokeWidth={2} />
-            Admin Accounts
-          </Link>
+          <>
+            <Link
+              href="/admins"
+              className={clsx("nav-item", pathname.startsWith("/admins") && "nav-item-active")}
+            >
+              <ShieldCheck size={17} strokeWidth={2} />
+              Admin Accounts
+            </Link>
+            <Link
+              href="/audit-log"
+              className={clsx("nav-item", pathname.startsWith("/audit-log") && "nav-item-active")}
+            >
+              <ScrollText size={17} strokeWidth={2} />
+              Audit Log
+            </Link>
+          </>
         )}
       </nav>
 

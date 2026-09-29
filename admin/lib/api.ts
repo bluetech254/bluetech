@@ -105,6 +105,8 @@ export const adminApi = {
     request(`/api/v1/bookings/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
   updateBookingCost: (id: string, estimated_cost?: number, final_cost?: number) =>
     request(`/api/v1/bookings/${id}/cost`, { method: "PUT", body: JSON.stringify({ estimated_cost, final_cost }) }),
+  updateBookingNotes: (id: string, internal_notes: string | null) =>
+    request(`/api/v1/admin/bookings/${id}/notes`, { method: "PUT", body: JSON.stringify({ internal_notes }) }),
   requestFinalPayment: (id: string) =>
     request(`/api/v1/payments/mpesa/booking/${id}/request-final-payment`, { method: "POST" }),
   getFinalPaymentStatus: (id: string) =>

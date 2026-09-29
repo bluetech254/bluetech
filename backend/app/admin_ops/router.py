@@ -306,3 +306,25 @@ def get_audit_log(
         q = q.eq("admin_id", admin_id)
     r = q.order("created_at", desc=True).limit(limit).execute()
     return {"data": r.data or [], "count": len(r.data or [])}
+
+
+# ── Booking internal notes ─────────────────────────────────────────────────────
+
+class BookingNotesUpdate(BaseModel):
+    internal_notes: str | None = None
+
+
+@router.put("/bookings/{booking_id}/notes")
+def update_booking_notes(
+    booking_id: str,
+    body: BookingNotesUpdate,
+    admin: dict = Depends(get_current_admin),
+):
+    """Update internal notes for a booking. Admin only."""
+    r = supabase_admin.table("bookings") \
+        .update({"internal_notes": body.internal_notes}) \
+        .eq("id", booking_id).execute()
+    if not r.data:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    log_action(admin, "booking.notes_update", f"booking:{booking_id}", {})
+    return {"ok": True}

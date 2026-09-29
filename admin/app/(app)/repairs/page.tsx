@@ -39,6 +39,8 @@ export default function RepairsPage() {
   const [savingCost, setSavingCost] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
   const [payModal, setPayModal] = useState<PaymentModal | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -60,6 +62,7 @@ export default function RepairsPage() {
   function openDetail(b: Booking) {
     setDetail(b);
     setCostDraft({ estimated_cost: b.estimated_cost, final_cost: b.final_cost });
+    setNotesDraft(b.internal_notes ?? "");
   }
 
   function closeDetail() { setDetail(null); load(); }
@@ -273,6 +276,33 @@ export default function RepairsPage() {
                   <button onClick={handleSaveCost} disabled={savingCost}
                     className="btn-primary !py-2.5 text-xs self-end disabled:opacity-50">
                     {savingCost ? <Loader2 size={12} className="animate-spin" /> : "Save"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Internal notes */}
+              <div className="space-y-2">
+                <p className="text-xs text-ink-dim font-bold uppercase tracking-wider">Internal Notes</p>
+                <div className="flex gap-2 items-end">
+                  <textarea
+                    className="input-field text-sm flex-1 resize-none"
+                    rows={3}
+                    placeholder="Staff-only notes (not visible to customer)…"
+                    value={notesDraft}
+                    onChange={(e) => setNotesDraft(e.target.value)}
+                  />
+                  <button
+                    onClick={async () => {
+                      setSavingNotes(true);
+                      try {
+                        await adminApi.updateBookingNotes(detail.id, notesDraft || null);
+                        setDetail({ ...detail, internal_notes: notesDraft || undefined });
+                      } finally { setSavingNotes(false); }
+                    }}
+                    disabled={savingNotes}
+                    className="btn-primary !py-2.5 text-xs self-end shrink-0 disabled:opacity-50"
+                  >
+                    {savingNotes ? <Loader2 size={12} className="animate-spin" /> : "Save"}
                   </button>
                 </div>
               </div>

@@ -231,12 +231,17 @@ export default function OrdersPage() {
               <div className="space-y-2">
                 <p className="text-xs text-ink-dim font-bold uppercase tracking-wider flex items-center gap-1.5"><Package size={12} />Items</p>
                 <div className="divide-y divide-base-border rounded-xl border border-base-border overflow-hidden">
-                  {(detailOrder.order_items ?? []).map((it) => (
-                    <div key={it.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                      <span className="text-ink">{it.quantity}× {it.title}</span>
-                      <span className="font-bold tabular-nums">{formatKES(it.price * it.quantity)}</span>
-                    </div>
-                  ))}
+                  {(detailOrder.order_items ?? []).map((it) => {
+                    const label = it.product_title ?? it.title ?? "Item";
+                    const unitPrice = it.unit_price ?? it.price ?? 0;
+                    const lineTotal = it.total_price ?? unitPrice * it.quantity;
+                    return (
+                      <div key={it.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <span className="text-ink">{it.quantity}× {label}</span>
+                        <span className="font-bold tabular-nums">{formatKES(lineTotal)}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

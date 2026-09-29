@@ -18,9 +18,14 @@ export type BookingStatus =
 
 export interface OrderItem {
   id: string;
-  title: string;
+  // API returns product_title (not title) and unit_price (not price)
+  product_title?: string;
+  title?: string;          // fallback alias
   quantity: number;
-  price: number;
+  unit_price?: number;
+  price?: number;          // fallback alias
+  total_price?: number;
+  product_id?: string;
 }
 
 export interface Order {
