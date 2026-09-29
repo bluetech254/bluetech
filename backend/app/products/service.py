@@ -53,9 +53,10 @@ def get_products(
 
 
 def get_product_by_id(product_id: UUID) -> dict:
-    response = supabase.table("products").select("*").eq("id", str(product_id)).single().execute()
+    response = supabase.table("products").select("*").eq("id", str(product_id)).execute()
     if not response.data:
         raise ProductNotFoundException(f"Product {product_id} not found")
+    return response.data[0]
     return response.data
 
 
