@@ -67,17 +67,30 @@ def get_product_categories() -> list[str]:
     return sorted(set(p["category"] for p in (r.data or []) if p.get("category")))
 
 
-def create_product(product: ProductCreate) -> dict:
-    data = product.model_dump()
-    # Convert Decimal to float for JSON serialisation
+def _prepare_product_data(data: dict) -> dict:
+    """Normalise product data before writing to Supabase.
+
+    - Converts Decimal price to float.
+    - 'category' is not a DB column; fold it into specifications so it is
+      persisted without causing a column-not-found error.
+    """
     data["price"] = float(data["price"])
+    category = data.pop("category", None)
+    if category:
+        specs = data.get("specifications") or {}
+        specs.setdefault("category", category)
+        data["specifications"] = specs
+    return data
+
+
+def create_product(product: ProductCreate) -> dict:
+    data = _prepare_product_data(product.model_dump())
     response = supabase_admin.table("products").insert(data).execute()
     return response.data[0]
 
 
 def update_product(product_id: UUID, product: ProductUpdate) -> dict:
-    data = product.model_dump()
-    data["price"] = float(data["price"])
+    data = _prepare_product_data(product.model_dump())
     response = supabase_admin.table("products").update(data).eq("id", str(product_id)).execute()
     if not response.data:
         raise ProductNotFoundException(f"Product {product_id} not found")
