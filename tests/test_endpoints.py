@@ -37,14 +37,14 @@ import requests
 
 def _with_retry(fn):
     def wrapper(*args, **kwargs):
-        for attempt in range(3):
+        for attempt in range(5):
             try:
                 return fn(*args, **kwargs)
             except (requests.exceptions.SSLError,
                     requests.exceptions.ConnectionError):
-                if attempt == 2:
+                if attempt == 4:
                     raise
-                time.sleep(5 + attempt * 5)
+                time.sleep(5 + attempt * 5)  # 5s, 10s, 15s, 20s
     return wrapper
 
 requests.get    = _with_retry(requests.get)
