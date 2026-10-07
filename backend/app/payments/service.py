@@ -14,6 +14,7 @@ import logging
 import uuid
 
 from core.audit import log_action
+from core.config import settings
 from core.database import supabase_admin as db
 from payments.paystack import initialize_transaction, verify_transaction
 
@@ -25,6 +26,12 @@ def _make_reference(prefix: str, entity_id: str) -> str:
     short = entity_id[:8].upper()
     rand  = uuid.uuid4().hex[:6].upper()
     return f"{prefix}-{short}-{rand}"
+
+
+def _callback_url() -> str | None:
+    """Return frontend URL for Paystack to redirect to after payment, or None if not configured."""
+    base = (settings.FRONTEND_URL or "").rstrip("/")
+    return f"{base}/payment/callback" if base else None
 
 
 # ── Order payments ─────────────────────────────────────────────────────────────
@@ -54,6 +61,7 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
         email       = email,
         amount_kes  = float(order["total_amount"]),
         reference   = reference,
+        callback_url = _callback_url(),
         metadata    = {
             "order_id":   order_id,
             "type":       "order",
@@ -132,6 +140,7 @@ def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:
         email      = email,
         amount_kes = float(commitment_amount),
         reference  = reference,
+        callback_url = _callback_url(),
         metadata   = {
             "booking_id": booking_id,
             "type":       "commitment",
@@ -203,6 +212,7 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
         email      = email,
         amount_kes = float(remaining),
         reference  = reference,
+        callback_url = _callback_url(),
         metadata   = {
             "booking_id": booking_id,
             "type":       "final",

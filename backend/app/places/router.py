@@ -21,7 +21,7 @@ async def autocomplete(input: str = Query(..., min_length=2)):
         import httpx
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get(
-                "https://maps.googleapis.com/maps/api/place/autocomplete/json",
+                settings.GOOGLE_PLACES_API_URL,
                 params={
                     "input":      input,
                     "key":        api_key,

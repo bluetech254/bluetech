@@ -4,10 +4,6 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "*.supabase.co" },
-      { protocol: "https", hostname: "*.supabase.in" },
-    ],
     formats: ["image/avif", "image/webp"],
     unoptimized: true, // required for static export
   },

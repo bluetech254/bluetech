@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { getDeliveryZones } from '../api/zones';
-import { createOrder, initiateMpesaPayment } from '../api/orders';
+import { createOrder, initiatePaystackOrderPayment, verifyPaystackOrderPayment } from '../api/orders';
 import { getMyPoints } from '../api/points';
 import { DeliveryZone } from '../types';
 import { orderSchema } from '../utils/validation';
@@ -16,7 +16,7 @@ import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
-import MpesaWaitingModal from '../components/cart/MpesaWaitingModal';
+import PaystackModal from '../components/cart/PaystackModal';
 import { ChevronLeft, CreditCard, DollarSign, Loader2, ClipboardCheck, AlertCircle, Phone, MapPin, Sparkles, CheckCircle, FileText, Star, Zap } from 'lucide-react';
 import PlacesAutocomplete from '../components/common/PlacesAutocomplete';
 import toast from 'react-hot-toast';
@@ -29,7 +29,10 @@ export const CheckoutPage = () => {
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [loadingZones, setLoadingZones] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [mpesaOrder, setMpesaOrder] = useState<{ orderId: string; phone: string; amount: string } | null>(null);
+  const [paystackModal, setPaystackModal] = useState<{
+    orderId: string; reference: string; email: string; amount: number;
+  } | null>(null);
+  const [verifyStatus, setVerifyStatus] = useState<'idle' | 'verifying' | 'paid' | 'failed'>('idle');
   const [pointsBalance, setPointsBalance] = useState(0);
   const [redeemPoints, setRedeemPoints] = useState(false);
 
@@ -50,7 +53,7 @@ export const CheckoutPage = () => {
       email: '',
       delivery_address: '',
       delivery_zone: defaultZoneId,
-      payment_method: 'mpesa' as 'mpesa' | 'cash_on_delivery' | 'points_only',
+      payment_method: 'paystack' as 'paystack' | 'cash_on_delivery' | 'points_only',
       notes: '',
       referral_code: '',
       redeem_points: 0,
@@ -153,16 +156,21 @@ export const CheckoutPage = () => {
       // points_only = subtotal paid by points, but delivery fee still needs payment
       if (formData.payment_method === 'points_only') {
         if (deliveryFee > 0) {
-          // Trigger M-Pesa STK for delivery fee only
+          // Trigger Paystack popup for delivery fee only
           try {
-            await initiateMpesaPayment(response.id);
+            const { reference } = await initiatePaystackOrderPayment(response.id);
             orderPlaced.current = true;
             clearCart();
             sessionStorage.removeItem('bluetech_delivery_zone_id');
             toast.dismiss(toastId);
-            setMpesaOrder({ orderId: response.id, phone: phoneNumber, amount: formatCurrency(deliveryFee) });
+            setPaystackModal({
+              orderId: response.id,
+              reference,
+              email: formData.email || `${phoneNumber}@paystack.placeholder`,
+              amount: deliveryFee,
+            });
           } catch {
-            toast.error('Order created but M-Pesa prompt for delivery fee failed. Please retry payment.', { id: toastId });
+            toast.error('Order created but payment init failed. Please retry payment.', { id: toastId });
           }
         } else {
           toast.success('Order placed & paid with points! 🎉', { id: toastId });
@@ -171,17 +179,22 @@ export const CheckoutPage = () => {
           sessionStorage.removeItem('bluetech_delivery_zone_id');
           navigate(`/order-success/${response.id}`);
         }
-      } else if (formData.payment_method === 'mpesa') {
-        // Initiate STK push then show waiting modal
+      } else if (formData.payment_method === 'paystack' || formData.payment_method === 'mpesa') {
+        // Initiate Paystack inline popup
         try {
-          await initiateMpesaPayment(response.id);
+          const { reference } = await initiatePaystackOrderPayment(response.id);
           orderPlaced.current = true;
           clearCart();
           sessionStorage.removeItem('bluetech_delivery_zone_id');
           toast.dismiss(toastId);
-          setMpesaOrder({ orderId: response.id, phone: phoneNumber, amount: formatCurrency(grandTotal) });
+          setPaystackModal({
+            orderId: response.id,
+            reference,
+            email: formData.email || `${phoneNumber}@paystack.placeholder`,
+            amount: grandTotal,
+          });
         } catch {
-          toast.error('Order created but M-Pesa prompt failed. Please retry payment.', { id: toastId });
+          toast.error('Order created but payment init failed. Please retry payment.', { id: toastId });
         }
       } else {
         toast.success('Order placed successfully!', { id: toastId });
@@ -204,12 +217,36 @@ export const CheckoutPage = () => {
 
   return (
     <div className="space-y-8 py-6 animate-fade-in text-left">
-      {mpesaOrder && (
-        <MpesaWaitingModal
-          orderId={mpesaOrder.orderId}
-          phone={mpesaOrder.phone}
-          amount={mpesaOrder.amount}
-          onCancel={() => setMpesaOrder(null)}
+      {paystackModal && (
+        <PaystackModal
+          amountKes={paystackModal.amount}
+          email={paystackModal.email}
+          reference={paystackModal.reference}
+          label="Order Payment"
+          verifyStatus={verifyStatus}
+          onSuccess={async (ref) => {
+            setVerifyStatus('verifying');
+            try {
+              const result = await verifyPaystackOrderPayment(ref);
+              if (result.status === 'success') {
+                setVerifyStatus('paid');
+                setTimeout(() => navigate(`/order-success/${paystackModal.orderId}`), 1500);
+              } else {
+                setVerifyStatus('failed');
+              }
+            } catch {
+              setVerifyStatus('failed');
+            }
+          }}
+          onDismiss={() => {
+            // popup closed without paying — keep modal open so they can retry
+            setVerifyStatus('idle');
+          }}
+          onCancel={() => {
+            setPaystackModal(null);
+            setVerifyStatus('idle');
+            navigate(`/order-success/${paystackModal.orderId}`);
+          }}
         />
       )}
       {/* Header */}
@@ -302,32 +339,32 @@ export const CheckoutPage = () => {
               </h2>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* M-Pesa Option */}
+                {/* Paystack Option */}
                 <label
                   className={`
                     border-2 rounded-xl p-4 flex items-start space-x-3 cursor-pointer transition-all
-                    ${watchedPaymentMethod === 'mpesa' 
-                      ? 'border-blue-500 bg-blue-50/40' 
+                    ${watchedPaymentMethod === 'paystack'
+                      ? 'border-blue-500 bg-blue-50/40'
                       : 'border-slate-100 hover:border-slate-200 bg-white'
                     }
                   `}
                 >
                   <input
                     type="radio"
-                    value="mpesa"
-                    checked={watchedPaymentMethod === 'mpesa'}
+                    value="paystack"
+                    checked={watchedPaymentMethod === 'paystack'}
                     className="w-4 h-4 text-blue-600 border-slate-200 mt-1 cursor-pointer"
                     {...register('payment_method')}
                   />
                   <div className="min-w-0">
                     <p className="font-bold text-slate-900 text-sm flex items-center">
-                      M-Pesa Mobile Money
+                      Pay Online (M-Pesa / Card)
                       <span className="ml-1.5 bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm">
                         Popular
                       </span>
                     </p>
                     <p className="text-xs text-slate-500 leading-normal mt-1">
-                      Pay instantly using Lipa Na M-Pesa Paybill #{MPESA_PAYBILL}. Secure transaction reference checked on dispatch.
+                      Pay instantly via Paystack — supports M-Pesa STK push, Visa, and Mastercard. Secure popup on this page.
                     </p>
                   </div>
                 </label>
@@ -383,18 +420,12 @@ export const CheckoutPage = () => {
                 )}
               </div>
 
-              {watchedPaymentMethod === 'mpesa' && (
-                <div className="p-4 bg-green-50 border border-green-100 rounded-xl space-y-2 text-xs text-green-800 leading-relaxed font-medium">
-                  <p className="font-bold">M-Pesa Checkout Guide:</p>
-                  <ol className="list-decimal pl-4 space-y-1">
-                    <li>Go to your M-Pesa Menu & select <strong>Lipa Na M-Pesa</strong></li>
-                    <li>Select <strong>Paybill</strong></li>
-                    <li>Enter Business Number: <strong>{MPESA_PAYBILL}</strong></li>
-                    <li>Enter Account Number: <strong>Your Phone Number</strong></li>
-                    <li>Enter Amount: <strong>{formatCurrency(grandTotal)}</strong></li>
-                    <li>Enter your M-Pesa PIN and confirm the transaction.</li>
-                  </ol>
-                  <p className="text-[10px] text-green-600 pt-1 font-bold">Your payment receipt will be crosschecked instantly upon checkout submission.</p>
+              {watchedPaymentMethod === 'paystack' && (
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl space-y-2 text-xs text-blue-800 leading-relaxed font-medium">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5" /> Secure Inline Payment
+                  </p>
+                  <p>After placing your order, a Paystack popup will appear on this page. You can pay with <strong>M-Pesa</strong>, <strong>Visa</strong>, or <strong>Mastercard</strong> — no redirect needed.</p>
                 </div>
               )}
             </Card>
@@ -544,8 +575,8 @@ export const CheckoutPage = () => {
 
             {/* Payment badge */}
             <div className="pt-2 flex justify-center">
-              <Badge variant={watchedPaymentMethod === 'mpesa' ? 'success' : watchedPaymentMethod === 'points_only' ? 'warning' : 'info'} className="w-full py-2 font-bold uppercase text-xs">
-                Paying via: {watchedPaymentMethod === 'mpesa' ? 'Lipa Na M-Pesa' : watchedPaymentMethod === 'points_only' ? '⚡ Points Wallet' : 'Cash on Delivery'}
+              <Badge variant={watchedPaymentMethod === 'paystack' ? 'success' : watchedPaymentMethod === 'points_only' ? 'warning' : 'info'} className="w-full py-2 font-bold uppercase text-xs">
+                Paying via: {watchedPaymentMethod === 'paystack' ? 'Paystack (M-Pesa / Card)' : watchedPaymentMethod === 'points_only' ? '⚡ Points Wallet' : 'Cash on Delivery'}
               </Badge>
             </div>
           </Card>

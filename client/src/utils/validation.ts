@@ -27,7 +27,7 @@ export const orderSchema = z.object({
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   delivery_address: z.string().min(1, 'Please enter a delivery address'),
   delivery_zone: z.string().min(1, 'Please select a delivery zone'),
-  payment_method: z.enum(['mpesa', 'cash_on_delivery', 'points_only']),
+  payment_method: z.enum(['paystack', 'cash_on_delivery', 'points_only']),
   notes: z.string().optional(),
   referral_code: z.string().optional(),
   redeem_points: z.number().int().min(0).optional(),
