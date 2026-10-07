@@ -1,7 +1,13 @@
-import httpx, json
+import httpx, json, os, sys
 
-SUPABASE_URL = "https://ureebvpesbkbholidlrn.supabase.co"
-SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyZWVidnBlc2JrYmhvbGlkbHJuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjcyMzgyNywiZXhwIjoyMDk4Mjk5ODI3fQ.B9u-wElfqgPDlstwTVR18CSKf2vVa3EKbrgFHcO_aPI"
+# All credentials must be set in environment — never hardcoded.
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SERVICE_KEY  = os.environ.get("SUPABASE_SERVICE_KEY")
+
+if not SUPABASE_URL or not SERVICE_KEY:
+    print("❌ Missing required env vars: SUPABASE_URL and SUPABASE_SERVICE_KEY must be set.")
+    print("   Export them or copy backend/.env.example to backend/.env and fill in values.")
+    sys.exit(1)
 
 headers = {
     "apikey": SERVICE_KEY,

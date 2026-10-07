@@ -2,12 +2,26 @@ import postgres from 'postgres';
 import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
 
+// All credentials must be set in environment — never hardcoded.
+// Copy .env.example to .env and fill in values before running.
+const DB_HOST     = process.env.DB_HOST;
+const DB_PORT     = parseInt(process.env.DB_PORT || '5432', 10);
+const DB_NAME     = process.env.DB_NAME     || 'postgres';
+const DB_USER     = process.env.DB_USER     || 'postgres';
+const DB_PASSWORD = process.env.DB_PASSWORD;
+
+if (!DB_HOST || !DB_PASSWORD) {
+  console.error('❌ Missing required env vars: DB_HOST and DB_PASSWORD must be set.');
+  console.error('   Copy .env.example to .env and fill in your Supabase DB credentials.');
+  process.exit(1);
+}
+
 const sql = postgres({
-  host: 'db.ureebvpesbkbholidlrn.supabase.co',
-  port: 5432,
-  database: 'postgres',
-  username: 'postgres',
-  password: 'J7mDuB$J%P*VGtx',
+  host:     DB_HOST,
+  port:     DB_PORT,
+  database: DB_NAME,
+  username: DB_USER,
+  password: DB_PASSWORD,
   ssl: 'require',
   connection: {
     application_name: 'bluetech_seed'

@@ -54,7 +54,14 @@ requests.delete = _with_retry(requests.delete)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-BASE_URL           = os.getenv("BASE_URL", "https://bluetechnology-y1f8.onrender.com")
+BASE_URL           = os.getenv("BASE_URL")
+if not BASE_URL:
+    raise RuntimeError(
+        "BASE_URL env var is required.\n"
+        "  Local:  BASE_URL=http://localhost:8000 pytest tests/test_endpoints.py\n"
+        "  Render: BASE_URL=https://bluetechnology-y1f8.onrender.com pytest tests/test_endpoints.py"
+    )
+BASE_URL = BASE_URL.rstrip("/")
 TEST_PHONE         = "254704291657"       # 0704291657 normalised
 TEST_PASSWORD      = os.getenv("TEST_PASSWORD", "TestPass@2026!")   # set or change
 TEST_ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
