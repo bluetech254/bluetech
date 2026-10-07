@@ -1,13 +1,12 @@
 """
-notifications/sms.py — SMS sending via HostPinnacle Bulk SMS.
+notifications/sms.py — SMS sending via BlessedTexts Bulk SMS.
 
 Single public function: send_sms(mobile, message) -> bool
 All other code in the backend imports from here — never from utils/.
 
-HostPinnacle API docs: https://smsportal.hostpinnacle.co.ke
-Endpoint: POST https://smsportal.hostpinnacle.co.ke/SMSApi/send
-Auth: apikey in header
-Success: responses[0]["response-code"] == "200"
+BlessedTexts API docs: https://sms.blessedtexts.com/api/sms/v1
+Endpoint: POST https://sms.blessedtexts.com/api/sms/v1/sendsms
+Success:  response[0]["status_code"] == "1000"
 """
 import logging
 
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def send_sms(mobile: str, message: str) -> bool:
     """
-    Send an SMS via HostPinnacle Bulk SMS API.
+    Send an SMS via BlessedTexts Bulk SMS API.
 
     Args:
         mobile:  Recipient phone number e.g. '254712345678'
@@ -29,32 +28,29 @@ def send_sms(mobile: str, message: str) -> bool:
         True if the SMS was accepted by the provider, False on any failure.
         Never raises — SMS failure must never break the caller's operation.
     """
-    if not settings.HOSTPINNACLE_API_KEY:
-        logger.warning("SMS skipped: HOSTPINNACLE_API_KEY not configured")
+    if not settings.BLESSEDTEXTS_API_KEY:
+        logger.warning("SMS skipped: BLESSEDTEXTS_API_KEY not configured")
         return False
 
     try:
         response = requests.post(
-            settings.HOSTPINNACLE_API_URL,
-            headers={
-                "apikey": settings.HOSTPINNACLE_API_KEY,
+            settings.BLESSEDTEXTS_API_URL,
+            json={
+                "api_key":   settings.BLESSEDTEXTS_API_KEY,
+                "sender_id": settings.BLESSEDTEXTS_SENDER_ID,
+                "message":   message,
+                "phone":     mobile,
             },
-            data={
-                "partnerID": settings.HOSTPINNACLE_PARTNER_ID,
-                "mobile":    mobile,
-                "msg":       message,
-                "shortcode": settings.HOSTPINNACLE_SENDER_ID,
-                "pass_type": "plain",
-            },
+            headers={"Accept": "application/json"},
             timeout=10,
         )
         data = response.json()
-        # HostPinnacle returns a list under "responses"; check the first entry
-        responses_list = data.get("responses", [])
-        success = (
-            len(responses_list) > 0
-            and str(responses_list[0].get("response-code", "")) == "200"
-        )
+        # Response is a list; check first entry's status_code
+        if isinstance(data, list) and len(data) > 0:
+            success = str(data[0].get("status_code", "")) == "1000"
+        else:
+            success = False
+
         if not success:
             logger.warning(f"SMS to {mobile} failed: {data}")
         return success

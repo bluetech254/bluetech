@@ -477,7 +477,7 @@ def structure():
             <span class="chevron">&#x25B6;</span>
           </div>
           <div class="folder-children">
-            <div class="file-row"><span class="badge badge-py">PY</span><span class="file-name">sms.py</span><span class="file-desc">HostPinnacle Bulk SMS API integration. Sends OTP codes, booking status updates, order confirmations. Falls back silently if API key not set.</span></div>
+            <div class="file-row"><span class="badge badge-py">PY</span><span class="file-name">sms.py</span><span class="file-desc">BlessedTexts Bulk SMS API integration. Sends OTP codes, booking status updates, order confirmations. Falls back silently if API key not set.</span></div>
             <div class="file-row"><span class="badge badge-py">PY</span><span class="file-name">email.py</span><span class="file-desc">AWS SES email sender. Used for order receipts and booking confirmations. Optional — falls back if SES credentials not set.</span></div>
           </div>
         </div>

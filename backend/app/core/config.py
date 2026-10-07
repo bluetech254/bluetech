@@ -46,11 +46,10 @@ class Settings(BaseSettings):
     # Prod: CORS_ORIGINS=https://fixit-bluetechnology.co.ke,https://admin.fixit-bluetechnology.co.ke
     CORS_ORIGINS: str = ""
 
-    # SMS — HostPinnacle Bulk SMS
-    HOSTPINNACLE_API_KEY: str    = ""
-    HOSTPINNACLE_PARTNER_ID: str = ""   # Your HostPinnacle account username/partner ID
-    HOSTPINNACLE_SENDER_ID: str  = "HostPinncl"   # Default sender ID (max 11 chars)
-    HOSTPINNACLE_API_URL: str    = "https://smsportal.hostpinnacle.co.ke/SMSApi/send"
+    # SMS — BlessedTexts Bulk SMS
+    BLESSEDTEXTS_API_KEY: str    = ""
+    BLESSEDTEXTS_SENDER_ID: str  = "23107"   # Sender ID assigned in BlessedTexts account
+    BLESSEDTEXTS_API_URL: str    = "https://sms.blessedtexts.com/api/sms/v1/sendsms"
 
     # Payments — Paystack
     PAYSTACK_API_URL: str  = "https://api.paystack.co"
