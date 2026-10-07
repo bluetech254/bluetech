@@ -1,17 +1,14 @@
 /**
  * hooks/usePaystack.ts
  *
- * Wraps the PaystackPop inline JS SDK (loaded via index.html script tag).
+ * Wraps the PaystackPop inline JS SDK.
+ * Dynamically injects the SDK script if it hasn't loaded yet (handles CSP/race issues).
  * Returns a single `pay()` function that opens the Paystack popup.
- *
- * Usage:
- *   const { pay, loading } = usePaystack();
- *   pay({ email, amount, reference, onSuccess, onClose });
  */
 
 import { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
 
-// PaystackPop is injected globally by the SDK script in index.html
 declare global {
   interface Window {
     PaystackPop: {
@@ -23,9 +20,9 @@ declare global {
 export interface PaystackOptions {
   key: string;
   email: string;
-  amount: number;          // in KOBO (KES × 100)
-  currency?: string;       // default 'KES'
-  ref: string;             // unique transaction reference
+  amount: number;
+  currency?: string;
+  ref: string;
   metadata?: Record<string, unknown>;
   callback: (response: { reference: string; status: string }) => void;
   onClose: () => void;
@@ -33,28 +30,64 @@ export interface PaystackOptions {
 
 export interface PayOptions {
   email: string;
-  amountKes: number;       // in KES — hook converts to kobo automatically
+  amountKes: number;
   reference: string;
   metadata?: Record<string, unknown>;
   onSuccess: (reference: string) => void;
   onClose: () => void;
 }
 
+/** Dynamically load the Paystack SDK if not already present. */
+function loadPaystackSDK(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Already loaded
+    if (window.PaystackPop) {
+      resolve();
+      return;
+    }
+    // Script tag already injected — wait for it
+    const existing = document.querySelector('script[src*="paystack.co"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Paystack SDK failed to load')));
+      return;
+    }
+    // Inject fresh
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Paystack SDK failed to load'));
+    document.head.appendChild(script);
+  });
+}
+
 export function usePaystack() {
   const [loading, setLoading] = useState(false);
 
-  const pay = useCallback((opts: PayOptions) => {
+  const pay = useCallback(async (opts: PayOptions) => {
     const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
     if (!publicKey) {
+      toast.error('Payment not configured. Contact support.');
       console.error('VITE_PAYSTACK_PUBLIC_KEY is not set');
-      return;
-    }
-    if (!window.PaystackPop) {
-      console.error('Paystack SDK not loaded — check index.html script tag');
       return;
     }
 
     setLoading(true);
+
+    try {
+      await loadPaystackSDK();
+    } catch {
+      setLoading(false);
+      toast.error('Could not load payment window. Check your internet connection and try again.');
+      return;
+    }
+
+    if (!window.PaystackPop) {
+      setLoading(false);
+      toast.error('Payment window unavailable. Try refreshing the page.');
+      return;
+    }
 
     const handler = window.PaystackPop.setup({
       key:      publicKey,
