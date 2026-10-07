@@ -69,10 +69,9 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
         },
     )
 
-    # Store reference so the webhook can match it back
+    # Store reference so the webhook can match it back (don't change payment_status yet)
     db.table("orders").update({
         "payment_reference": reference,
-        "payment_status":    "pending",
     }).eq("id", order_id).execute()
 
     return {
@@ -151,7 +150,6 @@ def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:
     db.table("bookings").update({
         "commitment_fee":                commitment_amount,
         "commitment_payment_reference":  reference,
-        "commitment_payment_status":     "pending",
     }).eq("id", booking_id).execute()
 
     return {
@@ -223,7 +221,6 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     db.table("bookings").update({
         "status":                   "completed",
         "final_payment_reference":  reference,
-        "final_payment_status":     "pending",
     }).eq("id", booking_id).execute()
 
     log_action(admin, "booking.final_payment_requested", f"booking:{booking_id}", {"amount": remaining})
