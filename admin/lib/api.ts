@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "https://bluetechnology-y1f8.onrender.com";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 function getToken(): string {
   if (typeof document === "undefined") return "";

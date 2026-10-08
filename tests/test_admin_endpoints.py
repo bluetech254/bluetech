@@ -32,7 +32,14 @@ import requests
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 
-BASE_URL            = os.getenv("BASE_URL",            "https://bluetechnology-y1f8.onrender.com")
+BASE_URL            = os.getenv("BASE_URL")
+if not BASE_URL:
+    raise RuntimeError(
+        "BASE_URL env var is required.\n"
+        "  Local:  BASE_URL=http://localhost:8000 pytest tests/test_admin_endpoints.py\n"
+        "  Render: BASE_URL=https://bluetechnology-y1f8.onrender.com pytest tests/test_admin_endpoints.py"
+    )
+BASE_URL            = BASE_URL.rstrip("/")
 ADMIN_USERNAME      = os.getenv("ADMIN_USERNAME",      "admin")
 ADMIN_PASSWORD      = os.getenv("ADMIN_PASSWORD",      "BlueTech@2026!")
 SUPERADMIN_USERNAME = os.getenv("SUPERADMIN_USERNAME", "superadmin")

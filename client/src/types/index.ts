@@ -58,7 +58,7 @@ export interface Order {
   subtotal: number;
   delivery_fee: number;
   total_amount: number;
-  payment_method: 'mpesa' | 'cash_on_delivery' | 'points_only';
+  payment_method: 'paystack' | 'cash_on_delivery' | 'points_only' | 'mpesa';
   payment_status: 'paid' | 'unpaid' | 'pending';
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   checkout_request_id?: string;
@@ -92,7 +92,7 @@ export interface Booking {
   final_cost?: number;
   user_id?: string;
   commitment_payment_status?: string;
-  commitment_checkout_id?: string;
+  commitment_payment_reference?: string;
   commitment_receipt?: string;
   commitment_fee?: number;
   final_payment_status?: string;

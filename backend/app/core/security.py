@@ -65,8 +65,8 @@ def verify_and_rehash(plain: str, stored_hash: str, user_id: str, table: str) ->
         # Re-hash with bcrypt immediately
         new_hash = hash_password(plain)
         try:
-            from core.database import supabase_admin
-            supabase_admin.table(table).update({"password": new_hash}).eq("id", user_id).execute()
+            from core.db import db
+            db.table(table).update({"password": new_hash}).eq("id", user_id).execute()
         except Exception:
             pass  # non-critical — will retry on next login
         return True

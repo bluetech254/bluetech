@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
 
-const API = "https://api.fixit-bluetechnology.co.ke";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export default function LoginPage() {
   const router = useRouter();

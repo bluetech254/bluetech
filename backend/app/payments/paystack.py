@@ -16,8 +16,6 @@ from core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_BASE = "https://api.paystack.co"
-
 
 def _headers() -> dict:
     return {
@@ -50,7 +48,7 @@ def initialize_transaction(
     if metadata:
         payload["metadata"] = metadata
 
-    resp = requests.post(f"{_BASE}/transaction/initialize", json=payload, headers=_headers(), timeout=30)
+    resp = requests.post(f"{settings.PAYSTACK_API_URL}/transaction/initialize", json=payload, headers=_headers(), timeout=30)
     resp.raise_for_status()
     data = resp.json()
 
@@ -66,7 +64,7 @@ def verify_transaction(reference: str) -> dict:
     Returns the full transaction object from Paystack.
     Raises ValueError if transaction not found or failed.
     """
-    resp = requests.get(f"{_BASE}/transaction/verify/{reference}", headers=_headers(), timeout=30)
+    resp = requests.get(f"{settings.PAYSTACK_API_URL}/transaction/verify/{reference}", headers=_headers(), timeout=30)
     resp.raise_for_status()
     data = resp.json()
 

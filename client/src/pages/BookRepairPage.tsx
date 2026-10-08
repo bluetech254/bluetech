@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { getRepairServiceById } from '../api/services';
-import { createBooking, initiateCommitmentPayment, getCommitmentPaymentStatus } from '../api/bookings';
+import { createBooking, initiatePaystackCommitmentPayment, verifyPaystackCommitment } from '../api/bookings';
 import { RepairService } from '../types';
 import { bookingSchema } from '../utils/validation';
 import { formatCurrency } from '../utils/formatters';
@@ -13,7 +12,8 @@ import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, CreditCard, Loader2, Tag, ChevronRight } from 'lucide-react';
+import PaystackModal from '../components/cart/PaystackModal';
+import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, Loader2, Tag, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DEVICE_CATEGORIES = [
@@ -46,9 +46,10 @@ export const BookRepairPage = () => {
   const [loadingModels, setLoadingModels] = useState(false);
   const [loadingPrice, setLoadingPrice] = useState(false);
 
-  const [paymentModal, setPaymentModal] = useState<{ bookingId: string; amount: number; phone: string; servicePrice: number } | null>(null);
-  const [paymentState, setPaymentState] = useState<'idle' | 'sending' | 'polling' | 'paid' | 'failed'>('idle');
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{
+    bookingId: string; amount: number; email: string; reference: string; servicePrice: number;
+  } | null>(null);
+  const [verifyStatus, setVerifyStatus] = useState<'idle' | 'verifying' | 'paid' | 'failed'>('idle');
 
   const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
@@ -141,47 +142,24 @@ export const BookRepairPage = () => {
         pickup_address: undefined,
       });
 
-      toast.success('Booking created! Please pay the commitment fee.', { id: toastId });
+      toast.success('Booking created! Initialising payment...', { id: toastId });
       const servicePrice = estimatedPrice ?? service?.price ?? 0;
       const commitmentAmount = Math.max(1, Math.round(servicePrice * 0.20));
-      setPaymentModal({ bookingId: response.id, amount: commitmentAmount, phone: phoneNumber, servicePrice });
+
+      try {
+        const { reference } = await initiatePaystackCommitmentPayment(response.id, servicePrice);
+        const email = `${phoneNumber}@paystack.placeholder`;
+        setPaymentModal({ bookingId: response.id, amount: commitmentAmount, email, reference, servicePrice });
+      } catch {
+        // Payment init failed — still navigate, they can pay from booking detail
+        toast.success('Booking created! You can pay the commitment fee from your bookings page.', { id: toastId });
+        navigate(`/booking-success/${response.id}`);
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to submit booking.', { id: toastId });
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const sendCommitmentSTK = async () => {
-    if (!paymentModal) return;
-    setPaymentState('sending');
-    try {
-      await initiateCommitmentPayment(paymentModal.bookingId, paymentModal.servicePrice);
-      setPaymentState('polling');
-      let attempts = 0;
-      pollRef.current = setInterval(async () => {
-        attempts++;
-        try {
-          const status = await getCommitmentPaymentStatus(paymentModal.bookingId);
-          if (status.commitment_payment_status === 'paid') {
-            clearInterval(pollRef.current!);
-            setPaymentState('paid');
-            setTimeout(() => navigate(`/booking-success/${paymentModal.bookingId}`), 1500);
-          } else if (status.commitment_payment_status === 'failed' || attempts >= 6) {
-            clearInterval(pollRef.current!);
-            setPaymentState('failed');
-          }
-        } catch {}
-      }, 5000);
-    } catch (err: any) {
-      setPaymentState('failed');
-      toast.error(err.response?.data?.detail || 'Failed to send M-Pesa prompt.');
-    }
-  };
-
-  const skipPayment = () => {
-    if (pollRef.current) clearInterval(pollRef.current);
-    navigate(`/booking-success/${paymentModal!.bookingId}`);
   };
 
   useEffect(() => {
@@ -477,56 +455,34 @@ export const BookRepairPage = () => {
         </div>
       </div>
 
-      {/* Commitment Fee Payment Modal */}
-      {paymentModal && createPortal(
-        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', padding: '16px' }}>
-          <div style={{ background: '#fff', borderRadius: '1rem', padding: '1.5rem', width: '100%', maxWidth: '380px', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="w-7 h-7 text-blue-600" />
-            </div>
-            <div className="mb-4">
-              <h2 className="text-lg font-black text-slate-900">Pay Commitment Fee</h2>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                A 20% commitment fee of <span className="font-bold text-slate-800">{formatCurrency(paymentModal.amount)}</span> is required to confirm your booking.
-              </p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-3 text-xs text-slate-600 space-y-1 text-left mb-4">
-              <div className="flex justify-between"><span>Commitment fee (20%)</span><span className="font-bold">{formatCurrency(paymentModal.amount)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Remaining on completion</span><span>{formatCurrency(paymentModal.servicePrice - paymentModal.amount)}</span></div>
-              <div className="flex justify-between font-bold text-slate-800 border-t border-slate-200 pt-1 mt-1"><span>Total service fee</span><span>{formatCurrency(paymentModal.servicePrice)}</span></div>
-            </div>
-            {paymentState === 'idle' && (
-              <Button variant="primary" className="w-full font-bold mb-3" onClick={sendCommitmentSTK}>
-                Pay {formatCurrency(paymentModal.amount)} via M-Pesa
-              </Button>
-            )}
-            {(paymentState === 'sending' || paymentState === 'polling') && (
-              <div className="flex flex-col items-center gap-2 py-2">
-                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-                <p className="text-xs text-slate-500">{paymentState === 'sending' ? 'Sending M-Pesa prompt...' : 'Check your phone and enter your M-Pesa PIN'}</p>
-              </div>
-            )}
-            {paymentState === 'paid' && (
-              <div className="flex flex-col items-center gap-2 py-2">
-                <CheckCircle className="w-8 h-8 text-green-500" />
-                <p className="text-sm font-bold text-green-700">Payment confirmed! Redirecting...</p>
-              </div>
-            )}
-            {paymentState === 'failed' && (
-              <div className="space-y-3">
-                <p className="text-xs text-red-600">Payment failed or timed out.</p>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 text-xs" onClick={() => setPaymentState('idle')}>Retry</Button>
-                  <Button variant="ghost" className="flex-1 text-xs text-slate-500" onClick={skipPayment}>Skip for now</Button>
-                </div>
-              </div>
-            )}
-            {paymentState === 'idle' && (
-              <button onClick={skipPayment} className="text-xs text-slate-400 hover:text-slate-600 underline">Skip — I'll pay later</button>
-            )}
-          </div>
-        </div>,
-        document.body
+      {paymentModal && (
+        <PaystackModal
+          amountKes={paymentModal.amount}
+          email={paymentModal.email}
+          reference={paymentModal.reference}
+          label="Repair Commitment Fee (20%)"
+          verifyStatus={verifyStatus}
+          onSuccess={async (ref) => {
+            setVerifyStatus('verifying');
+            try {
+              const result = await verifyPaystackCommitment(ref);
+              if (result.status === 'success') {
+                setVerifyStatus('paid');
+                setTimeout(() => navigate(`/booking-success/${paymentModal.bookingId}`), 1500);
+              } else {
+                setVerifyStatus('failed');
+              }
+            } catch {
+              setVerifyStatus('failed');
+            }
+          }}
+          onDismiss={() => setVerifyStatus('idle')}
+          onCancel={() => {
+            setPaymentModal(null);
+            setVerifyStatus('idle');
+            navigate(`/booking-success/${paymentModal.bookingId}`);
+          }}
+        />
       )}
     </div>
   );

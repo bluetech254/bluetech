@@ -25,13 +25,13 @@ def validate_startup() -> None:
 def _check_database() -> None:
     """Verify the database is reachable before accepting traffic."""
     try:
-        from core.database import get_admin_db
-        get_admin_db().table("products").select("id").limit(1).execute()
+        from core.db import db
+        db.table("products").select("id").limit(1).execute()
         logger.info("✓ Database connection OK")
     except Exception as e:
         raise RuntimeError(
             f"Database unreachable at startup. "
-            f"Check SUPABASE_URL and SUPABASE_SERVICE_KEY. Error: {e}"
+            f"Check DATABASE_TYPE env var and connection credentials. Error: {e}"
         )
 
 

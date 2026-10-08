@@ -14,7 +14,8 @@ import logging
 import uuid
 
 from core.audit import log_action
-from core.database import supabase_admin as db
+from core.config import settings
+from core.db import db
 from payments.paystack import initialize_transaction, verify_transaction
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,12 @@ def _make_reference(prefix: str, entity_id: str) -> str:
     short = entity_id[:8].upper()
     rand  = uuid.uuid4().hex[:6].upper()
     return f"{prefix}-{short}-{rand}"
+
+
+def _callback_url() -> str | None:
+    """Return frontend URL for Paystack to redirect to after payment, or None if not configured."""
+    base = (settings.FRONTEND_URL or "").rstrip("/")
+    return f"{base}/payment/callback" if base else None
 
 
 # ── Order payments ─────────────────────────────────────────────────────────────
@@ -54,6 +61,7 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
         email       = email,
         amount_kes  = float(order["total_amount"]),
         reference   = reference,
+        callback_url = _callback_url(),
         metadata    = {
             "order_id":   order_id,
             "type":       "order",
@@ -61,10 +69,9 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
         },
     )
 
-    # Store reference so the webhook can match it back
+    # Store reference so the webhook can match it back (don't change payment_status yet)
     db.table("orders").update({
         "payment_reference": reference,
-        "payment_status":    "pending",
     }).eq("id", order_id).execute()
 
     return {
@@ -132,6 +139,7 @@ def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:
         email      = email,
         amount_kes = float(commitment_amount),
         reference  = reference,
+        callback_url = _callback_url(),
         metadata   = {
             "booking_id": booking_id,
             "type":       "commitment",
@@ -142,7 +150,6 @@ def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:
     db.table("bookings").update({
         "commitment_fee":                commitment_amount,
         "commitment_payment_reference":  reference,
-        "commitment_payment_status":     "pending",
     }).eq("id", booking_id).execute()
 
     return {
@@ -203,6 +210,7 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
         email      = email,
         amount_kes = float(remaining),
         reference  = reference,
+        callback_url = _callback_url(),
         metadata   = {
             "booking_id": booking_id,
             "type":       "final",
@@ -213,7 +221,6 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     db.table("bookings").update({
         "status":                   "completed",
         "final_payment_reference":  reference,
-        "final_payment_status":     "pending",
     }).eq("id", booking_id).execute()
 
     log_action(admin, "booking.final_payment_requested", f"booking:{booking_id}", {"amount": remaining})

@@ -1,7 +1,7 @@
 """services_catalog/router.py — Repair services catalog. Public read-only."""
 import logging
 
-from core.database import supabase
+from core.db import db
 from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/v1/repair-services", tags=["Repair Services"])
 def get_categories():
     """Get all distinct repair service categories."""
     try:
-        resp = supabase.table("repair_services").select("service_category").eq("is_active", True).execute()
+        resp = db.table("repair_services").select("service_category").eq("is_active", True).execute()
         cats = sorted(set(r["service_category"] for r in (resp.data or []) if r.get("service_category")))
         return {"data": cats, "count": len(cats)}
     except Exception as e:
@@ -28,7 +28,7 @@ def get_repair_services(
 ):
     """Get active repair services with optional category/search filter."""
     try:
-        q = supabase.table("repair_services").select("*").eq("is_active", True)
+        q = db.table("repair_services").select("*").eq("is_active", True)
         if category:
             q = q.eq("service_category", category)
         if search:
@@ -47,7 +47,7 @@ def get_repair_services(
 def get_repair_service(service_id: str):
     """Get a single repair service by ID."""
     try:
-        resp = supabase.table("repair_services").select("*").eq("id", service_id).single().execute()
+        resp = db.table("repair_services").select("*").eq("id", service_id).single().execute()
         if not resp.data:
             raise HTTPException(status_code=404, detail="Service not found")
         return resp.data

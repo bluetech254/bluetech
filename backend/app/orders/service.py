@@ -15,7 +15,7 @@ import math
 from decimal import Decimal
 from uuid import UUID
 
-from core.database import supabase, supabase_admin
+from core.db import db
 from core.exceptions import (
     DeliveryZoneNotFoundException,
     InsufficientStockException,
@@ -31,14 +31,14 @@ logger = logging.getLogger(__name__)
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
 def _fetch_products(item_ids: list[str]) -> dict:
-    resp = supabase.table("products").select("*").in_("id", item_ids).execute()
+    resp = db.table("products").select("*").in_("id", item_ids).execute()
     return {p["id"]: p for p in (resp.data or [])}
 
 
 def _get_delivery_fee(zone_name: str) -> Decimal:
     """Look up delivery fee by zone name OR UUID id."""
     # Try by zone_name first
-    q = supabase.table("delivery_zones").select("delivery_fee").eq("is_active", True)
+    q = db.table("delivery_zones").select("delivery_fee").eq("is_active", True)
     resp = q.eq("zone_name", zone_name).execute()
     if resp.data:
         return Decimal(str(resp.data[0]["delivery_fee"]))
@@ -46,7 +46,7 @@ def _get_delivery_fee(zone_name: str) -> Decimal:
     # Fall back to id lookup (client may pass UUID instead of name)
     try:
         UUID(zone_name)  # validate it looks like a UUID
-        resp2 = supabase.table("delivery_zones").select("delivery_fee").eq("id", zone_name).eq("is_active", True).execute()
+        resp2 = db.table("delivery_zones").select("delivery_fee").eq("id", zone_name).eq("is_active", True).execute()
         if resp2.data:
             return Decimal(str(resp2.data[0]["delivery_fee"]))
     except (ValueError, AttributeError):
@@ -71,7 +71,7 @@ def _decrement_stock(items: list[OrderItemCreate], products: dict):
     for item in items:
         p = products[str(item.product_id)]
         new_qty = p["stock_quantity"] - item.quantity
-        supabase_admin.table("products").update(
+        db.table("products").update(
             {"stock_quantity": new_qty}
         ).eq("id", str(item.product_id)).execute()
 
@@ -81,13 +81,13 @@ def _resolve_referral(referral_code: str | None, user_id: str | None) -> str | N
     referrer_id = None
 
     if referral_code and user_id:
-        resp = supabase.table("users").select("id").eq("referral_code", referral_code.upper()).execute()
+        resp = db.table("users").select("id").eq("referral_code", referral_code.upper()).execute()
         if resp.data:
             referrer_id = resp.data[0]["id"]
 
     # Fallback: use referred_by from user profile
     if not referrer_id and user_id:
-        resp = supabase_admin.table("users").select("referred_by").eq("id", user_id).single().execute()
+        resp = db.table("users").select("referred_by").eq("id", user_id).single().execute()
         if resp.data:
             referrer_id = resp.data.get("referred_by")
 
@@ -136,7 +136,7 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
 
     # Points redemption
     if order_data.redeem_points and user_id:
-        from core.database import supabase_admin as sb
+        from core.db import db as sb
         user_r    = sb.table("users").select("points").eq("id", user_id).single().execute()
         current   = user_r.data.get("points", 0) if user_r.data else 0
         if current < order_data.redeem_points:
@@ -177,7 +177,7 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
         "points_redeemed":  int(order_data.redeem_points or 0),
     }
 
-    order_resp = supabase.table("orders").insert(order_row).execute()
+    order_resp = db.table("orders").insert(order_row).execute()
     order      = order_resp.data[0]
     order_id   = order["id"]
 
@@ -190,7 +190,7 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
         "unit_price":    float(li["unit_price"]),
         "total_price":   float(li["total_price"]),
     } for li in line_items]
-    supabase.table("order_items").insert(items_rows).execute()
+    db.table("order_items").insert(items_rows).execute()
 
     # Decrement stock
     _decrement_stock(order_data.items, products)
@@ -198,11 +198,10 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
     # Deduct redeemed points
     if points_discount > 0 and user_id:
         pts = int(order_data.redeem_points)
-        sb = supabase_admin
-        user_r  = sb.table("users").select("points").eq("id", user_id).single().execute()
-        current = user_r.data.get("points", 0) if user_r.data else 0
-        sb.table("users").update({"points": current - pts}).eq("id", user_id).execute()
-        sb.table("points_ledger").insert({
+        user_r  = db.table("users").select("points").eq("id", user_id).single().execute()
+        current = user_r["data"].get("points", 0) if user_r["data"] else 0
+        db.table("users").update({"points": current - pts}).eq("id", user_id).execute()
+        db.table("points_ledger").insert({
             "user_id":     user_id,
             "points":      -pts,
             "type":        "redemption",
@@ -232,7 +231,7 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
 
 def get_order_by_id(order_id: UUID) -> dict:
     try:
-        resp = supabase.table("orders").select("*, order_items(*)").eq("id", str(order_id)).single().execute()
+        resp = db.table("orders").select("*, order_items(*)").eq("id", str(order_id)).single().execute()
         data = resp.data
     except Exception:
         data = None
@@ -242,7 +241,7 @@ def get_order_by_id(order_id: UUID) -> dict:
 
 
 def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict]:
-    q = supabase_admin.table("orders").select("*, order_items(*)")
+    q = db.table("orders").select("*, order_items(*)")
     if status:
         q = q.eq("status", status)
     resp = q.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
@@ -251,7 +250,7 @@ def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> 
 
 def update_order_status(order_id: UUID, status: str) -> dict:
     """Update status. Awards loyalty + referral points on delivery."""
-    resp = supabase_admin.table("orders").update({"status": status}).eq("id", str(order_id)).execute()
+    resp = db.table("orders").update({"status": status}).eq("id", str(order_id)).execute()
     if not resp.data:
         raise OrderNotFoundException(f"Order {order_id} not found")
     order = resp.data[0]
@@ -272,11 +271,10 @@ def _handle_delivery_rewards(order: dict):
         import math as _math
         earned = _math.floor(subtotal * 0.10)
         if earned > 0:
-            sb = supabase_admin
-            u  = sb.table("users").select("points").eq("id", user_id).single().execute()
-            current = u.data.get("points", 0) if u.data else 0
-            sb.table("users").update({"points": current + earned}).eq("id", user_id).execute()
-            sb.table("points_ledger").insert({
+            u  = db.table("users").select("points").eq("id", user_id).single().execute()
+            current = u["data"].get("points", 0) if u["data"] else 0
+            db.table("users").update({"points": current + earned}).eq("id", user_id).execute()
+            db.table("points_ledger").insert({
                 "user_id":     user_id,
                 "points":      earned,
                 "type":        "order_earn",
@@ -287,20 +285,19 @@ def _handle_delivery_rewards(order: dict):
     # Referral bonus — first delivered order only
     referrer_id = order.get("referrer_id")
     if referrer_id and user_id:
-        prev = supabase_admin.table("orders") \
+        prev = db.table("orders") \
             .select("id") \
             .eq("user_id", user_id) \
             .eq("status", "delivered") \
             .neq("id", order_id) \
             .execute()
         if not prev.data:
-            buyer = supabase_admin.table("users").select("full_name").eq("id", user_id).single().execute()
-            name  = buyer.data.get("full_name", "A customer") if buyer.data else "A customer"
-            sb    = supabase_admin
-            ref_u = sb.table("users").select("points").eq("id", referrer_id).single().execute()
-            ref_pts = ref_u.data.get("points", 0) if ref_u.data else 0
-            sb.table("users").update({"points": ref_pts + 50}).eq("id", referrer_id).execute()
-            sb.table("points_ledger").insert({
+            buyer = db.table("users").select("full_name").eq("id", user_id).single().execute()
+            name  = buyer["data"].get("full_name", "A customer") if buyer["data"] else "A customer"
+            ref_u = db.table("users").select("points").eq("id", referrer_id).single().execute()
+            ref_pts = ref_u["data"].get("points", 0) if ref_u["data"] else 0
+            db.table("users").update({"points": ref_pts + 50}).eq("id", referrer_id).execute()
+            db.table("points_ledger").insert({
                 "user_id":     referrer_id,
                 "points":      50,
                 "type":        "referral_earn",
@@ -309,13 +306,13 @@ def _handle_delivery_rewards(order: dict):
 
 
 def track_orders_by_phone(phone: str) -> list[dict]:
-    resp = supabase.table("orders").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
+    resp = db.table("orders").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
     return resp.data or []
 
 
 def cancel_order_by_client(order_id: UUID, user_id: str | None) -> dict:
     """Client cancels their own order. Only allowed when status is 'pending'."""
-    resp = supabase_admin.table("orders").select("status, user_id").eq("id", str(order_id)).single().execute()
+    resp = db.table("orders").select("status, user_id").eq("id", str(order_id)).single().execute()
     if not resp.data:
         raise OrderNotFoundException(f"Order {order_id} not found")
 
@@ -325,13 +322,13 @@ def cancel_order_by_client(order_id: UUID, user_id: str | None) -> dict:
     if order["status"] != "pending":
         raise ValueError(f"Cannot cancel an order with status '{order['status']}'")
 
-    supabase_admin.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
+    db.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
     return {"message": "Order cancelled"}
 
 
 def cancel_order_by_admin(order_id: UUID) -> dict:
     """Admin cancels any order."""
-    resp = supabase_admin.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
+    resp = db.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
     if not resp.data:
         raise OrderNotFoundException(f"Order {order_id} not found")
     return {"message": "Order cancelled"}

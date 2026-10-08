@@ -11,7 +11,7 @@ import math
 from uuid import UUID
 
 from bookings.models import BookingCreate, CostUpdate
-from core.database import supabase, supabase_admin
+from core.db import db
 from core.exceptions import BookingNotFoundException
 from notifications.sms import send_sms
 
@@ -36,7 +36,7 @@ def create_booking(data: BookingCreate, user_id: str | None = None) -> dict:
     # Enum → string
     row["fulfillment_type"] = data.fulfillment_type.value
 
-    resp    = supabase.table("bookings").insert(row).execute()
+    resp    = db.table("bookings").insert(row).execute()
     booking = resp.data[0]
     sid     = booking["id"][:8].upper()
 
@@ -58,7 +58,7 @@ def create_booking(data: BookingCreate, user_id: str | None = None) -> dict:
 
 def get_booking_by_id(booking_id: UUID) -> dict:
     try:
-        resp = supabase.table("bookings").select("*").eq("id", str(booking_id)).single().execute()
+        resp = db.table("bookings").select("*").eq("id", str(booking_id)).single().execute()
         data = resp.data
     except Exception:
         data = None
@@ -68,7 +68,7 @@ def get_booking_by_id(booking_id: UUID) -> dict:
 
 
 def get_bookings(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict]:
-    q = supabase_admin.table("bookings").select("*")
+    q = db.table("bookings").select("*")
     if status:
         q = q.eq("status", status)
     resp = q.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
@@ -76,13 +76,13 @@ def get_bookings(status: str | None = None, limit: int = 100, offset: int = 0) -
 
 
 def track_bookings_by_phone(phone: str) -> list[dict]:
-    resp = supabase.table("bookings").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
+    resp = db.table("bookings").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
     return resp.data or []
 
 
 def update_booking_status(booking_id: UUID, status: str) -> dict:
     """Update booking status. Sends SMS notification. Awards points on completion."""
-    resp = supabase_admin.table("bookings").update({"status": status}).eq("id", str(booking_id)).execute()
+    resp = db.table("bookings").update({"status": status}).eq("id", str(booking_id)).execute()
     if not resp.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
     booking = resp.data[0]
@@ -115,7 +115,7 @@ def update_booking_cost(booking_id: UUID, cost_data: CostUpdate) -> dict:
     if not updates:
         raise ValueError("No cost values provided")
 
-    resp = supabase_admin.table("bookings").update(updates).eq("id", str(booking_id)).execute()
+    resp = db.table("bookings").update(updates).eq("id", str(booking_id)).execute()
     if not resp.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
     return resp.data[0]
@@ -135,11 +135,10 @@ def _award_completion_points(booking: dict):
         return
 
     try:
-        sb = supabase_admin
-        u  = sb.table("users").select("points").eq("id", user_id).single().execute()
-        current = u.data.get("points", 0) if u.data else 0
-        sb.table("users").update({"points": current + earned}).eq("id", user_id).execute()
-        sb.table("points_ledger").insert({
+        u  = db.table("users").select("points").eq("id", user_id).single().execute()
+        current = u["data"].get("points", 0) if u["data"] else 0
+        db.table("users").update({"points": current + earned}).eq("id", user_id).execute()
+        db.table("points_ledger").insert({
             "user_id":     user_id,
             "points":      earned,
             "type":        "booking_earn",

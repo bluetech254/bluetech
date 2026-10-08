@@ -8,7 +8,7 @@ business rules (ownership, idempotency, status updates).
 import logging
 
 from core.audit import log_action
-from core.database import supabase_admin as db
+from core.db import db
 from payments.mpesa.daraja import stk_push, stk_query
 
 logger = logging.getLogger(__name__)

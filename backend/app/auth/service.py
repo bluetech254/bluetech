@@ -19,7 +19,7 @@ from auth.models import (
     UserSignup,
     VerifyPhone,
 )
-from core.database import supabase, supabase_admin
+from core.db import db
 from core.exceptions import AuthException
 from core.security import (
     create_client_token,
@@ -51,12 +51,12 @@ def signup_user(data: UserSignup) -> dict:
     - Returns JWT + user object
     """
     # Uniqueness checks
-    existing_phone = supabase.table("users").select("id").eq("phone_number", data.phone_number).execute()
+    existing_phone = db.table("users").select("id").eq("phone_number", data.phone_number).execute()
     if existing_phone.data:
         raise AuthException("Phone number already registered")
 
     if data.email:
-        existing_email = supabase.table("users").select("id").eq("email", data.email).execute()
+        existing_email = db.table("users").select("id").eq("email", data.email).execute()
         if existing_email.data:
             raise AuthException("Email already registered")
 
@@ -88,7 +88,7 @@ def signup_user(data: UserSignup) -> dict:
         "points":             0,
     }
 
-    resp = supabase.table("users").insert(user_data).execute()
+    resp = db.table("users").insert(user_data).execute()
     user = resp.data[0]
 
     # Award instant signup points to referrer (fire-and-forget)
@@ -118,7 +118,7 @@ def login_user(data: UserLogin) -> dict:
     - verify_and_rehash() transparently upgrades SHA-256 → bcrypt on first login
     - Updates last_login timestamp
     """
-    resp = supabase.table("users").select("*").eq("phone_number", data.phone_number).execute()
+    resp = db.table("users").select("*").eq("phone_number", data.phone_number).execute()
 
     # Same error for wrong phone OR wrong password — no enumeration
     if not resp.data:
@@ -141,7 +141,7 @@ def login_user(data: UserLogin) -> dict:
                 )
             else:
                 # Lock expired — reset counters
-                supabase_admin.table("users").update({
+                db.table("users").update({
                     "failed_login_attempts": 0,
                     "locked_until": None,
                 }).eq("id", user["id"]).execute()
@@ -162,12 +162,12 @@ def login_user(data: UserLogin) -> dict:
                 datetime.now(timezone.utc) + timedelta(minutes=15)
             ).isoformat()
             logger.warning(f"Account locked after {new_attempts} failed attempts: {user['id']}")
-        supabase_admin.table("users").update(update).eq("id", user["id"]).execute()
+        db.table("users").update(update).eq("id", user["id"]).execute()
         raise AuthException("Invalid phone number or password")
 
     # ── Successful login — reset failure counter ──────────────────────────────
     try:
-        supabase_admin.table("users").update({
+        db.table("users").update({
             "last_login":             datetime.utcnow().isoformat(),
             "failed_login_attempts":  0,
             "locked_until":           None,
@@ -187,7 +187,7 @@ def login_user(data: UserLogin) -> dict:
 
 def verify_phone(data: VerifyPhone) -> dict:
     """Verify a phone number with the 6-digit OTP sent at signup."""
-    resp = supabase.table("users").select("*").eq("phone_number", data.phone_number).execute()
+    resp = db.table("users").select("*").eq("phone_number", data.phone_number).execute()
     if not resp.data:
         raise AuthException("User not found")
 
@@ -203,7 +203,7 @@ def verify_phone(data: VerifyPhone) -> dict:
     # Check expiry
     _check_otp_expiry(user.get("otp_expires_at"))
 
-    supabase_admin.table("users").update({
+    db.table("users").update({
         "phone_verified":    True,
         "is_verified":       True,
         "verification_code": None,
@@ -217,7 +217,7 @@ def verify_phone(data: VerifyPhone) -> dict:
 
 def resend_verification_code(phone_number: str) -> dict:
     """Issue a fresh OTP for phone verification."""
-    resp = supabase.table("users").select("id, phone_verified").eq("phone_number", phone_number).execute()
+    resp = db.table("users").select("id, phone_verified").eq("phone_number", phone_number).execute()
     if not resp.data:
         raise AuthException("User not found")
 
@@ -229,7 +229,7 @@ def resend_verification_code(phone_number: str) -> dict:
     otp_hash   = hash_otp(otp_plain)
     otp_expiry = (datetime.utcnow() + timedelta(minutes=_VERIFY_OTP_EXPIRE_MINUTES)).isoformat()
 
-    supabase_admin.table("users").update({
+    db.table("users").update({
         "verification_code": otp_hash,
         "otp_expires_at":    otp_expiry,
     }).eq("id", user["id"]).execute()
@@ -247,7 +247,7 @@ def forgot_password(data: ForgotPassword) -> dict:
     """
     _GENERIC = "If this number is registered, a reset code has been sent"
 
-    resp = supabase.table("users").select("id, phone_number").eq("phone_number", data.phone_number).execute()
+    resp = db.table("users").select("id, phone_number").eq("phone_number", data.phone_number).execute()
     if not resp.data:
         return {"message": _GENERIC}
 
@@ -257,7 +257,7 @@ def forgot_password(data: ForgotPassword) -> dict:
     otp_hash   = hash_otp(otp_plain)
     otp_expiry = (datetime.utcnow() + timedelta(minutes=_RESET_OTP_EXPIRE_MINUTES)).isoformat()
 
-    supabase_admin.table("users").update({
+    db.table("users").update({
         "reset_code":         otp_hash,
         "reset_code_expires": otp_expiry,
     }).eq("id", user["id"]).execute()
@@ -270,7 +270,7 @@ def forgot_password(data: ForgotPassword) -> dict:
 
 def reset_password(data: ResetPassword) -> dict:
     """Reset a password using the OTP sent via forgot_password."""
-    resp = supabase.table("users").select("*").eq("phone_number", data.phone_number).execute()
+    resp = db.table("users").select("*").eq("phone_number", data.phone_number).execute()
     if not resp.data:
         raise AuthException("Invalid phone number or reset code")
 
@@ -281,7 +281,7 @@ def reset_password(data: ResetPassword) -> dict:
 
     _check_otp_expiry(user.get("reset_code_expires"))
 
-    supabase_admin.table("users").update({
+    db.table("users").update({
         "password":           hash_password(data.new_password),
         "reset_code":         None,
         "reset_code_expires": None,
@@ -323,17 +323,16 @@ def _generate_referral_code() -> str:
 
 def _resolve_referral_code(code: str) -> str | None:
     """Return user_id of the referral code owner, or None if not found."""
-    resp = supabase.table("users").select("id").eq("referral_code", code.upper()).execute()
+    resp = db.table("users").select("id").eq("referral_code", code.upper()).execute()
     return resp.data[0]["id"] if resp.data else None
 
 
 def _award_referral_signup_points(referrer_id: str, referee_name: str) -> None:
     """Award instant 10 points to referrer when their referee signs up."""
-    from core.database import supabase_admin as sb
-    current = sb.table("users").select("points").eq("id", referrer_id).single().execute()
+    current = db.table("users").select("points").eq("id", referrer_id).single().execute()
     current_pts = current.data.get("points", 0) if current.data else 0
-    sb.table("users").update({"points": current_pts + 10}).eq("id", referrer_id).execute()
-    sb.table("points_ledger").insert({
+    db.table("users").update({"points": current_pts + 10}).eq("id", referrer_id).execute()
+    db.table("points_ledger").insert({
         "user_id":     referrer_id,
         "points":      10,
         "type":        "referral_signup",

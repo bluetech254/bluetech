@@ -17,7 +17,7 @@ from admin_auth.models import (
     AdminLoginRequest,
 )
 from core.audit import log_action
-from core.database import supabase_admin
+from core.db import db
 from core.exceptions import AuthException
 from core.security import create_admin_token, hash_password, verify_and_rehash
 
@@ -35,7 +35,7 @@ def admin_login(data: AdminLoginRequest) -> dict:
     - Updates last_login timestamp
     - Returns 8-hour admin JWT
     """
-    resp = supabase_admin.table("admins").select("*") \
+    resp = db.table("admins").select("*") \
         .eq("username", data.username) \
         .eq("is_active", True) \
         .execute()
@@ -53,7 +53,7 @@ def admin_login(data: AdminLoginRequest) -> dict:
 
     # Update last_login
     try:
-        supabase_admin.table("admins").update({
+        db.table("admins").update({
             "last_login": datetime.utcnow().isoformat()
         }).eq("id", admin["id"]).execute()
     except Exception:
@@ -80,7 +80,7 @@ def admin_login(data: AdminLoginRequest) -> dict:
 
 def get_admin_profile(admin_id: str) -> dict:
     """Fetch current admin's profile from DB (source of truth over token)."""
-    resp = supabase_admin.table("admins").select(
+    resp = db.table("admins").select(
         "id, username, full_name, email, role, is_active, created_at, last_login"
     ).eq("id", admin_id).single().execute()
 
@@ -94,14 +94,14 @@ def get_admin_profile(admin_id: str) -> dict:
 
 def change_password(admin_id: str, data: AdminChangePasswordRequest, admin_payload: dict) -> dict:
     """Change admin password after verifying the current one."""
-    resp = supabase_admin.table("admins").select("password").eq("id", admin_id).single().execute()
+    resp = db.table("admins").select("password").eq("id", admin_id).single().execute()
     if not resp.data:
         raise AuthException("Admin not found")
 
     if not verify_and_rehash(data.current_password, resp.data["password"], admin_id, "admins"):
         raise AuthException("Current password is incorrect")
 
-    supabase_admin.table("admins").update({
+    db.table("admins").update({
         "password":   hash_password(data.new_password),
         "updated_at": datetime.utcnow().isoformat(),
     }).eq("id", admin_id).execute()
@@ -116,7 +116,7 @@ def change_password(admin_id: str, data: AdminChangePasswordRequest, admin_paylo
 def create_admin(data: AdminCreateRequest, acting_admin: dict) -> dict:
     """Create a new admin account. Superadmin only."""
     # Check username and email uniqueness
-    existing = supabase_admin.table("admins").select("id").or_(
+    existing = db.table("admins").select("id").or_(
         f"username.eq.{data.username},email.eq.{data.email}"
     ).execute()
     if existing.data:
@@ -125,7 +125,7 @@ def create_admin(data: AdminCreateRequest, acting_admin: dict) -> dict:
     if data.role not in ("admin", "superadmin"):
         raise AuthException("Role must be 'admin' or 'superadmin'")
 
-    result = supabase_admin.table("admins").insert({
+    result = db.table("admins").insert({
         "username":  data.username,
         "email":     data.email,
         "full_name": data.full_name,
@@ -151,7 +151,7 @@ def deactivate_admin(target_admin_id: str, acting_admin: dict) -> dict:
     if target_admin_id == acting_admin["admin_id"]:
         raise AuthException("Cannot deactivate your own account")
 
-    supabase_admin.table("admins").update({
+    db.table("admins").update({
         "is_active":  False,
         "updated_at": datetime.utcnow().isoformat(),
     }).eq("id", target_admin_id).execute()
@@ -165,7 +165,7 @@ def deactivate_admin(target_admin_id: str, acting_admin: dict) -> dict:
 
 def list_admins() -> dict:
     """Return all admin accounts (without password hashes)."""
-    resp = supabase_admin.table("admins").select(
+    resp = db.table("admins").select(
         "id, username, full_name, email, role, is_active, created_at, last_login"
     ).order("created_at", desc=True).execute()
     return resp.data or []
@@ -175,7 +175,7 @@ def list_admins() -> dict:
 
 def toggle_user_active(user_id: str, is_active: bool, acting_admin: dict) -> dict:
     """Activate or deactivate a client user account."""
-    supabase_admin.table("users").update({
+    db.table("users").update({
         "is_active":  is_active,
         "updated_at": datetime.utcnow().isoformat(),
     }).eq("id", user_id).execute()

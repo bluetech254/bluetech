@@ -32,6 +32,16 @@ export const getMpesaPaymentStatus = async (orderId: string): Promise<{ payment_
   return response.data;
 };
 
+export const initiatePaystackOrderPayment = async (orderId: string): Promise<{ authorization_url: string; reference: string }> => {
+  const response = await api.post(`/payments/order/${orderId}/initiate`);
+  return response.data;
+};
+
+export const verifyPaystackOrderPayment = async (reference: string): Promise<{ status: string; reference: string; amount: number }> => {
+  const response = await api.post(`/payments/order/verify/${reference}`);
+  return response.data;
+};
+
 export const getOrderById = async (id: string): Promise<Order> => {
   const response = await api.get(`/orders/${id}`);
   return response.data;
