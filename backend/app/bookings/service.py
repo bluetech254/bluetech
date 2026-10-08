@@ -135,11 +135,10 @@ def _award_completion_points(booking: dict):
         return
 
     try:
-        sb = supabase_admin
-        u  = sb.table("users").select("points").eq("id", user_id).single().execute()
-        current = u.data.get("points", 0) if u.data else 0
-        sb.table("users").update({"points": current + earned}).eq("id", user_id).execute()
-        sb.table("points_ledger").insert({
+        u  = db.table("users").select("points").eq("id", user_id).single().execute()
+        current = u["data"].get("points", 0) if u["data"] else 0
+        db.table("users").update({"points": current + earned}).eq("id", user_id).execute()
+        db.table("points_ledger").insert({
             "user_id":     user_id,
             "points":      earned,
             "type":        "booking_earn",

@@ -6,7 +6,7 @@ Transparently translates to SQL for PostgreSQL or passes through to Supabase cli
 
 Usage:
     from core.db import db
-    
+
     # Works identically on both backends:
     resp = db.table("users").select("*").eq("id", "123").single().execute()
     resp = db.table("users").insert({"name": "Alice"}).execute()
@@ -22,7 +22,7 @@ Response format (both backends):
 """
 
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from core.db_connection import close_connection, get_connection
 

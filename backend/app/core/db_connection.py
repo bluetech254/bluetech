@@ -58,7 +58,7 @@ def _get_pg_connection() -> Any:
 
     try:
         return _pg_pool.getconn()
-    except pool.PoolError as e:
+    except Exception as e:
         raise RuntimeError(f"Failed to get PostgreSQL connection from pool: {e}")
 
 
