@@ -81,9 +81,9 @@ def health():
 
 @app.get("/health/db", tags=["Health"])
 def health_db():
-    from core.database import get_admin_db
+    from core.db import db
     try:
-        get_admin_db().table("products").select("id").limit(1).execute()
+        db.table("products").select("id").limit(1).execute()
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return JSONResponse(status_code=503, content={"status": "unhealthy", "database": str(e)})

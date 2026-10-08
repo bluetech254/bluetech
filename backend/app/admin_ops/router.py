@@ -12,7 +12,7 @@ from typing import Literal
 
 from admin_auth.dependencies import get_current_admin
 from core.audit import log_action
-from core.database import supabase_admin
+from core.db import db
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -30,11 +30,11 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat()
     today_set = {today, yesterday}   # EAT = UTC+3
 
-    orders_r   = supabase_admin.table("orders").select("*, order_items(*)").execute()
-    bookings_r = supabase_admin.table("bookings").select("*").execute()
-    products_r = supabase_admin.table("products")\
+    orders_r   = db.table("orders").select("*, order_items(*)").execute()
+    bookings_r = db.table("bookings").select("*").execute()
+    products_r = db.table("products")\
         .select("id,title,stock_quantity,low_stock_threshold,is_active").eq("is_active", True).execute()
-    users_r    = supabase_admin.table("users").select("id,created_at").execute()
+    users_r    = db.table("users").select("id,created_at").execute()
 
     orders   = orders_r.data or []
     bookings = bookings_r.data or []
@@ -92,7 +92,7 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
 
 @router.get("/stock/alerts")
 def stock_alerts(admin: dict = Depends(get_current_admin)):
-    r = supabase_admin.table("products")\
+    r = db.table("products")\
         .select("id,title,stock_quantity,low_stock_threshold,specifications")\
         .eq("is_active", True).execute()
     alerts = []
@@ -118,7 +118,7 @@ def stock_alerts(admin: dict = Depends(get_current_admin)):
 
 @router.put("/stock/{product_id}/threshold")
 def set_stock_threshold(product_id: str, threshold: int, admin: dict = Depends(get_current_admin)):
-    supabase_admin.table("products").update({"low_stock_threshold": threshold}).eq("id", product_id).execute()
+    db.table("products").update({"low_stock_threshold": threshold}).eq("id", product_id).execute()
     log_action(admin, "product.threshold_update", f"product:{product_id}", {"threshold": threshold})
     return {"message": "Threshold updated"}
 
@@ -132,7 +132,7 @@ def export_orders_csv(
     date_to:   str | None = None,
     admin: dict = Depends(get_current_admin),
 ):
-    q = supabase_admin.table("orders").select("*")
+    q = db.table("orders").select("*")
     if status:
         q = q.eq("status", status)
     if date_from:
@@ -155,7 +155,7 @@ def export_orders_csv(
 
 @router.get("/export/bookings")
 def export_bookings_csv(status: str | None = None, admin: dict = Depends(get_current_admin)):
-    q = supabase_admin.table("bookings").select("*")
+    q = db.table("bookings").select("*")
     if status:
         q = q.eq("status", status)
     bookings = q.order("created_at", desc=True).execute().data or []
@@ -176,8 +176,8 @@ def export_bookings_csv(status: str | None = None, admin: dict = Depends(get_cur
 
 @router.get("/transactions")
 def get_transactions(admin: dict = Depends(get_current_admin)):
-    orders_r   = supabase_admin.table("orders").select("*, order_items(*)").execute()
-    bookings_r = supabase_admin.table("bookings").select("*").execute()
+    orders_r   = db.table("orders").select("*, order_items(*)").execute()
+    bookings_r = db.table("bookings").select("*").execute()
     txns = []
     for o in (orders_r.data or []):
         txns.append({"id": o["id"], "type": "order", "ref": f"ORD-{o['id'][:8].upper()}",
@@ -223,7 +223,7 @@ class BulkStatusUpdate(BaseModel):
 def bulk_update_order_status(body: BulkStatusUpdate, admin: dict = Depends(get_current_admin)):
     if not body.order_ids:
         raise HTTPException(status_code=400, detail="No order IDs provided")
-    supabase_admin.table("orders").update({"status": body.status}).in_("id", body.order_ids).execute()
+    db.table("orders").update({"status": body.status}).in_("id", body.order_ids).execute()
     log_action(admin, "order.bulk_status_update", detail={"ids": body.order_ids, "status": body.status})
     return {"message": f"Updated {len(body.order_ids)} orders to '{body.status}'"}
 
@@ -232,7 +232,7 @@ def bulk_update_order_status(body: BulkStatusUpdate, admin: dict = Depends(get_c
 
 @router.get("/referrals")
 def referral_overview(admin: dict = Depends(get_current_admin)):
-    users = supabase_admin.table("users")\
+    users = db.table("users")\
         .select("id,full_name,phone_number,referral_code,points,referred_by").execute().data or []
     counts   = defaultdict(int)
     user_map = {u["id"]: u for u in users}
@@ -249,7 +249,7 @@ def referral_overview(admin: dict = Depends(get_current_admin)):
 
 @router.get("/referrals/user/{user_id}")
 def user_referral_detail(user_id: str, admin: dict = Depends(get_current_admin)):
-    r = supabase_admin.table("users")\
+    r = db.table("users")\
         .select("id,full_name,phone_number,created_at,points").eq("referred_by", user_id).execute()
     return {"data": r.data or [], "count": len(r.data or [])}
 
@@ -259,15 +259,15 @@ def user_referral_detail(user_id: str, admin: dict = Depends(get_current_admin))
 @router.get("/customers/{user_id}/history")
 def customer_history(user_id: str, admin: dict = Depends(get_current_admin)):
     try:
-        user_r = supabase_admin.table("users").select("*").eq("id", user_id).single().execute()
+        user_r = db.table("users").select("*").eq("id", user_id).single().execute()
         user   = user_r.data
     except Exception:
         user = None
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    orders_r   = supabase_admin.table("orders").select("*, order_items(*)").eq("user_id", user_id).order("created_at", desc=True).execute()
-    bookings_r = supabase_admin.table("bookings").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-    points_r   = supabase_admin.table("points_ledger").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+    orders_r   = db.table("orders").select("*, order_items(*)").eq("user_id", user_id).order("created_at", desc=True).execute()
+    bookings_r = db.table("bookings").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+    points_r   = db.table("points_ledger").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
     for f in ("password", "verification_code", "reset_code"):
         user.pop(f, None)
     orders = orders_r.data or []
@@ -290,13 +290,13 @@ def customer_history(user_id: str, admin: dict = Depends(get_current_admin)):
 @router.get("/search")
 def global_search(q: str = Query(..., min_length=2), admin: dict = Depends(get_current_admin)):
     term = q.strip()
-    users_r    = supabase_admin.table("users")\
+    users_r    = db.table("users")\
         .select("id,full_name,phone_number,email,points,created_at")\
         .or_(f"phone_number.ilike.%{term}%,full_name.ilike.%{term}%,email.ilike.%{term}%").limit(10).execute()
-    orders_r   = supabase_admin.table("orders")\
+    orders_r   = db.table("orders")\
         .select("id,full_name,phone_number,total_amount,status,payment_status,created_at")\
         .or_(f"phone_number.ilike.%{term}%,full_name.ilike.%{term}%").limit(10).execute()
-    bookings_r = supabase_admin.table("bookings")\
+    bookings_r = db.table("bookings")\
         .select("id,full_name,phone_number,device_type,device_model,status,created_at")\
         .or_(f"phone_number.ilike.%{term}%,full_name.ilike.%{term}%,device_model.ilike.%{term}%").limit(10).execute()
     return {"query": term, "users": users_r.data or [], "orders": orders_r.data or [], "bookings": bookings_r.data or []}
@@ -310,7 +310,7 @@ def get_audit_log(
     admin_id: str | None = None,
     admin: dict = Depends(get_current_admin),
 ):
-    q = supabase_admin.table("admin_audit_log").select("*")
+    q = db.table("admin_audit_log").select("*")
     if admin_id:
         q = q.eq("admin_id", admin_id)
     r = q.order("created_at", desc=True).limit(limit).execute()
@@ -330,7 +330,7 @@ def update_booking_notes(
     admin: dict = Depends(get_current_admin),
 ):
     """Update internal notes for a booking. Admin only."""
-    r = supabase_admin.table("bookings") \
+    r = db.table("bookings") \
         .update({"internal_notes": body.internal_notes}) \
         .eq("id", booking_id).execute()
     if not r.data:

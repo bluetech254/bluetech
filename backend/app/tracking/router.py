@@ -1,7 +1,7 @@
 """tracking/router.py — Public order+booking tracking by phone number."""
 import logging
 
-from core.database import supabase
+from core.db import db
 from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger(__name__)
@@ -12,8 +12,8 @@ router = APIRouter(prefix="/api/v1/track", tags=["Tracking"])
 def track_by_phone(phone: str):
     """Track all orders and bookings for a phone number. No auth required."""
     try:
-        orders   = supabase.table("orders").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
-        bookings = supabase.table("bookings").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
+        orders   = db.table("orders").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
+        bookings = db.table("bookings").select("*").eq("phone_number", phone).order("created_at", desc=True).execute()
         return {
             "phone_number": phone,
             "orders":       orders.data or [],

@@ -7,7 +7,7 @@ Public reads use supabase (respects RLS).
 """
 from uuid import UUID
 
-from core.database import supabase, supabase_admin
+from core.db import db
 from core.exceptions import ProductNotFoundException
 from products.models import ProductCreate, ProductUpdate
 
@@ -26,7 +26,7 @@ def get_products(
     limit: int = 200,
     offset: int = 0,
 ) -> list[dict]:
-    query = supabase.table("products").select("*")
+    query = db.table("products").select("*")
 
     if active_only:
         query = query.eq("is_active", True)
@@ -56,14 +56,14 @@ def get_product_by_id(product_id: UUID) -> dict:
     # Use supabase_admin so the lookup works regardless of is_active state and
     # avoids any RLS edge-cases that can cause the anon client to throw instead
     # of returning empty data.
-    response = supabase_admin.table("products").select("*").eq("id", str(product_id)).execute()
+    response = db.table("products").select("*").eq("id", str(product_id)).execute()
     if not response.data:
         raise ProductNotFoundException(f"Product {product_id} not found")
     return response.data[0]
 
 
 def get_product_categories() -> list[str]:
-    r = supabase.table("products").select("category").eq("is_active", True).execute()
+    r = db.table("products").select("category").eq("is_active", True).execute()
     return sorted(set(p["category"] for p in (r.data or []) if p.get("category")))
 
 
@@ -87,20 +87,20 @@ def _prepare_product_data(data: dict) -> dict:
 
 def create_product(product: ProductCreate) -> dict:
     data = _prepare_product_data(product.model_dump())
-    response = supabase_admin.table("products").insert(data).execute()
+    response = db.table("products").insert(data).execute()
     return response.data[0]
 
 
 def update_product(product_id: UUID, product: ProductUpdate) -> dict:
     data = _prepare_product_data(product.model_dump())
-    response = supabase_admin.table("products").update(data).eq("id", str(product_id)).execute()
+    response = db.table("products").update(data).eq("id", str(product_id)).execute()
     if not response.data:
         raise ProductNotFoundException(f"Product {product_id} not found")
     return response.data[0]
 
 
 def deactivate_product(product_id: UUID) -> dict:
-    response = supabase_admin.table("products").update({"is_active": False}).eq("id", str(product_id)).execute()
+    response = db.table("products").update({"is_active": False}).eq("id", str(product_id)).execute()
     if not response.data:
         raise ProductNotFoundException(f"Product {product_id} not found")
     return response.data[0]

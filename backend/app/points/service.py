@@ -11,7 +11,7 @@ import math
 import secrets
 import string
 
-from core.database import supabase, supabase_admin
+from core.db import db
 from core.exceptions import InsufficientPointsException
 
 logger = logging.getLogger(__name__)
@@ -25,23 +25,23 @@ REDEEM_MINIMUM  = 1     # any positive amount can be redeemed
 # ── Read ──────────────────────────────────────────────────────────────────────
 
 def get_user_points(user_id: str) -> int:
-    resp = supabase_admin.table("users").select("points").eq("id", user_id).single().execute()
+    resp = db.table("users").select("points").eq("id", user_id).single().execute()
     return resp.data.get("points", 0) if resp.data else 0
 
 
 def get_points_history(user_id: str) -> list:
-    resp = supabase_admin.table("points_ledger")\
+    resp = db.table("points_ledger")\
         .select("*").eq("user_id", user_id)\
         .order("created_at", desc=True).execute()
     return resp.data or []
 
 
 def get_or_create_referral_code(user_id: str) -> str:
-    resp = supabase_admin.table("users").select("referral_code").eq("id", user_id).single().execute()
+    resp = db.table("users").select("referral_code").eq("id", user_id).single().execute()
     code = resp.data.get("referral_code") if resp.data else None
     if not code:
         code = _generate_referral_code()
-        supabase_admin.table("users").update({"referral_code": code}).eq("id", user_id).execute()
+        db.table("users").update({"referral_code": code}).eq("id", user_id).execute()
     return code
 
 
@@ -49,13 +49,13 @@ def get_or_create_referral_code(user_id: str) -> str:
 
 def add_points(user_id: str, points: int, type_: str, description: str, order_id: str = None) -> None:
     """Add (positive) or subtract (negative) points and write ledger entry."""
-    u       = supabase_admin.table("users").select("points").eq("id", user_id).single().execute()
+    u       = db.table("users").select("points").eq("id", user_id).single().execute()
     current = u.data.get("points", 0) if u.data else 0
-    supabase_admin.table("users").update({"points": current + points}).eq("id", user_id).execute()
+    db.table("users").update({"points": current + points}).eq("id", user_id).execute()
     entry = {"user_id": user_id, "points": points, "type": type_, "description": description}
     if order_id:
         entry["order_id"] = order_id
-    supabase_admin.table("points_ledger").insert(entry).execute()
+    db.table("points_ledger").insert(entry).execute()
 
 
 def award_order_points(user_id: str, subtotal: float, order_id: str) -> None:
@@ -104,7 +104,7 @@ def admin_award_points(user_id: str, points: int, reason: str) -> dict:
 
 def resolve_referral_code(code: str) -> str | None:
     """Return user_id of the referral code owner, or None."""
-    resp = supabase.table("users").select("id").eq("referral_code", code.upper()).execute()
+    resp = db.table("users").select("id").eq("referral_code", code.upper()).execute()
     return resp.data[0]["id"] if resp.data else None
 
 

@@ -26,8 +26,8 @@ def log_action(
         detail: Optional dict of additional context (status, amounts, etc.).
     """
     try:
-        from core.database import supabase_admin
-        supabase_admin.table("admin_audit_log").insert({
+        from core.db import db
+        db.table("admin_audit_log").insert({
             "admin_id":   admin.get("admin_id"),
             "admin_name": admin.get("username"),
             "action":     action,

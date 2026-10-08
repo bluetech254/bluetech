@@ -1,7 +1,7 @@
 """contact/router.py — Contact form submission."""
 import logging
 
-from core.database import supabase_admin
+from core.db import db
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 
@@ -21,7 +21,7 @@ class ContactMessage(BaseModel):
 def submit_contact(data: ContactMessage):
     """Save a contact form message."""
     try:
-        result = supabase_admin.table("contact_messages").insert(data.model_dump()).execute()
+        result = db.table("contact_messages").insert(data.model_dump()).execute()
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to save message")
         return {"message": "Message received. We'll get back to you soon."}

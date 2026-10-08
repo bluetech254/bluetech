@@ -153,8 +153,8 @@ def logout():
 @router.get("/users/me")
 def get_current_user(user_id: str = Depends(get_current_user_dep)):
     """Return the authenticated user's profile."""
-    from core.database import supabase_admin
-    resp = supabase_admin.table("users").select(
+    from core.db import db
+    resp = db.table("users").select(
         "id, full_name, email, phone_number, points, referral_code, created_at"
     ).eq("id", user_id).single().execute()
     if not resp.data:
@@ -165,11 +165,11 @@ def get_current_user(user_id: str = Depends(get_current_user_dep)):
 @router.put("/users/me")
 def update_profile(body: dict, user_id: str = Depends(get_current_user_dep)):
     """Update the authenticated user's profile (full_name, email)."""
-    from core.database import supabase_admin
+    from core.db import db
     allowed = {k: v for k, v in body.items() if k in ("full_name", "email")}
     if not allowed:
         raise HTTPException(status_code=400, detail="No valid fields to update")
-    resp = supabase_admin.table("users").update(allowed).eq("id", user_id).execute()
+    resp = db.table("users").update(allowed).eq("id", user_id).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="User not found")
     user = resp.data[0]
@@ -181,7 +181,7 @@ def update_profile(body: dict, user_id: str = Depends(get_current_user_dep)):
 @router.put("/users/me/password", response_model=MessageResponse)
 def change_own_password(body: dict, user_id: str = Depends(get_current_user_dep)):
     """Change the authenticated user's own password."""
-    from core.database import supabase_admin
+    from core.db import db
     from core.security import hash_password, verify_and_rehash
     current_pw = body.get("current_password")
     new_pw     = body.get("new_password")
@@ -189,12 +189,12 @@ def change_own_password(body: dict, user_id: str = Depends(get_current_user_dep)
         raise HTTPException(status_code=400, detail="current_password and new_password required")
     if len(new_pw) < 8:
         raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
-    resp = supabase_admin.table("users").select("password").eq("id", user_id).single().execute()
+    resp = db.table("users").select("password").eq("id", user_id).single().execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="User not found")
     if not verify_and_rehash(current_pw, resp.data["password"], user_id, "users"):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    supabase_admin.table("users").update({"password": hash_password(new_pw)}).eq("id", user_id).execute()
+    db.table("users").update({"password": hash_password(new_pw)}).eq("id", user_id).execute()
     return {"message": "Password updated successfully"}
 
 
@@ -208,8 +208,8 @@ def refresh_token(request: Request, user_id: str = Depends(get_current_user_dep)
     Client should call this before expiry to stay logged in without re-entering password.
     Rate limited to 10/minute — cannot be used to brute-force new tokens.
     """
-    from core.database import supabase_admin
-    resp = supabase_admin.table("users").select(
+    from core.db import db
+    resp = db.table("users").select(
         "id, full_name, email, phone_number, points, referral_code, created_at"
     ).eq("id", user_id).single().execute()
     if not resp.data:

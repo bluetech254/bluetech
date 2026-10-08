@@ -15,7 +15,7 @@ import uuid
 
 from core.audit import log_action
 from core.config import settings
-from core.database import supabase_admin as db
+from core.db import db
 from payments.paystack import initialize_transaction, verify_transaction
 
 logger = logging.getLogger(__name__)
