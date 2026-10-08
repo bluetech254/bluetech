@@ -65,25 +65,24 @@ def get_service_price(
     model_id:   UUID | None = Query(None),
 ):
     """Smart price lookup: model-specific → brand-specific → service default."""
-    sb = supabase
     if model_id and brand_id:
-        r = sb.table("service_pricing").select("price")\
+        r = db.table("service_pricing").select("price")\
             .eq("service_id", str(service_id)).eq("brand_id", str(brand_id))\
             .eq("model_id", str(model_id)).limit(1).execute()
-        if r.data:
-            return {"price": float(r.data[0]["price"]), "level": "model"}
+        if r["data"]:
+            return {"price": float(r["data"][0]["price"]), "level": "model"}
 
     if brand_id:
-        r = sb.table("service_pricing").select("price")\
+        r = db.table("service_pricing").select("price")\
             .eq("service_id", str(service_id)).eq("brand_id", str(brand_id))\
             .is_("model_id", "null").limit(1).execute()
-        if r.data:
-            return {"price": float(r.data[0]["price"]), "level": "brand"}
+        if r["data"]:
+            return {"price": float(r["data"][0]["price"]), "level": "brand"}
 
-    r = sb.table("repair_services").select("base_price").eq("id", str(service_id)).single().execute()
-    if not r.data:
+    r = db.table("repair_services").select("base_price").eq("id", str(service_id)).single().execute()
+    if not r["data"]:
         raise HTTPException(status_code=404, detail="Service not found")
-    return {"price": float(r.data["base_price"] or 0), "level": "default"}
+    return {"price": float(r["data"]["base_price"] or 0), "level": "default"}
 
 
 # ── Admin: brand CRUD ─────────────────────────────────────────────────────────

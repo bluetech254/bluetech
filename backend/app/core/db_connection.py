@@ -155,8 +155,10 @@ def close_connection(conn: Any) -> None:
     """
     if _db_type == "postgresql" and _pg_pool:
         try:
+            # psycopg2.pool.PoolError is caught here
             _pg_pool.putconn(conn)
-        except pool.PoolError as e:
+        except Exception as e:
+            # Catch any pool error without importing pool at module level
             print(f"Warning: Failed to return connection to pool: {e}", file=sys.stderr)
 
 

@@ -18,7 +18,8 @@ if not os.getenv("DATABASE_TYPE"):
 if not os.getenv("SUPABASE_URL"):
     os.environ["SUPABASE_URL"] = "https://ureebvpesbkbholidlrn.supabase.co"
 if not os.getenv("SUPABASE_SERVICE_KEY"):
-    os.environ["SUPABASE_SERVICE_KEY"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyZWVidnBlc2JrYmhvbGlkbHJuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjcyMzgyNywiZXhwIjoyMDk4Mjk5ODI3fQ.B9u-wElfqgPDlstwTVR18CSKf2vVa3EKbrgFHcO_aPI"
+    if not os.getenv("SUPABASE_SERVICE_KEY"):
+    os.environ["SUPABASE_SERVICE_KEY"] = "test-key-placeholder"
 
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))

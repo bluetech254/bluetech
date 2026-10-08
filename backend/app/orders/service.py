@@ -198,11 +198,10 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
     # Deduct redeemed points
     if points_discount > 0 and user_id:
         pts = int(order_data.redeem_points)
-        sb = supabase_admin
-        user_r  = sb.table("users").select("points").eq("id", user_id).single().execute()
-        current = user_r.data.get("points", 0) if user_r.data else 0
-        sb.table("users").update({"points": current - pts}).eq("id", user_id).execute()
-        sb.table("points_ledger").insert({
+        user_r  = db.table("users").select("points").eq("id", user_id).single().execute()
+        current = user_r["data"].get("points", 0) if user_r["data"] else 0
+        db.table("users").update({"points": current - pts}).eq("id", user_id).execute()
+        db.table("points_ledger").insert({
             "user_id":     user_id,
             "points":      -pts,
             "type":        "redemption",
@@ -272,11 +271,10 @@ def _handle_delivery_rewards(order: dict):
         import math as _math
         earned = _math.floor(subtotal * 0.10)
         if earned > 0:
-            sb = supabase_admin
-            u  = sb.table("users").select("points").eq("id", user_id).single().execute()
-            current = u.data.get("points", 0) if u.data else 0
-            sb.table("users").update({"points": current + earned}).eq("id", user_id).execute()
-            sb.table("points_ledger").insert({
+            u  = db.table("users").select("points").eq("id", user_id).single().execute()
+            current = u["data"].get("points", 0) if u["data"] else 0
+            db.table("users").update({"points": current + earned}).eq("id", user_id).execute()
+            db.table("points_ledger").insert({
                 "user_id":     user_id,
                 "points":      earned,
                 "type":        "order_earn",
@@ -295,12 +293,11 @@ def _handle_delivery_rewards(order: dict):
             .execute()
         if not prev.data:
             buyer = db.table("users").select("full_name").eq("id", user_id).single().execute()
-            name  = buyer.data.get("full_name", "A customer") if buyer.data else "A customer"
-            sb    = supabase_admin
-            ref_u = sb.table("users").select("points").eq("id", referrer_id).single().execute()
-            ref_pts = ref_u.data.get("points", 0) if ref_u.data else 0
-            sb.table("users").update({"points": ref_pts + 50}).eq("id", referrer_id).execute()
-            sb.table("points_ledger").insert({
+            name  = buyer["data"].get("full_name", "A customer") if buyer["data"] else "A customer"
+            ref_u = db.table("users").select("points").eq("id", referrer_id).single().execute()
+            ref_pts = ref_u["data"].get("points", 0) if ref_u["data"] else 0
+            db.table("users").update({"points": ref_pts + 50}).eq("id", referrer_id).execute()
+            db.table("points_ledger").insert({
                 "user_id":     referrer_id,
                 "points":      50,
                 "type":        "referral_earn",
