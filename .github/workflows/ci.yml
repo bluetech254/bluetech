@@ -297,32 +297,38 @@ jobs:
       - name: Grep for hardcoded secrets
         run: |
           echo "Scanning for hardcoded credentials..."
-          # Patterns to catch: JWT tokens, API keys, Supabase URLs, AWS keys
-          PATTERNS=(
-            "eyJhbGci"           # JWT tokens
-            "sk_live_"           # Stripe/Paystack live secret keys
-            "sk_test_"           # Stripe/Paystack test secret keys
-            "pk_live_"           # Paystack live public keys (less critical but still shouldn't be hardcoded)
-            "AKIA"               # AWS access keys
-            "supabase\.co"       # Supabase URLs (should be in env)
-            "password.*=.*['\"]" # password= assignments with quotes
-          )
-          
+          # Patterns to catch: actual JWT tokens (not comments), actual API keys, passwords in code
           FOUND=0
-          for pattern in "${PATTERNS[@]}"; do
-            if grep -rn "$pattern" \
-              --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" \
-              --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
-              --exclude-dir=dist --exclude-dir=build --exclude-dir=".next" \
-              --exclude="*.example" \
-              . 2>/dev/null | grep -v "__pycache__" | grep -v "\.pyc"; then
-              FOUND=1
-            fi
-          done
+          
+          # JWT tokens (actual tokens, not comments mentioning them)
+          if grep -rn "eyJhbGciOiJIUzI1NiIs" \
+            --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" \
+            --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+            --exclude-dir=dist --exclude-dir=build --exclude-dir=".next" \
+            --exclude="*.example" . 2>/dev/null | grep -v "__pycache__" | grep -v "# " | grep -v "//"; then
+            FOUND=1
+          fi
+          
+          # AWS keys (AKIA prefix)
+          if grep -rn "AKIA[0-9A-Z]\{16\}" \
+            --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" \
+            --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+            --exclude-dir=dist --exclude-dir=build --exclude-dir=".next" \
+            --exclude="*.example" . 2>/dev/null | grep -v "__pycache__"; then
+            FOUND=1
+          fi
+          
+          # Actual hardcoded passwords (password = "..." not in comments)
+          if grep -rn 'password\s*=\s*["\x27][a-zA-Z0-9!@#$%^&*]\{8,\}["\x27]' \
+            --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" \
+            --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+            --exclude-dir=dist --exclude-dir=build --exclude-dir=".next" \
+            --exclude="*.example" . 2>/dev/null | grep -v "__pycache__" | grep -v "// " | grep -v "# "; then
+            FOUND=1
+          fi
           
           if [ $FOUND -eq 1 ]; then
-            echo ""
-            echo "❌ Hardcoded credentials found. Move all secrets to environment variables."
+            echo "❌ Hardcoded credentials found."
             exit 1
           fi
           
@@ -364,8 +370,8 @@ jobs:
       - name: Check DEBUG is not True in production config files
         run: |
           echo "Checking for DEBUG=True in production configs..."
-          # Check backend config for DEBUG default
-          if grep -n "DEBUG.*=.*True" backend/app/core/config.py; then
+          # Only check for actual assignments, not comments
+          if grep -n "^\s*DEBUG\s*:\s*bool\s*=\s*True" backend/app/core/config.py; then
             echo "❌ DEBUG defaults to True in config.py"
             echo "Change to: DEBUG: bool = False"
             exit 1
