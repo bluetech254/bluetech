@@ -29,6 +29,32 @@ from core.db_connection import close_connection, get_connection
 _db_type = os.getenv("DATABASE_TYPE", "").lower()
 
 
+class DBResponse(dict):
+    """
+    Response object that behaves as both a dict (supports ['data']) and
+    an object (supports .data, .count, .error) for backward compatibility
+    with code that used the Supabase SDK's attribute-style access.
+    """
+
+    def __init__(self, data: Any = None, count: int = 0, error: Optional[str] = None):
+        super().__init__()
+        self["data"] = data
+        self["count"] = count
+        self["error"] = error
+
+    @property
+    def data(self) -> Any:
+        return self["data"]
+
+    @property
+    def count(self) -> int:
+        return self["count"]
+
+    @property
+    def error(self) -> Optional[str]:
+        return self["error"]
+
+
 class QueryBuilder:
     """Unified query builder for Supabase and PostgreSQL."""
 
@@ -199,28 +225,24 @@ class QueryBuilder:
             self._is_single = True
         return self
 
-    def execute(self) -> Dict[str, Any]:
+    def execute(self) -> DBResponse:
         """Execute the query and return standardized response."""
         if self.is_supabase:
             try:
                 result = self._sb_table.execute()
                 close_connection(self.conn)
-                return {
-                    "data": result.data,
-                    "count": len(result.data) if result.data else 0,
-                    "error": None,
-                }
+                return DBResponse(
+                    data=result.data,
+                    count=len(result.data) if result.data else 0,
+                    error=None,
+                )
             except Exception as e:
                 close_connection(self.conn)
-                return {
-                    "data": None,
-                    "count": 0,
-                    "error": str(e),
-                }
+                return DBResponse(data=None, count=0, error=str(e))
         else:
             return self._execute_postgres()
 
-    def _execute_postgres(self) -> Dict[str, Any]:
+    def _execute_postgres(self) -> DBResponse:
         """Execute query on PostgreSQL backend."""
         try:
             cursor = self.conn.cursor()
@@ -241,11 +263,11 @@ class QueryBuilder:
             if self._insert_data or self._update_data or self._delete:
                 # Commit and get affected row count
                 self.conn.commit()
-                result = {
-                    "data": [] if self._delete else [self._insert_data or self._update_data],
-                    "count": cursor.rowcount,
-                    "error": None,
-                }
+                result = DBResponse(
+                    data=[] if self._delete else [self._insert_data or self._update_data],
+                    count=cursor.rowcount,
+                    error=None,
+                )
             else:
                 # SELECT: fetch results
                 rows = cursor.fetchall()
@@ -254,18 +276,20 @@ class QueryBuilder:
 
                 if self._is_single:
                     if len(data) != 1:
-                        return {
-                            "data": None,
-                            "count": 0,
-                            "error": f"Expected 1 row, got {len(data)}",
-                        }
+                        cursor.close()
+                        close_connection(self.conn)
+                        return DBResponse(
+                            data=None,
+                            count=0,
+                            error=f"Expected 1 row, got {len(data)}",
+                        )
                     data = data[0]
 
-                result = {
-                    "data": data,
-                    "count": len(data) if isinstance(data, list) else 1 if data else 0,
-                    "error": None,
-                }
+                result = DBResponse(
+                    data=data,
+                    count=len(data) if isinstance(data, list) else 1 if data else 0,
+                    error=None,
+                )
 
             cursor.close()
             close_connection(self.conn)
@@ -274,11 +298,7 @@ class QueryBuilder:
         except Exception as e:
             self.conn.rollback()
             close_connection(self.conn)
-            return {
-                "data": None,
-                "count": 0,
-                "error": str(e),
-            }
+            return DBResponse(data=None, count=0, error=str(e))
 
     def _build_select_sql(self) -> tuple:
         """Build SELECT SQL statement."""
