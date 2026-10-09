@@ -79,3 +79,5 @@ supabase/.temp/
 
 # Zip files
 *.zip
+CPANEL_MIGRATION_PLAN.md
+CREDENTIAL_CLEANUP_PLAN.md
