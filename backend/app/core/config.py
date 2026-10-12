@@ -15,25 +15,27 @@ _ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 class Settings(BaseSettings):
     # ── Required — no defaults, app will not start without these ──────────────
-    SUPABASE_URL: str
-    SUPABASE_ANON_KEY: str
-    SUPABASE_SERVICE_KEY: str
     JWT_SECRET: str
 
-    # ── M-Pesa Daraja (default payment provider) ──────────────────────────────
+    # ── Supabase (dev only — optional in production where DATABASE_TYPE=postgresql)
+    SUPABASE_URL: str         = ""
+    SUPABASE_ANON_KEY: str    = ""
+    SUPABASE_SERVICE_KEY: str = ""
+
+    # ── Paystack (production payment provider) ───────────────────────────────
+    PAYSTACK_SECRET_KEY: str   = ""          # sk_live_... or sk_test_...
+    PAYSTACK_PUBLIC_KEY: str   = ""          # pk_live_... or pk_test_...
+    # Frontend base URL — used to build Paystack callback_url
+    # Dev:  http://localhost:3001   Prod: https://fixit-bluetechnology.co.ke
+    FRONTEND_URL: str          = ""
+
+    # ── M-Pesa (dev only — not used in production) ────────────────────────────
     MPESA_CONSUMER_KEY: str    = ""
     MPESA_CONSUMER_SECRET: str = ""
     MPESA_SHORTCODE: str       = ""
     MPESA_PASSKEY: str         = ""
     MPESA_CALLBACK_URL: str    = ""
     MPESA_ENV: str             = "sandbox"   # "sandbox" | "production"
-
-    # ── Paystack (secondary — ready when needed) ──────────────────────────────
-    PAYSTACK_SECRET_KEY: str   = ""          # sk_live_... or sk_test_...
-    PAYSTACK_PUBLIC_KEY: str   = ""          # pk_live_... or pk_test_...
-    # Frontend base URL — used to build Paystack callback_url
-    # Dev:  http://localhost:3001   Prod: https://fixit-bluetechnology.co.ke
-    FRONTEND_URL: str          = ""
 
     # ── Optional with safe defaults ───────────────────────────────────────────
     DEBUG: bool = False                 # NEVER default True in production
@@ -54,7 +56,7 @@ class Settings(BaseSettings):
     # Payments — Paystack
     PAYSTACK_API_URL: str  = "https://api.paystack.co"
 
-    # Payments — M-Pesa Daraja API base URLs (overridable for test mocks)
+    # Payments — M-Pesa Daraja (dev only, not used in production)
     MPESA_API_URL_PROD:    str = "https://api.safaricom.co.ke"
     MPESA_API_URL_SANDBOX: str = "https://sandbox.safaricom.co.ke"
 

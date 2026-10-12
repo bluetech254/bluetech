@@ -24,6 +24,7 @@ admin/node_modules/
 .env.production.local
 .env.development.local
 backend/.env
+backend/.env.production
 client/.env
 admin/.env
 

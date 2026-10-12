@@ -18,7 +18,6 @@ def validate_startup() -> None:
     process exits immediately with a visible error message.
     """
     _check_database()
-    _check_mpesa_production_config()
     logger.info("✓ All startup checks passed")
 
 
@@ -33,28 +32,3 @@ def _check_database() -> None:
             f"Database unreachable at startup. "
             f"Check DATABASE_TYPE env var and connection credentials. Error: {e}"
         )
-
-
-def _check_mpesa_production_config() -> None:
-    """
-    In production M-Pesa mode, all Daraja credentials must be set.
-    In sandbox mode this check is skipped so local dev works without them.
-    """
-    if settings.MPESA_ENV != "production":
-        logger.info("✓ M-Pesa in sandbox mode — skipping credential check")
-        return
-
-    required = {
-        "MPESA_CONSUMER_KEY":    settings.MPESA_CONSUMER_KEY,
-        "MPESA_CONSUMER_SECRET": settings.MPESA_CONSUMER_SECRET,
-        "MPESA_PASSKEY":         settings.MPESA_PASSKEY,
-        "MPESA_CALLBACK_URL":    settings.MPESA_CALLBACK_URL,
-        "MPESA_SHORTCODE":       settings.MPESA_SHORTCODE,
-    }
-    missing = [k for k, v in required.items() if not v]
-    if missing:
-        raise RuntimeError(
-            f"MPESA_ENV is 'production' but these vars are missing: "
-            f"{', '.join(missing)}"
-        )
-    logger.info("✓ M-Pesa production config OK")
