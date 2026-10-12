@@ -2,28 +2,33 @@
 """
 setup_prod.py — BlueTech cPanel production activation script.
 
-Run this on the cPanel server after every git pull:
+Run ONCE after GitHub Actions deploys to cPanel:
 
     cd /home2/fixitblu/backend
     python3 setup_prod.py
 
 What it does:
-  1. Copies .env.production → .env  (prod DB, no Supabase, no M-Pesa)
-  2. Verifies the PostgreSQL connection using the prod credentials
-  3. Touches tmp/restart.txt to restart Passenger / the app
+  1. Writes .env.production with prod credentials (PostgreSQL, no Supabase, no M-Pesa)
+  2. Copies .env.production → .env  (activates prod config)
+  3. Connects to PostgreSQL
+  4. Runs schema.sql to create all tables (safe — uses IF NOT EXISTS)
+  5. Patches admins table (adds full_name + last_login if missing)
+  6. Seeds superadmin account
+  7. Seeds delivery zones
+  8. Touches tmp/restart.txt to restart Passenger
 
-.env.production lives on the server only — it is NOT in git (gitignored).
-It contains: DATABASE_TYPE=postgresql, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD,
-             JWT_SECRET, PAYSTACK keys, BLESSEDTEXTS key, AWS keys, CORS_ORIGINS.
+Safe to re-run — all DB operations are idempotent.
 """
 
 import os
 import shutil
+import subprocess
 import sys
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ENV_FILE        = os.path.join(BASE_DIR, ".env")
-ENV_PROD_FILE   = os.path.join(BASE_DIR, ".env.production")
+BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
+ENV_FILE      = os.path.join(BASE_DIR, ".env")
+ENV_PROD_FILE = os.path.join(BASE_DIR, ".env.production")
+SCHEMA_FILE   = os.path.join(BASE_DIR, "schema.sql")
 
 
 def section(title: str) -> None:
@@ -38,9 +43,8 @@ def fail(label: str, detail: str = "") -> None:
     print(f"  ✗  {label}" + (f"  —  {detail}" if detail else ""))
 
 
-def load_env_file(path: str) -> dict[str, str]:
-    """Parse a .env file into a dict."""
-    values: dict[str, str] = {}
+def load_env_file(path: str) -> dict:
+    values = {}
     with open(path) as f:
         for raw in f:
             line = raw.strip()
@@ -51,7 +55,7 @@ def load_env_file(path: str) -> dict[str, str]:
     return values
 
 
-# ── Step 1: Write .env.production (create or overwrite) ──────────────────────
+# ── Step 1: Write .env.production ────────────────────────────────────────────
 
 section("1. Writing .env.production")
 
@@ -97,30 +101,24 @@ try:
     os.chmod(ENV_PROD_FILE, 0o600)
 except Exception:
     pass
-ok(".env.production written", ENV_PROD_FILE)
+ok(".env.production written")
 
 prod_env = load_env_file(ENV_PROD_FILE)
-ok(".env.production loaded")
-
 ok("DATABASE_TYPE=postgresql — no Supabase, no M-Pesa")
 
 
-# ── Step 2: Copy .env.production → .env ──────────────────────────────────────
+# ── Step 2: Activate prod .env ────────────────────────────────────────────────
 
 section("2. Activate prod environment")
 
-# Back up existing .env if it looks like a dev file
 if os.path.exists(ENV_FILE):
     current = load_env_file(ENV_FILE)
     if current.get("DATABASE_TYPE", "").lower() == "supabase":
-        backup = ENV_FILE + ".dev.bak"
-        shutil.copy2(ENV_FILE, backup)
-        ok(".env (dev) backed up", backup)
+        shutil.copy2(ENV_FILE, ENV_FILE + ".dev.bak")
+        ok(".env (dev) backed up", ENV_FILE + ".dev.bak")
 
 shutil.copy2(ENV_PROD_FILE, ENV_FILE)
-ok(".env.production → .env", "prod credentials are now active")
-
-# Lock down file permissions so other users can't read credentials
+ok(".env → prod credentials active")
 try:
     os.chmod(ENV_FILE, 0o600)
     ok(".env permissions set to 600")
@@ -128,92 +126,188 @@ except Exception as e:
     fail("Could not chmod .env", str(e))
 
 
-# ── Step 3: Verify PostgreSQL connection ──────────────────────────────────────
+# ── Step 3: Connect to PostgreSQL ─────────────────────────────────────────────
 
-section("3. PostgreSQL connection check")
+section("3. PostgreSQL connection")
 
 try:
     import psycopg2
 except ImportError:
-    print("  psycopg2 not found — installing psycopg2-binary...")
-    import subprocess
+    print("  psycopg2 not found — installing...")
     result = subprocess.run(
         [sys.executable, "-m", "pip", "install", "psycopg2-binary", "-q"],
-        capture_output=True, text=True
+        capture_output=True, text=True,
     )
     if result.returncode != 0:
-        fail("Failed to install psycopg2-binary", result.stderr.strip()[:200])
+        fail("pip install psycopg2-binary failed", result.stderr.strip()[:200])
         sys.exit(1)
     import psycopg2
     ok("psycopg2-binary installed")
 
-try:
-    conn = psycopg2.connect(
-        host=prod_env["DB_HOST"],
-        port=int(prod_env.get("DB_PORT", "5432")),
-        dbname=prod_env["DB_NAME"],
-        user=prod_env["DB_USER"],
-        password=prod_env["DB_PASSWORD"],
-        connect_timeout=10,
-    )
-    cur = conn.cursor()
-    cur.execute("SELECT version()")
-    pg_version = cur.fetchone()[0].split(",")[0]
+# cPanel PostgreSQL listens on a Unix socket at /var/run/postgresql
+# Try socket first (most reliable on cPanel), fall back to localhost TCP
+conn = None
+pg_version = ""
 
-    # Check tables exist
-    cur.execute("""
-        SELECT COUNT(*) FROM information_schema.tables
-        WHERE table_schema = 'public'
-    """)
-    table_count = cur.fetchone()[0]
+for host in ["/var/run/postgresql", "localhost", "127.0.0.1"]:
+    try:
+        conn = psycopg2.connect(
+            host=host,
+            port=int(prod_env.get("DB_PORT", "5432")),
+            dbname=prod_env["DB_NAME"],
+            user=prod_env["DB_USER"],
+            password=prod_env["DB_PASSWORD"],
+            connect_timeout=10,
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT version()")
+        pg_version = cur.fetchone()[0].split(",")[0]
+        ok(f"Connected via host={host!r}", pg_version)
+        # Update DB_HOST in prod_env so restart uses the right one
+        prod_env["DB_HOST"] = host
+        break
+    except Exception as e:
+        print(f"  trying host={host!r} ... {str(e)[:60]}")
+        conn = None
 
-    conn.close()
-    ok("Connected to PostgreSQL", pg_version)
-    if table_count == 0:
-        fail("No tables found", "run: psql < schema.sql  to create the schema first")
-    else:
-        ok(f"Schema present", f"{table_count} tables in public schema")
-
-except Exception as e:
-    fail("PostgreSQL connection failed", str(e))
+if conn is None:
+    fail("Could not connect to PostgreSQL on any host")
     print("""
-  Possible causes:
-    - DB_HOST / DB_PORT is wrong
-    - DB_USER or DB_PASSWORD is incorrect
-    - PostgreSQL not accepting connections from this host
-    - Database doesn't exist yet (create it in cPanel first)
+  Check:
+    - DB name / user / password in cPanel → PostgreSQL Databases
+    - cPanel → Remote PostgreSQL → add 127.0.0.1
 """)
     sys.exit(1)
 
+conn.autocommit = False
+cur = conn.cursor()
 
-# ── Step 4: Restart Passenger ─────────────────────────────────────────────────
 
-section("4. Restart app")
+# ── Step 4: Run schema.sql ────────────────────────────────────────────────────
 
-tmp_dir = os.path.join(BASE_DIR, "tmp")
-os.makedirs(tmp_dir, exist_ok=True)
-restart_file = os.path.join(tmp_dir, "restart.txt")
+section("4. Schema setup")
+
+if not os.path.exists(SCHEMA_FILE):
+    fail("schema.sql not found", SCHEMA_FILE)
+    sys.exit(1)
+
+with open(SCHEMA_FILE) as f:
+    schema_sql = f.read()
 
 try:
+    cur.execute(schema_sql)
+    conn.commit()
+    ok("schema.sql executed — all tables created")
+except Exception as e:
+    conn.rollback()
+    # DuplicateObject means types/tables already exist — safe
+    if "already exists" in str(e).lower():
+        ok("Schema already up-to-date")
+    else:
+        fail("schema.sql failed", str(e)[:200])
+        sys.exit(1)
+
+
+# ── Step 5: Patch admins table ────────────────────────────────────────────────
+
+section("5. Schema patches")
+
+for label, sql in [
+    ("admins.full_name",  "ALTER TABLE admins ADD COLUMN IF NOT EXISTS full_name VARCHAR(255) NOT NULL DEFAULT ''"),
+    ("admins.last_login", "ALTER TABLE admins ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE"),
+]:
+    try:
+        cur.execute(sql)
+        conn.commit()
+        ok(label)
+    except Exception as e:
+        conn.rollback()
+        fail(label, str(e)[:100])
+
+
+# ── Step 6: Seed superadmin ───────────────────────────────────────────────────
+
+section("6. Superadmin seed")
+
+try:
+    import bcrypt
+except ImportError:
+    subprocess.run([sys.executable, "-m", "pip", "install", "bcrypt", "-q"], check=True)
+    import bcrypt
+
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = prod_env.get("ADMIN_PASSWORD", "BlueTech@2026!")
+ADMIN_EMAIL    = "admin@fixit-bluetechnology.co.ke"
+ADMIN_FULLNAME = "BlueTech Admin"
+
+cur.execute("SELECT id FROM admins WHERE username = %s", (ADMIN_USERNAME,))
+if cur.fetchone():
+    ok(f"Superadmin '{ADMIN_USERNAME}' already exists")
+else:
+    hashed = bcrypt.hashpw(ADMIN_PASSWORD.encode(), bcrypt.gensalt(rounds=12)).decode()
+    try:
+        cur.execute(
+            "INSERT INTO admins (username, email, full_name, password, role, is_active) "
+            "VALUES (%s, %s, %s, %s, 'superadmin', TRUE)",
+            (ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_FULLNAME, hashed),
+        )
+        conn.commit()
+        ok(f"Superadmin '{ADMIN_USERNAME}' created", f"email={ADMIN_EMAIL}")
+    except Exception as e:
+        conn.rollback()
+        fail("Failed to create superadmin", str(e)[:200])
+
+
+# ── Step 7: Seed delivery zones ───────────────────────────────────────────────
+
+section("7. Delivery zones")
+
+cur.execute("SELECT COUNT(*) FROM delivery_zones")
+if cur.fetchone()[0] > 0:
+    ok("Delivery zones already seeded")
+else:
+    zones = [
+        ("Nairobi CBD", 200.00),
+        ("Westlands / Parklands", 250.00),
+        ("Kilimani / Ngong Road", 300.00),
+        ("Thika / Kiambu Outskirts", 450.00),
+        ("Mombasa / Kisumu / Upcountry", 600.00),
+    ]
+    for name, fee in zones:
+        cur.execute(
+            "INSERT INTO delivery_zones (zone_name, delivery_fee, is_active) "
+            "VALUES (%s, %s, TRUE) ON CONFLICT (zone_name) DO NOTHING",
+            (name, fee),
+        )
+    conn.commit()
+    ok(f"Delivery zones seeded", f"{len(zones)} zones")
+
+conn.close()
+
+
+# ── Step 8: Restart Passenger ─────────────────────────────────────────────────
+
+section("8. Restart app")
+
+tmp_dir      = os.path.join(BASE_DIR, "tmp")
+restart_file = os.path.join(tmp_dir, "restart.txt")
+os.makedirs(tmp_dir, exist_ok=True)
+try:
     open(restart_file, "w").close()
-    ok("Touched tmp/restart.txt — Passenger will restart on next request")
+    ok("Touched tmp/restart.txt — Passenger will restart")
 except Exception as e:
     fail("Could not touch restart.txt", str(e))
-    print("   Run manually: touch /home2/fixitblu/backend/tmp/restart.txt")
 
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 
 print(f"""
 {'=' * 60}
-  ✓  Production activation complete.
+  ✓  Production setup complete.
 
-  Active config:
-    DATABASE_TYPE : postgresql
-    DB_HOST       : {prod_env['DB_HOST']}
-    DB_NAME       : {prod_env['DB_NAME']}
-    DEBUG         : {prod_env.get('DEBUG', 'false')}
-    CORS_ORIGINS  : {prod_env.get('CORS_ORIGINS', '(not set)')}
+  Config:   DATABASE_TYPE=postgresql  DEBUG=false
+  DB:       {prod_env['DB_NAME']} @ {prod_env['DB_HOST']}
+  CORS:     {prod_env.get('CORS_ORIGINS', '(not set)')}
 
   Test:
     curl https://api.fixit-bluetechnology.co.ke/health
