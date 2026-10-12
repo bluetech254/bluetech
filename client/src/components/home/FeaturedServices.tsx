@@ -103,7 +103,7 @@ const ServiceCard = ({ service }: { service: RepairService }) => {
         {service.category}
       </p>
       <button
-        onClick={() => navigate('/book-repair')}
+        onClick={() => navigate(`/book-repair/${service.id}`)}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 rounded-lg transition-all"
       >
         Book Now
