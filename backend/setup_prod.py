@@ -179,7 +179,6 @@ if conn is None:
 """)
     sys.exit(1)
 
-conn.autocommit = False
 cur = conn.cursor()
 
 
