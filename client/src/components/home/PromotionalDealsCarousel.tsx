@@ -113,7 +113,7 @@ export const PromotionalDealsCarousel = () => {
                   </div>
                   <span className="text-lg font-bold text-blue-600">KSH {deal.price.toFixed(0)}</span>
                   <button
-                    onClick={() => navigate(deal.type === 'service' ? `/book-repair` : `/products/${deal.id}`)}
+                    onClick={() => navigate(deal.type === 'service' ? `/book-repair/${deal.id}` : `/products/${deal.id}`)}
                     className={`w-full mt-3 py-2 rounded text-sm font-medium transition-colors ${
                       deal.type === 'service'
                         ? 'bg-blue-600 hover:bg-blue-700 text-white'
