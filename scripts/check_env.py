@@ -20,11 +20,11 @@ What it does:
     Do NOT commit this file to git with real credentials.
     It is listed in .gitignore for safety.
 """
-import sys
 import os
 import re
 import shutil
-from datetime import datetime
+import sys
+from datetime import datetime, timezone
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -32,53 +32,10 @@ from datetime import datetime
 BASE_DIR = os.environ.get("BLUETECH_BASE_DIR", "/home2/fixitblu/backend")
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 
-# ── All production environment values ─────────────────────────────────────────
-# These are the known-good production credentials. The --fix mode will
-# update the .env file to match these values exactly.
-# Production stack: PostgreSQL + Paystack only. No Supabase, no M-Pesa.
-PROD_ENV = {
-    # Database
-    "DATABASE_TYPE": "postgresql",
-    "DB_HOST": "217.20.124.84",
-    "DB_PORT": "5432",
-    "DB_NAME": "fixitblu_prod_db",
-    "DB_USER": "fixitblu_prod_user",
-    "DB_PASSWORD": "Pa7swrd1990@#12345ooo@#",
-
-    # App config
-    "ENVIRONMENT": "production",
-    "API_HOST": "0.0.0.0",
-    "API_PORT": "8000",
-    "DEBUG": "false",
-    "ADMIN_PASSWORD": "BlueTech@2026!",
-
-    # CORS — production domains only (no localhost)
-    "CORS_ORIGINS": "https://bluetechadmin.vercel.app,https://bluetech-tau.vercel.app,https://bluetech.dallah.co.ke",
-    "FRONTEND_URL": "https://bluetech-tau.vercel.app",
-
-    # JWT
-    "JWT_SECRET": "c8092f2d1b61930481dc761cd98fe916",
-
-    # Paystack (live keys)
-    "PAYSTACK_PUBLIC_KEY": "pk_live_065b16c9af2156cc2140cc1883eac896ad68c443",
-    "PAYSTACK_SECRET_KEY": "sk_live_646e60be58d2d886582bc4870f96c13484f6f35f",
-
-    # SMS — BlessedTexts
-    "BLESSEDTEXTS_API_KEY": "7d76082305d74d989001e6445a99aaee",
-    "BLESSEDTEXTS_SENDER_ID": "Champ_Int",
-
-    # AWS SES (email)
-    "AWS_REGION": "us-east-1",
-    "AWS_ACCESS_KEY_ID": "AKIAQVLI5J3DKLUIHE32",
-    "AWS_SECRET_ACCESS_KEY": "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",
-
-    # Google Maps
-    "GOOGLE_MAPS_API_KEY": "AIzaSyBgD_gOVkD6FraeroFAHxQDPZOEXZuOS3E",
-
-    # AWS Cognito
-    "COGNITO_APP_CLIENT_ID": "6e8tqf647d17ucqcfr62vm5ie",
-    "COGNITO_USER_POOL_ID": "us-east-1_zktWt8Bi4",
-}
+# Path to .env.production — the source of truth for prod credentials.
+# This file is gitignored and must exist on the server with all real values.
+# It is NOT committed to git — see backend/.env.production.example for the template.
+PROD_ENV_PATH = os.path.join(BASE_DIR, ".env.production")
 
 # Variables whose values should always be overwritten in --fix mode
 # (even if the current value isn't empty or a placeholder)
@@ -101,6 +58,14 @@ SENSITIVE_VARS = {
     "PAYSTACK_SECRET_KEY", "BLESSEDTEXTS_API_KEY",
     "AWS_SECRET_ACCESS_KEY", "AWS_ACCESS_KEY_ID",
     "ADMIN_PASSWORD", "GOOGLE_MAPS_API_KEY",
+}
+
+# Variables that should NOT be copied from .env.production to .env even if missing.
+# These are dev-only vars that have no place in the .env on a production server.
+SKIP_VARS = {
+    "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_KEY",
+    "MPESA_ENV", "MPESA_CONSUMER_KEY", "MPESA_CONSUMER_SECRET",
+    "MPESA_SHORTCODE", "MPESA_PASSKEY", "MPESA_CALLBACK_URL",
 }
 
 # ── Required variables (app won't start without these) ────────────────────────
@@ -279,7 +244,7 @@ def update_env_value(lines, key, value):
 
 def write_env_file(path, lines):
     """Write lines back to the .env file, creating a backup first."""
-    backup = path + ".bak." + datetime.now().strftime("%Y%m%d%H%M%S")
+    backup = path + ".bak." + datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S")
     if os.path.exists(path):
         shutil.copy2(path, backup)
         print(f"  ✓  Backup created: {backup}")
@@ -475,18 +440,39 @@ def _redact(value, show=4):
 
 def apply_fixes(env, lines, dry_run=False):
     """
-    Apply all known production values to the .env file.
+    Apply production values from .env.production to the .env file.
+
+    The .env.production file is the source of truth for all prod credentials.
+    It must exist on the server (gitignored — not committed to git).
 
     Strategy:
-      - PROD_FORCE_OVERWRITE vars: always overwrite (DATABASE_TYPE, DB_*,
-        DEBUG, ENVIRONMENT, CORS_ORIGINS, FRONTEND_URL)
-      - All other PROD_ENV vars: only update if missing, empty, or a placeholder
+      - PROD_FORCE_OVERWRITE vars: always overwrite from .env.production
+      - All other vars: only update if missing, empty, or a placeholder
+      - SKIP_VARS (Supabase, M-Pesa): never copied — dev-only, not used in prod
     """
     section("Applying Production Fixes")
 
+    # Load the production reference file
+    if not os.path.exists(PROD_ENV_PATH):
+        print(f"  ✗  .env.production not found at {PROD_ENV_PATH}")
+        print("     This file contains the known-good production credentials.")
+        print("     It must exist on the server (it is gitignored, not in the repo).")
+        print("     Copy it manually or create it from backend/.env.production.example")
+        return []
+
+    prod_env, _ = parse_env_file(PROD_ENV_PATH)
+
+    if not prod_env:
+        print("  ✗  .env.production is empty or has no KEY=VALUE pairs")
+        return []
+
     changes = []
 
-    for key, value in PROD_ENV.items():
+    for key, value in prod_env.items():
+        # Skip dev-only vars entirely — they don't belong in a prod .env
+        if key in SKIP_VARS:
+            continue
+
         current = env.get(key, "")
         needs_update = False
 
@@ -516,16 +502,6 @@ def apply_fixes(env, lines, dry_run=False):
             print("  (dry run — no changes written)")
     else:
         print("  No fixes needed — all values already correct.")
-
-    if changes:
-        print(f"\n  {len(changes)} change(s) to apply.")
-        if not dry_run:
-            write_env_file(ENV_PATH, lines)
-            print(f"  ✓  .env updated at {ENV_PATH}")
-        else:
-            print("  (dry run — no changes written)")
-    else:
-        print("  No DB/CORS/DEBUG fixes needed — values already correct.")
 
     return changes
 
@@ -585,7 +561,6 @@ def print_report():
 def main():
     # Parse args
     fix_mode = "--fix" in sys.argv
-    check_only = "--check" in sys.argv
     dry_run = "--dry-run" in sys.argv
     base_dir_override = None
 
@@ -593,10 +568,11 @@ def main():
         if arg.startswith("--base-dir="):
             base_dir_override = arg.split("=", 1)[1]
 
-    global BASE_DIR, ENV_PATH
+    global BASE_DIR, ENV_PATH, PROD_ENV_PATH
     if base_dir_override:
         BASE_DIR = base_dir_override
         ENV_PATH = os.path.join(BASE_DIR, ".env")
+        PROD_ENV_PATH = os.path.join(BASE_DIR, ".env.production")
 
     print("=" * 60)
     print("  BlueTech Production .env Validator")
