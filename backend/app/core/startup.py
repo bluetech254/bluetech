@@ -7,8 +7,6 @@ broken server that crashes on the first real request.
 """
 import logging
 
-from core.config import settings
-
 logger = logging.getLogger(__name__)
 
 
