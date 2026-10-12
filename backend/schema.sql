@@ -10,8 +10,8 @@
 -- EXTENSIONS
 -- ========================================================================
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- uuid-ossp and pgcrypto are not available on all cPanel installs.
+-- PostgreSQL 13+ has gen_random_uuid() built-in — no extension needed.
 
 -- ========================================================================
 -- ENUMS
@@ -47,7 +47,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE,
@@ -77,7 +77,7 @@ CREATE INDEX idx_users_referred_by ON users(referred_by);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100),
@@ -103,7 +103,7 @@ CREATE INDEX idx_products_featured ON products(is_featured);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS delivery_zones (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     zone_name VARCHAR(100) UNIQUE NOT NULL,
     delivery_fee DECIMAL(10,2) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -125,7 +125,7 @@ ON CONFLICT (zone_name) DO NOTHING;
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS orders (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     full_name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
@@ -157,7 +157,7 @@ CREATE INDEX idx_orders_created_at ON orders(created_at);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS order_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id UUID REFERENCES products(id),
     product_title VARCHAR(255) NOT NULL,
@@ -175,7 +175,7 @@ CREATE INDEX idx_order_items_product ON order_items(product_id);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS repair_services (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     service_name VARCHAR(255) NOT NULL,
     service_category VARCHAR(100) NOT NULL,
     description TEXT,
@@ -193,7 +193,7 @@ CREATE INDEX idx_services_category ON repair_services(service_category);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS bookings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     full_name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
@@ -225,7 +225,7 @@ CREATE INDEX idx_bookings_created_at ON bookings(created_at);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS device_brands (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     device_type VARCHAR(50) NOT NULL,          -- e.g., 'phone', 'laptop', 'tablet'
     is_popular BOOLEAN DEFAULT FALSE,
@@ -239,7 +239,7 @@ CREATE INDEX idx_brands_active ON device_brands(is_active);
 CREATE INDEX idx_brands_device_type ON device_brands(device_type);
 
 CREATE TABLE IF NOT EXISTS device_models (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     brand_id UUID NOT NULL REFERENCES device_brands(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     device_type VARCHAR(50) NOT NULL,
@@ -254,7 +254,7 @@ CREATE INDEX idx_models_active ON device_models(is_active);
 CREATE INDEX idx_models_device_type ON device_models(device_type);
 
 CREATE TABLE IF NOT EXISTS service_pricing (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     service_id UUID NOT NULL REFERENCES repair_services(id) ON DELETE CASCADE,
     device_model_id UUID NOT NULL REFERENCES device_models(id) ON DELETE CASCADE,
     price DECIMAL(12,2) NOT NULL,
@@ -270,7 +270,7 @@ CREATE INDEX idx_service_pricing_device_model ON service_pricing(device_model_id
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS admins (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(100) UNIQUE NOT NULL,
     full_name VARCHAR(255) NOT NULL DEFAULT '',
     email VARCHAR(255),
@@ -293,7 +293,7 @@ CREATE INDEX idx_admins_active ON admins(is_active);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS points_ledger (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     points INTEGER NOT NULL,                   -- can be negative for deductions
     type VARCHAR(50) NOT NULL,                 -- e.g., 'signup_bonus', 'purchase', 'referral_signup', 'referral_purchase', 'redemption'
@@ -310,7 +310,7 @@ CREATE INDEX idx_points_ledger_created_at ON points_ledger(created_at);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS contact_messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
@@ -328,7 +328,7 @@ CREATE INDEX idx_contact_messages_created_at ON contact_messages(created_at);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS audit_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     admin_id UUID REFERENCES admins(id) ON DELETE SET NULL,
     action VARCHAR(255) NOT NULL,
     table_name VARCHAR(100),
@@ -349,7 +349,7 @@ CREATE INDEX idx_audit_log_created_at ON audit_log(created_at);
 -- ========================================================================
 
 CREATE TABLE IF NOT EXISTS product_sections (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) UNIQUE NOT NULL,
     display_order INTEGER,
     is_active BOOLEAN DEFAULT TRUE,
@@ -358,7 +358,7 @@ CREATE TABLE IF NOT EXISTS product_sections (
 );
 
 CREATE TABLE IF NOT EXISTS section_products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     section_id UUID NOT NULL REFERENCES product_sections(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     display_order INTEGER,
