@@ -17,16 +17,30 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ENUMS
 -- ========================================================================
 
-CREATE TYPE IF NOT EXISTS booking_fulfillment_type AS ENUM ('dropoff', 'pickup');
-CREATE TYPE IF NOT EXISTS booking_status AS ENUM (
-    'pending', 'confirmed', 'picked_up', 'in_diagnosis', 
-    'in_repair', 'ready', 'completed', 'cancelled'
-);
-CREATE TYPE IF NOT EXISTS order_status AS ENUM (
-    'pending', 'confirmed', 'processing', 'dispatched', 'delivered', 'cancelled'
-);
-CREATE TYPE IF NOT EXISTS payment_status AS ENUM ('unpaid', 'pending', 'paid', 'failed', 'refunded');
-CREATE TYPE IF NOT EXISTS admin_role AS ENUM ('admin', 'superadmin');
+DO $$ BEGIN
+    CREATE TYPE booking_fulfillment_type AS ENUM ('dropoff', 'pickup');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE booking_status AS ENUM (
+        'pending', 'confirmed', 'picked_up', 'in_diagnosis',
+        'in_repair', 'ready', 'completed', 'cancelled'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE order_status AS ENUM (
+        'pending', 'confirmed', 'processing', 'dispatched', 'delivered', 'cancelled'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE payment_status AS ENUM ('unpaid', 'pending', 'paid', 'failed', 'refunded');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE admin_role AS ENUM ('admin', 'superadmin');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ========================================================================
 -- USERS TABLE
