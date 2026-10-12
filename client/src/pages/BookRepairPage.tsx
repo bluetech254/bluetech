@@ -17,12 +17,12 @@ import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, C
 import toast from 'react-hot-toast';
 
 const DEVICE_CATEGORIES = [
-  { type: 'smartphone', label: 'Phone', icon: Smartphone },
-  { type: 'laptop',     label: 'Laptop', icon: Laptop },
-  { type: 'tv',         label: 'TV',     icon: Tv },
-  { type: 'camera',     label: 'Camera', icon: Camera },
-  { type: 'sound_system', label: 'Speaker', icon: Speaker },
-  { type: 'small_gadget', label: 'Gadget', icon: Cpu },
+  { type: 'phone',   label: 'Phone',   icon: Smartphone },
+  { type: 'laptop',  label: 'Laptop',  icon: Laptop },
+  { type: 'tv',      label: 'TV',      icon: Tv },
+  { type: 'camera',  label: 'Camera',  icon: Camera },
+  { type: 'speaker', label: 'Speaker', icon: Speaker },
+  { type: 'gadget',  label: 'Gadget',  icon: Cpu },
 ];
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -31,7 +31,7 @@ export const BookRepairPage = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const [service, setService] = useState<RepairService | null>(null);
-  const [loadingService, setLoadingService] = useState(true);
+  const [loadingService, setLoadingService] = useState(!!serviceId); // only show loading if there's a serviceId to fetch
   const [submitting, setSubmitting] = useState(false);
 
   // Device selection state — progressive: category → brand → model
@@ -124,7 +124,6 @@ export const BookRepairPage = () => {
   });
 
   const onSubmit = async (formData: any) => {
-    if (!serviceId) return;
     setSubmitting(true);
     const toastId = toast.loading('Submitting your repair booking...');
     try {
@@ -168,9 +167,8 @@ export const BookRepairPage = () => {
   }, [paymentModal]);
 
   if (loadingService) return <Loading fullScreen message="Loading service details..." />;
-  if (!service) return null;
 
-  const displayPrice = estimatedPrice ?? service.price;
+  const displayPrice = estimatedPrice ?? service?.price ?? 0;
 
   return (
     <div className="space-y-6 py-4 sm:py-6 animate-fade-in text-left">
@@ -188,8 +186,12 @@ export const BookRepairPage = () => {
           <Card className="p-4 sm:p-6 border border-slate-100 bg-white space-y-4">
             <h3 className="font-bold text-slate-400 text-xs border-b border-slate-100 pb-3">Repair Summary</h3>
             <div className="space-y-1">
-              <h4 className="font-extrabold text-slate-900 text-base leading-tight">{service.name}</h4>
-              <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md capitalize">{service.category}</span>
+              <h4 className="font-extrabold text-slate-900 text-base leading-tight">
+                {service?.name ?? 'General Repair Booking'}
+              </h4>
+              {service?.category && (
+                <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md capitalize">{service.category}</span>
+              )}
             </div>
             <div className="border-t border-b border-slate-100 py-3 space-y-2">
               <div className="flex justify-between items-center text-sm">
@@ -217,11 +219,11 @@ export const BookRepairPage = () => {
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-500">Duration</span>
-                <span className="font-bold text-slate-800">{service.estimated_duration}</span>
+                <span className="font-bold text-slate-800">{service?.estimated_duration || '1–3 Hours'}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-500">Warranty</span>
-                <span className="font-bold text-slate-800">{service.warranty_period || '90 Days'}</span>
+                <span className="font-bold text-slate-800">{service?.warranty_period || '90 Days'}</span>
               </div>
             </div>
             {selectedBrand && (
@@ -354,7 +356,7 @@ export const BookRepairPage = () => {
                     </p>
                     <p className={`text-xs ${priceLevel === 'model' ? 'text-emerald-600' : 'text-amber-600'}`}>
                       {priceLevel === 'model'
-                        ? `For ${service.name} on ${selectedBrand?.name} ${selectedModel?.name}`
+                        ? `For ${service?.name ?? 'this service'} on ${selectedBrand?.name} ${selectedModel?.name}`
                         : `For ${selectedBrand?.name} devices · select a model for exact price`}
                     </p>
                   </div>
