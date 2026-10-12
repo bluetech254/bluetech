@@ -257,10 +257,18 @@ def forgot_password(data: ForgotPassword) -> dict:
     otp_hash   = hash_otp(otp_plain)
     otp_expiry = (datetime.utcnow() + timedelta(minutes=_RESET_OTP_EXPIRE_MINUTES)).isoformat()
 
-    db.table("users").update({
+    update_resp = db.table("users").update({
         "reset_code":         otp_hash,
         "reset_code_expires": otp_expiry,
     }).eq("id", user["id"]).execute()
+
+    # DEBUG — remove once reset password is confirmed working
+    logger.error(
+        f"[DEBUG] forgot_password: phone={data.phone_number} "
+        f"otp_plain={otp_plain!r} otp_hash={otp_hash!r} "
+        f"expiry={otp_expiry!r} update_count={update_resp.count} "
+        f"update_error={update_resp.error!r}"
+    )
 
     send_sms(data.phone_number, f"Your BlueTech password reset code is: {otp_plain}. Valid for {_RESET_OTP_EXPIRE_MINUTES} minutes.")
     return {"message": _GENERIC}
@@ -276,7 +284,18 @@ def reset_password(data: ResetPassword) -> dict:
 
     user = resp.data[0]
 
-    if not verify_otp(data.reset_code, user.get("reset_code", "")):
+    # DEBUG — remove once reset password is confirmed working
+    stored_hash    = user.get("reset_code", "")
+    submitted_hash = hash_otp(data.reset_code)
+    logger.error(
+        f"[DEBUG] reset_password: phone={data.phone_number} "
+        f"submitted={data.reset_code!r} submitted_hash={submitted_hash!r} "
+        f"stored_hash={stored_hash!r} match={submitted_hash == stored_hash} "
+        f"expires={user.get('reset_code_expires')!r}"
+    )
+
+    if not verify_otp(data.reset_code, stored_hash):
+        raise AuthException("Invalid reset code")
         raise AuthException("Invalid reset code")
 
     _check_otp_expiry(user.get("reset_code_expires"))
