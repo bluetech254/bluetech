@@ -2,8 +2,8 @@
 core/logging.py — Structured JSON logger for the entire backend.
 
 Every log line is a single JSON object written to:
-  - stderr        (Passenger/LiteSpeed captures this → cPanel Error Logs)
-  - logs/app.log  (rotating file on the server, max 10 MB × 5 backups)
+  - stderr        (Passenger/LiteSpeed captures this -> cPanel Error Logs)
+  - logs/app.log  (rotating file on the server, max 10 MB x 5 backups)
 
 Usage anywhere in the codebase:
     from core.logging import get_logger
@@ -16,7 +16,6 @@ import json
 import logging
 import os
 import sys
-import traceback
 from logging.handlers import RotatingFileHandler
 from datetime import datetime, timezone
 
@@ -60,7 +59,7 @@ class _JSONFormatter(logging.Formatter):
         "thread", "threadName",
     })
 
-    def format(self, record: logging.LogRecord) -> str:  # noqa: A003
+    def format(self, record: logging.LogRecord) -> str:
         payload: dict = {
             "ts":     datetime.fromtimestamp(record.created, tz=timezone.utc)
                       .strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
