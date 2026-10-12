@@ -29,7 +29,6 @@ from core.db_connection import close_connection, get_connection
 
 def _get_db_type() -> str:
     """Read DATABASE_TYPE lazily (not at import time)."""
-    import os
     db_type = os.getenv("DATABASE_TYPE", "").lower()
     if db_type:
         return db_type
