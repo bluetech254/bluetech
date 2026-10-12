@@ -77,35 +77,37 @@ export const FeaturedServices = () => {
 
 const ServiceCard = ({ service }: { service: RepairService }) => {
   const navigate = useNavigate();
-  
+
+  const getCategoryIcon = (cat: string) => {
+    const c = cat.toLowerCase();
+    if (c.includes('phone') || c.includes('mobile')) return '📱';
+    if (c.includes('laptop') || c.includes('computer')) return '💻';
+    if (c.includes('tablet') || c.includes('ipad')) return '🖥️';
+    if (c.includes('audio') || c.includes('speaker')) return '🎧';
+    if (c.includes('watch') || c.includes('wearable')) return '⌚';
+    return '🔧';
+  };
+
   return (
     <div className="bg-white border border-slate-100 rounded-lg p-4 hover:shadow-md transition-shadow h-full flex flex-col">
-      {service.image && (
-        <img
-          src={service.image}
-          alt={service.name}
-          className="w-full h-24 object-cover rounded-lg mb-3"
-        />
-      )}
-      <h4 className="font-semibold text-slate-900 text-sm line-clamp-2 mb-2">
+      {/* Icon instead of image */}
+      <div className="flex justify-center mb-3">
+        <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-lg">
+          {getCategoryIcon(service.category || '')}
+        </div>
+      </div>
+      <h4 className="font-semibold text-slate-900 text-sm line-clamp-2 mb-2 text-center">
         {service.name}
       </h4>
-      <p className="text-xs text-slate-500 line-clamp-2 mb-3 flex-1">
-        {service.description}
+      <p className="text-xs text-slate-500 line-clamp-2 mb-3 flex-1 text-center">
+        {service.category}
       </p>
-      <div className="space-y-3">
-        <div className="flex items-center justify-end">
-          <span className="text-xs text-slate-400">
-            {service.estimated_duration}
-          </span>
-        </div>
-        <button
-          onClick={() => navigate('/services')}
-          className="w-full bg-slate-300 hover:bg-slate-400 text-slate-700 font-semibold text-xs py-2 rounded-lg transition-all"
-        >
-          Book Now
-        </button>
-      </div>
+      <button
+        onClick={() => navigate('/book-repair')}
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 rounded-lg transition-all"
+      >
+        Book Now
+      </button>
     </div>
   );
 };
