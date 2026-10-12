@@ -60,7 +60,7 @@ PROD_ENV_CONTENT = """\
 # DO NOT commit this file to git
 
 DATABASE_TYPE=postgresql
-DB_HOST=217.20.124.84
+DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=fixitblu_prod_db
 DB_USER=fixitblu_prod_user
