@@ -1,16 +1,13 @@
 name: Deploy Admin to cPanel
 
 on:
-  workflow_run:
-    workflows: ["CI"]
+  push:
     branches: [production]
-    types: [completed]
 
 jobs:
   deploy:
     name: Build & FTP Deploy Admin
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
