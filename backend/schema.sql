@@ -55,14 +55,16 @@ CREATE TABLE IF NOT EXISTS users (
     is_verified BOOLEAN DEFAULT FALSE,
     phone_verified BOOLEAN DEFAULT FALSE,
     email_verified BOOLEAN DEFAULT FALSE,
-    verification_code VARCHAR(255),           -- OTP hash for verification
+    verification_code TEXT,                   -- OTP hash for phone verification
     otp_expires_at TIMESTAMP WITH TIME ZONE,
+    reset_code TEXT,                          -- OTP hash for password reset
+    reset_code_expires TIMESTAMP WITH TIME ZONE,
     referral_code VARCHAR(20) UNIQUE,         -- unique code for referrals
     referred_by UUID REFERENCES users(id) ON DELETE SET NULL,
     points INTEGER DEFAULT 0,                 -- loyalty points
-    account_locked BOOLEAN DEFAULT FALSE,
-    lockout_expires_at TIMESTAMP WITH TIME ZONE,
     failed_login_attempts INTEGER DEFAULT 0,
+    locked_until TIMESTAMP WITH TIME ZONE,    -- account lockout expiry
+    last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
