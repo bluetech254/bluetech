@@ -118,7 +118,7 @@ def _init_pg_pool() -> Any:
         dsn = (
             f"host={db_host} "
             f"port={db_port} "
-            f"database={db_name} "
+            f"dbname={db_name} "
             f"user={db_user} "
             f"password={db_password}"
         )
