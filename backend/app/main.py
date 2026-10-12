@@ -2,6 +2,8 @@
 app/main.py — Application factory. This file only mounts routers and
 configures middleware. Zero business logic here.
 """
+import traceback
+
 from admin_auth.router import router as admin_auth_router
 from admin_ops.router import router as admin_ops_router
 
@@ -10,10 +12,13 @@ from auth.router import router as auth_router
 from bookings.router import router as bookings_router
 from contact.router import router as contact_router
 from core.config import settings
+from core.exceptions import BlueTechException
+from core.logging import get_logger
+from core.middleware import RequestLoggingMiddleware
 from core.startup import validate_startup
 from delivery.router import router as delivery_router
 from devices.router import router as devices_router
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from orders.router import router as orders_router
@@ -27,6 +32,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from tracking.router import router as tracking_router
+
+logger = get_logger("main")
 
 # ── Rate limiter ──────────────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address)
@@ -44,6 +51,8 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# ── Middleware (added bottom-up — last added runs outermost) ──────────────────
+# 1. CORS must be outermost so preflight requests are handled before anything else
 app.add_middleware(
     CORSMiddleware,
     allow_origins     = settings.cors_origins_list,
@@ -51,6 +60,59 @@ app.add_middleware(
     allow_methods     = ["*"],
     allow_headers     = ["*"],
 )
+
+# 2. Request logging — runs inside CORS, wraps every real request
+app.add_middleware(RequestLoggingMiddleware)
+
+
+# ── Exception handlers ────────────────────────────────────────────────────────
+
+@app.exception_handler(BlueTechException)
+async def bluetech_exception_handler(request: Request, exc: BlueTechException):
+    """
+    Handles all known application exceptions (AuthException, ProductNotFoundException, etc.)
+    Logs as WARNING with endpoint details. Returns clean 400 to the client.
+    """
+    logger.warning(
+        f"BlueTechException on {request.method} {request.url.path}: {exc}",
+        extra={
+            "method":  request.method,
+            "path":    request.url.path,
+            "ip":      request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+                       or (request.client.host if request.client else "unknown"),
+            "error":   str(exc),
+            "exc_type": type(exc).__name__,
+        },
+    )
+    return JSONResponse(
+        status_code=400,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """
+    Catch-all for any exception not handled by a router.
+    Logs full traceback as ERROR. Returns generic 500 so internals are never
+    exposed to the client.
+    """
+    tb = traceback.format_exc()
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path}: {type(exc).__name__}: {exc}",
+        extra={
+            "method":    request.method,
+            "path":      request.url.path,
+            "ip":        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+                         or (request.client.host if request.client else "unknown"),
+            "error":     f"{type(exc).__name__}: {exc}",
+            "traceback": tb,
+        },
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
 
 # ── Mount routers ─────────────────────────────────────────────────────────────
 app.include_router(auth_router)
