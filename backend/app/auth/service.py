@@ -9,7 +9,7 @@ Security fixes applied here:
 - Generic error messages (no user enumeration on login/forgot-password)
 - Referral code resolution on signup
 """
-import logging
+from core.logging import get_logger
 from datetime import datetime, timedelta
 
 from auth.models import (
@@ -31,7 +31,7 @@ from core.security import (
 )
 from notifications.sms import send_sms
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # OTP expiry windows
 _VERIFY_OTP_EXPIRE_MINUTES = 30

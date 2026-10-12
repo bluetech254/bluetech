@@ -10,7 +10,7 @@ Rate limiting applied on every sensitive endpoint:
 All business logic delegated to auth/service.py — this file only
 handles HTTP concerns (request parsing, response shaping, error mapping).
 """
-import logging
+from core.logging import get_logger
 
 from auth import service
 from auth.dependencies import get_current_user as get_current_user_dep
@@ -29,7 +29,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Client Authentication"])
@@ -53,7 +53,7 @@ def signup(request: Request, body: UserSignup):
     except AuthException as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Signup error: {e}")
+        logger.error(f"Signup error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Registration failed. Please try again.")
 
 
@@ -73,7 +73,7 @@ def login(request: Request, body: UserLogin):
     except AuthException as e:
         raise HTTPException(status_code=401, detail=str(e))
     except Exception as e:
-        logger.error(f"Login error: {e}")
+        logger.error(f"Login error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Login failed. Please try again.")
 
 
