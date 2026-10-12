@@ -274,8 +274,15 @@ class QueryBuilder:
             if self._insert_data or self._update_data or self._delete:
                 # Commit and get affected row count
                 self.conn.commit()
+                # For INSERT with RETURNING * — fetch the actual inserted row
+                if self._insert_data and cursor.description:
+                    col_names = [desc[0] for desc in cursor.description]
+                    rows = cursor.fetchall()
+                    returned_data = [dict(zip(col_names, row)) for row in rows]
+                else:
+                    returned_data = [] if self._delete else [self._insert_data or self._update_data]
                 result = DBResponse(
-                    data=[] if self._delete else [self._insert_data or self._update_data],
+                    data=returned_data,
                     count=cursor.rowcount,
                     error=None,
                 )
@@ -371,7 +378,7 @@ class QueryBuilder:
             placeholders = ",".join(["%s"] * len(cols))
             sql = (
                 f"INSERT INTO {self.table_name} ({','.join(cols)}) "
-                f"VALUES ({placeholders})"
+                f"VALUES ({placeholders}) RETURNING *"
             )
             params = list(self._insert_data.values())
 
