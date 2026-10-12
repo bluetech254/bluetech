@@ -14,6 +14,9 @@ _ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
+    # ── Database backend — must be 'postgresql' (prod) or 'supabase' (dev)
+    DATABASE_TYPE: str = ""
+
     # ── Required — no defaults, app will not start without these ──────────────
     JWT_SECRET: str
 

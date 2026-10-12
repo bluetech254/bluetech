@@ -26,8 +26,23 @@ _pg_pool: Any = None
 # Global Supabase client
 _supabase_client: Any = None
 
-# Detect which database backend to use
-_db_type = os.getenv("DATABASE_TYPE", "").lower()
+
+def _get_db_type() -> str:
+    """Read DATABASE_TYPE lazily (not at import time).
+
+    Checks os.environ first (Render/cPanel inject env vars directly),
+    then falls back to the Settings object (which loads from .env file).
+    """
+    db_type = os.getenv("DATABASE_TYPE", "").lower()
+    if db_type:
+        return db_type
+
+    # Fall back to Settings (loads from .env file via pydantic-settings)
+    try:
+        from core.config import settings
+        return settings.DATABASE_TYPE.lower()
+    except Exception:
+        return ""
 
 
 def get_connection() -> Any:
@@ -38,13 +53,14 @@ def get_connection() -> Any:
       - psycopg2 connection (if DATABASE_TYPE=postgresql)
       - Supabase client (if DATABASE_TYPE=supabase)
     """
-    if _db_type == "postgresql":
+    db_type = _get_db_type()
+    if db_type == "postgresql":
         return _get_pg_connection()
-    elif _db_type == "supabase":
+    elif db_type == "supabase":
         return _get_supabase_connection()
     else:
         raise RuntimeError(
-            f"Invalid DATABASE_TYPE='{_db_type}'. "
+            f"Invalid DATABASE_TYPE='{db_type}'. "
             "Must be 'postgresql' or 'supabase'. Set it in environment."
         )
 
@@ -153,7 +169,7 @@ def close_connection(conn: Any) -> None:
     Args:
         conn: Connection object returned by get_connection()
     """
-    if _db_type == "postgresql" and _pg_pool:
+    if _get_db_type() == "postgresql" and _pg_pool:
         try:
             # psycopg2.pool.PoolError is caught here
             _pg_pool.putconn(conn)
@@ -170,7 +186,7 @@ def validate_connection() -> bool:
         True if connection is valid, raises exception otherwise
     """
     try:
-        if _db_type == "postgresql":
+        if _get_db_type() == "postgresql":
             conn = _get_pg_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT 1")

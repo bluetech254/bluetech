@@ -26,7 +26,18 @@ from typing import Any, Dict, List, Optional
 
 from core.db_connection import close_connection, get_connection
 
-_db_type = os.getenv("DATABASE_TYPE", "").lower()
+
+def _get_db_type() -> str:
+    """Read DATABASE_TYPE lazily (not at import time)."""
+    import os
+    db_type = os.getenv("DATABASE_TYPE", "").lower()
+    if db_type:
+        return db_type
+    try:
+        from core.config import settings
+        return settings.DATABASE_TYPE.lower()
+    except Exception:
+        return ""
 
 
 class DBResponse(dict):
@@ -62,8 +73,9 @@ class QueryBuilder:
         """Initialize query builder for a table."""
         self.table_name = table_name
         self.conn = get_connection()
-        self.is_supabase = _db_type == "supabase"
-        self.is_postgres = _db_type == "postgresql"
+        _current_db_type = _get_db_type()
+        self.is_supabase = _current_db_type == "supabase"
+        self.is_postgres = _current_db_type == "postgresql"
 
         # For Supabase: store the table reference
         self._sb_table = None if not self.is_supabase else self.conn.table(table_name)
