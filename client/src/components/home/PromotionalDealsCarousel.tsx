@@ -76,25 +76,44 @@ export const PromotionalDealsCarousel = () => {
           style={{ scrollbarWidth: 'none' }}
         >
           <div className="flex gap-4 w-max">
-            {deals.map((deal) => (
+          {deals.map((deal) => (
               <div key={deal.id} className="flex-shrink-0 w-[130px] snap-start group/card">
-                <div className="relative h-40 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-                  <img src={deal.image} alt={deal.title} className="w-full h-full object-cover"  loading="lazy" />
-                  <div className="absolute top-3 right-3 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
-                    {deal.type === 'product' ? 'Deal' : 'Service'}
+                {/* Image only for products; services get an icon placeholder */}
+                {deal.type === 'product' ? (
+                  <div className="relative h-40 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+                    {deal.image ? (
+                      <img src={deal.image} alt={deal.title} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-4xl">📦</div>
+                    )}
+                    <div className="absolute top-3 right-3 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                      Deal
+                    </div>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-opacity" />
                   </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-opacity" />
-                </div>
+                ) : (
+                  <div className="relative h-40 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center justify-center gap-2 px-2">
+                    <div className="w-12 h-12 rounded-xl bg-white border border-blue-200 flex items-center justify-center text-2xl shadow-sm">
+                      🔧
+                    </div>
+                    <span className="text-xs font-semibold text-blue-800 text-center line-clamp-2 leading-tight">
+                      {deal.title}
+                    </span>
+                    <div className="absolute top-3 right-3 bg-green-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                      Service
+                    </div>
+                  </div>
+                )}
                 <div className="mt-3 bg-white p-3 rounded-lg shadow-sm">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-semibold text-slate-900 text-sm truncate flex-1">{deal.title}</h3>
-                    <span className={`text-xs px-2 py-1 rounded ${deal.type === 'product' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                    <span className={`text-xs px-2 py-1 rounded ml-1 ${deal.type === 'product' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
                       {deal.type === 'product' ? 'Product' : 'Service'}
                     </span>
                   </div>
                   <span className="text-lg font-bold text-blue-600">KSH {deal.price.toFixed(0)}</span>
                   <button
-                    onClick={() => navigate(deal.type === 'service' ? `/book-repair/${deal.id}` : `/products/${deal.id}`)}
+                    onClick={() => navigate(deal.type === 'service' ? `/book-repair` : `/products/${deal.id}`)}
                     className={`w-full mt-3 py-2 rounded text-sm font-medium transition-colors ${
                       deal.type === 'service'
                         ? 'bg-blue-600 hover:bg-blue-700 text-white'
