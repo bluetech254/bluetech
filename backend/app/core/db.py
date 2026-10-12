@@ -272,18 +272,19 @@ class QueryBuilder:
 
             # For INSERT/UPDATE/DELETE: fetch results if any, return row count
             if self._insert_data or self._update_data or self._delete:
-                # Commit and get affected row count
-                self.conn.commit()
-                # For INSERT with RETURNING * — fetch the actual inserted row
+                # Fetch BEFORE commit — psycopg2 wipes cursor.description after commit()
                 if self._insert_data and cursor.description:
+                    # INSERT with RETURNING * — read the actual inserted row from DB
                     col_names = [desc[0] for desc in cursor.description]
                     rows = cursor.fetchall()
                     returned_data = [dict(zip(col_names, row)) for row in rows]
                 else:
                     returned_data = [] if self._delete else [self._insert_data or self._update_data]
+                row_count = cursor.rowcount
+                self.conn.commit()
                 result = DBResponse(
                     data=returned_data,
-                    count=cursor.rowcount,
+                    count=row_count,
                     error=None,
                 )
             else:
