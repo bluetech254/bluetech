@@ -258,13 +258,15 @@ CREATE INDEX idx_service_pricing_device_model ON service_pricing(device_model_id
 CREATE TABLE IF NOT EXISTS admins (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,            -- hashed password (bcrypt)
+    full_name VARCHAR(255) NOT NULL DEFAULT '',
     email VARCHAR(255),
+    password VARCHAR(255) NOT NULL,            -- hashed password (bcrypt)
     role admin_role DEFAULT 'admin',
     is_active BOOLEAN DEFAULT TRUE,
     account_locked BOOLEAN DEFAULT FALSE,
     lockout_expires_at TIMESTAMP WITH TIME ZONE,
     failed_login_attempts INTEGER DEFAULT 0,
+    last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

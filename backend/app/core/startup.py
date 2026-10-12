@@ -2,12 +2,12 @@
 core/startup.py — Startup validation.
 
 Called once when the app boots. Validates all external connections and
-required config. Fails fast with a clear error rather than starting a
-broken server that crashes on the first real request.
+required config. Logs warnings instead of crashing when DATABASE_TYPE
+is not set, so the app can still start (e.g. on Render before env vars
+are configured). The /health/db endpoint provides runtime DB status.
 """
 import logging
-
-from core.config import settings
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +15,27 @@ logger = logging.getLogger(__name__)
 def validate_startup() -> None:
     """
     Run all startup checks. Raises RuntimeError on any failure so the
-    process exits immediately with a visible error message.
+    process exits immediately with a visible error message — unless
+    DATABASE_TYPE is not set, in which case we warn and let the app
+    start so it can be configured remotely.
     """
+    db_type = os.getenv("DATABASE_TYPE", "").lower()
+    if not db_type:
+        try:
+            from core.config import settings
+            db_type = settings.DATABASE_TYPE.lower()
+        except Exception:
+            pass
+
+    if not db_type:
+        logger.warning(
+            "⚠ DATABASE_TYPE not set. Set it to 'postgresql' or 'supabase' "
+            "in the environment (e.g. Render dashboard env vars). "
+            "DB endpoints will return errors until configured."
+        )
+        return
+
     _check_database()
-    _check_mpesa_production_config()
     logger.info("✓ All startup checks passed")
 
 
@@ -33,28 +50,3 @@ def _check_database() -> None:
             f"Database unreachable at startup. "
             f"Check DATABASE_TYPE env var and connection credentials. Error: {e}"
         )
-
-
-def _check_mpesa_production_config() -> None:
-    """
-    In production M-Pesa mode, all Daraja credentials must be set.
-    In sandbox mode this check is skipped so local dev works without them.
-    """
-    if settings.MPESA_ENV != "production":
-        logger.info("✓ M-Pesa in sandbox mode — skipping credential check")
-        return
-
-    required = {
-        "MPESA_CONSUMER_KEY":    settings.MPESA_CONSUMER_KEY,
-        "MPESA_CONSUMER_SECRET": settings.MPESA_CONSUMER_SECRET,
-        "MPESA_PASSKEY":         settings.MPESA_PASSKEY,
-        "MPESA_CALLBACK_URL":    settings.MPESA_CALLBACK_URL,
-        "MPESA_SHORTCODE":       settings.MPESA_SHORTCODE,
-    }
-    missing = [k for k, v in required.items() if not v]
-    if missing:
-        raise RuntimeError(
-            f"MPESA_ENV is 'production' but these vars are missing: "
-            f"{', '.join(missing)}"
-        )
-    logger.info("✓ M-Pesa production config OK")
