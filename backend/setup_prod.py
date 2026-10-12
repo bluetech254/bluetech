@@ -135,8 +135,17 @@ section("3. PostgreSQL connection check")
 try:
     import psycopg2
 except ImportError:
-    fail("psycopg2 not installed", "run: pip install psycopg2-binary")
-    sys.exit(1)
+    print("  psycopg2 not found — installing psycopg2-binary...")
+    import subprocess
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "psycopg2-binary", "-q"],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        fail("Failed to install psycopg2-binary", result.stderr.strip()[:200])
+        sys.exit(1)
+    import psycopg2
+    ok("psycopg2-binary installed")
 
 try:
     conn = psycopg2.connect(
