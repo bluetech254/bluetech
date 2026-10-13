@@ -199,7 +199,7 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
     if points_discount > 0 and user_id:
         pts = int(order_data.redeem_points)
         user_r  = db.table("users").select("points").eq("id", user_id).single().execute()
-        current = user_r["data"].get("points", 0) if user_r["data"] else 0
+        current = user_r.data.get("points", 0) if user_r.data else 0
         db.table("users").update({"points": current - pts}).eq("id", user_id).execute()
         db.table("points_ledger").insert({
             "user_id":     user_id,
@@ -284,7 +284,7 @@ def _handle_delivery_rewards(order: dict):
         earned = _math.floor(subtotal * 0.10)
         if earned > 0:
             u  = db.table("users").select("points").eq("id", user_id).single().execute()
-            current = u["data"].get("points", 0) if u["data"] else 0
+            current = u.data.get("points", 0) if u.data else 0
             db.table("users").update({"points": current + earned}).eq("id", user_id).execute()
             db.table("points_ledger").insert({
                 "user_id":     user_id,
@@ -305,9 +305,9 @@ def _handle_delivery_rewards(order: dict):
             .execute()
         if not prev.data:
             buyer = db.table("users").select("full_name").eq("id", user_id).single().execute()
-            name  = buyer["data"].get("full_name", "A customer") if buyer["data"] else "A customer"
+            name  = buyer.data.get("full_name", "A customer") if buyer.data else "A customer"
             ref_u = db.table("users").select("points").eq("id", referrer_id).single().execute()
-            ref_pts = ref_u["data"].get("points", 0) if ref_u["data"] else 0
+            ref_pts = ref_u.data.get("points", 0) if ref_u.data else 0
             db.table("users").update({"points": ref_pts + 50}).eq("id", referrer_id).execute()
             db.table("points_ledger").insert({
                 "user_id":     referrer_id,
