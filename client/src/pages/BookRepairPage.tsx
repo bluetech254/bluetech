@@ -155,7 +155,18 @@ export const BookRepairPage = () => {
         navigate(`/booking-success/${response.id}`);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to submit booking.', { id: toastId });
+      const detail = err.response?.data?.detail;
+      let msg = 'Failed to submit booking.';
+      if (typeof detail === 'string') {
+        msg = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        const first = detail[0];
+        const field = first.loc?.slice(-1)[0] ?? '';
+        msg = field ? `${field}: ${first.msg}` : first.msg;
+      } else if (err.response?.data?.message) {
+        msg = err.response.data.message;
+      }
+      toast.error(msg, { id: toastId });
     } finally {
       setSubmitting(false);
     }

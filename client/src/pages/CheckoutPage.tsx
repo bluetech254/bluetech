@@ -204,7 +204,22 @@ export const CheckoutPage = () => {
         navigate(`/order-success/${response.id}`);
       }
     } catch (err: any) {
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to submit order. Check stock availability or connection.';
+      // Pydantic 422 returns detail as an array of {loc, msg, type} objects
+      // We must extract a string — never pass the raw object to toast
+      let msg = 'Failed to submit order. Check your details and try again.';
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        msg = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        // Extract field name + message from first validation error
+        const first = detail[0];
+        const field = first.loc?.slice(-1)[0] ?? '';
+        msg = field ? `${field}: ${first.msg}` : first.msg;
+      } else if (err.response?.data?.message) {
+        msg = err.response.data.message;
+      } else if (err.message) {
+        msg = err.message;
+      }
       toast.error(msg, { id: toastId });
     } finally {
       setSubmitting(false);
