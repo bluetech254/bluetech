@@ -136,6 +136,19 @@ def request_final_payment(booking_id: str, admin: dict = Depends(get_current_adm
         raise HTTPException(status_code=502, detail="Failed to create payment link. Try again.")
 
 
+@router.post("/booking/final/verify/{reference}")
+@limiter.limit("10/minute")
+def verify_final_payment(request: Request, reference: str):
+    """Verify a final payment by Paystack reference. Updates DB if paid."""
+    try:
+        return service.verify_final_payment(reference)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Paystack verify final failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to verify payment.")
+
+
 @router.get("/booking/{booking_id}/final/status")
 def get_final_payment_status(booking_id: str):
     """Get final payment status for a booking."""

@@ -242,6 +242,21 @@ def get_final_payment_status(booking_id: str) -> dict:
     return resp.data
 
 
+def verify_final_payment(reference: str) -> dict:
+    """Verify a final payment by Paystack reference (client polling). Updates DB if paid."""
+    txn = verify_transaction(reference)
+    if txn.get("status") == "success":
+        db.table("bookings").update({
+            "final_payment_status": "paid",
+            "final_receipt":        txn.get("reference", reference),
+        }).eq("final_payment_reference", reference).execute()
+    return {
+        "status":    txn.get("status"),
+        "reference": reference,
+        "amount":    txn.get("amount", 0) / 100,
+    }
+
+
 # ── Webhook processor ──────────────────────────────────────────────────────────
 
 def process_webhook(event: dict) -> None:
