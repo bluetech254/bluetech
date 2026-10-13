@@ -118,7 +118,7 @@ def admin_delete_brand(brand_id: str, admin: dict = Depends(get_current_admin)):
 
 @router.get("/api/v1/admin/devices/models")
 def admin_get_models(brand_id: str | None = Query(None), admin: dict = Depends(get_current_admin)):
-    q = db.table("device_models").select("*, device_brands(name)")
+    q = db.table("device_models").select("*")
     if brand_id:
         q = q.eq("brand_id", brand_id)
     resp = q.order("name").execute()
@@ -145,7 +145,7 @@ def admin_delete_model(model_id: str, admin: dict = Depends(get_current_admin)):
 @router.get("/api/v1/admin/devices/pricing")
 def admin_get_pricing(admin: dict = Depends(get_current_admin)):
     resp = db.table("service_pricing")\
-        .select("*, repair_services(service_name), device_brands(name), device_models(name)")\
+        .select("*")\
         .order("created_at", desc=True).execute()
     return {"data": resp.data or []}
 
