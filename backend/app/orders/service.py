@@ -178,6 +178,10 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
     }
 
     order_resp = db.table("orders").insert(order_row).execute()
+    if not order_resp.data:
+        err = order_resp.error or "Insert returned no data"
+        logger.error(f"Order insert failed: {err}")
+        raise RuntimeError(f"Failed to create order: {err}")
     order      = order_resp.data[0]
     order_id   = order["id"]
 

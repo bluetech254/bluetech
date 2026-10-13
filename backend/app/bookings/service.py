@@ -36,7 +36,11 @@ def create_booking(data: BookingCreate, user_id: str | None = None) -> dict:
     # Enum → string
     row["fulfillment_type"] = data.fulfillment_type.value
 
-    resp    = db.table("bookings").insert(row).execute()
+    resp = db.table("bookings").insert(row).execute()
+    if not resp.data:
+        err = resp.error or "Insert returned no data"
+        logger.error(f"Booking insert failed: {err}")
+        raise RuntimeError(f"Failed to create booking: {err}")
     booking = resp.data[0]
     sid     = booking["id"][:8].upper()
 

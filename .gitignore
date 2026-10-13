@@ -82,3 +82,6 @@ supabase/.temp/
 *.zip
 CPANEL_MIGRATION_PLAN.md
 CREDENTIAL_CLEANUP_PLAN.md
+x.java
+x.txt
+git-commands.md
