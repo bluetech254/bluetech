@@ -30,7 +30,7 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat()
     today_set = {today, yesterday}   # EAT = UTC+3
 
-    orders_r   = db.table("orders").select("*")).execute()
+    orders_r   = db.table("orders").select("*").execute()
     bookings_r = db.table("bookings").select("*").execute()
     products_r = db.table("products")\
         .select("id,title,stock_quantity,low_stock_threshold,is_active").eq("is_active", True).execute()
@@ -176,7 +176,7 @@ def export_bookings_csv(status: str | None = None, admin: dict = Depends(get_cur
 
 @router.get("/transactions")
 def get_transactions(admin: dict = Depends(get_current_admin)):
-    orders_r   = db.table("orders").select("*")).execute()
+    orders_r   = db.table("orders").select("*").execute()
     bookings_r = db.table("bookings").select("*").execute()
     txns = []
     for o in (orders_r.data or []):
@@ -265,7 +265,7 @@ def customer_history(user_id: str, admin: dict = Depends(get_current_admin)):
         user = None
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    orders_r   = db.table("orders").select("*")).eq("user_id", user_id).order("created_at", desc=True).execute()
+    orders_r   = db.table("orders").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
     bookings_r = db.table("bookings").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
     points_r   = db.table("points_ledger").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
     for f in ("password", "verification_code", "reset_code"):
