@@ -41,9 +41,17 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     products = products_r.data or []
     users    = users_r.data or []
 
-    orders_today   = [o for o in orders   if (o.get("created_at") or "")[:10] in today_set]
-    bookings_today = [b for b in bookings if (b.get("created_at") or "")[:10] in today_set]
-    users_today    = [u for u in users    if (u.get("created_at") or "")[:10] in today_set]
+    def _date(val) -> str:
+        """Normalize created_at — may be a datetime object or ISO string."""
+        if val is None:
+            return ""
+        if hasattr(val, "date"):          # datetime object from psycopg2
+            return val.date().isoformat()
+        return str(val)[:10]             # ISO string "2026-10-13T..."
+
+    orders_today   = [o for o in orders   if _date(o.get("created_at")) in today_set]
+    bookings_today = [b for b in bookings if _date(b.get("created_at")) in today_set]
+    users_today    = [u for u in users    if _date(u.get("created_at")) in today_set]
 
     order_revenue      = sum(float(o.get("total_amount", 0) or 0) for o in orders if o.get("payment_status") == "paid")
     booking_commitment = sum(float(b.get("commitment_fee", 0) or 0) for b in bookings if b.get("commitment_payment_status") == "paid")
@@ -67,7 +75,7 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     daily = defaultdict(float)
     for o in orders:
         if o.get("payment_status") == "paid":
-            day = (o.get("created_at") or "")[:10]
+            day = _date(o.get("created_at"))
             if day:
                 daily[day] += float(o.get("total_amount", 0) or 0)
 
@@ -83,8 +91,8 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
         "low_stock_alerts":       low_stock,
         "order_status_breakdown": dict(status_counts),
         "revenue_chart":          [{"date": k, "revenue": v} for k, v in sorted(daily.items())[-30:]],
-        "recent_orders":          sorted(orders,   key=lambda x: x.get("created_at", ""), reverse=True)[:50],
-        "recent_bookings":        sorted(bookings, key=lambda x: x.get("created_at", ""), reverse=True)[:20],
+        "recent_orders":          sorted(orders,   key=lambda x: _date(x.get("created_at")), reverse=True)[:50],
+        "recent_bookings":        sorted(bookings, key=lambda x: _date(x.get("created_at")), reverse=True)[:20],
     }
 
 
@@ -288,7 +296,7 @@ def customer_history(user_id: str, admin: dict = Depends(get_current_admin)):
 # ── Global search ─────────────────────────────────────────────────────────────
 
 @router.get("/search")
-def global_search(q: str = Query(..., min_length=2), admin: dict = Depends(get_current_admin)):
+def global_search(q: str = Query(..., min_length=1), admin: dict = Depends(get_current_admin)):
     term = q.strip()
     users_r    = db.table("users")\
         .select("id,full_name,phone_number,email,points,created_at")\
