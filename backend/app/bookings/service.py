@@ -136,7 +136,7 @@ def _award_completion_points(booking: dict):
 
     try:
         u  = db.table("users").select("points").eq("id", user_id).single().execute()
-        current = u["data"].get("points", 0) if u["data"] else 0
+        current = u.data.get("points", 0) if u.data else 0
         db.table("users").update({"points": current + earned}).eq("id", user_id).execute()
         db.table("points_ledger").insert({
             "user_id":     user_id,
