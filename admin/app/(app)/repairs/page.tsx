@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send, Loader2, CheckCircle2, XCircle, Smartphone, X, Phone, Wrench, MapPin, FileText, AlertTriangle } from "lucide-react";
 import { adminApi, formatKES } from "@/lib/api";
+import { usePaystack } from "@/lib/usePaystack";
 import { Booking, BookingStatus } from "@/lib/types";
 
 const TABS: { label: string; value: BookingStatus | "" }[] = [
@@ -27,8 +28,8 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "text-green-500", cancelled: "text-red-500",
 };
 
-type PaymentModalState = "confirm" | "sending" | "link_ready" | "polling" | "paid" | "failed";
-interface PaymentModal { booking: Booking; amount: number; state: PaymentModalState; receipt?: string; error?: string; paymentUrl?: string; }
+type PaymentModalState = "confirm" | "loading" | "paid" | "failed";
+interface PaymentModal { booking: Booking; amount: number; state: PaymentModalState; receipt?: string; error?: string; }
 
 export default function RepairsPage() {
   const [tab, setTab] = useState<BookingStatus | "">("");
@@ -42,6 +43,7 @@ export default function RepairsPage() {
   const [notesDraft, setNotesDraft] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [payModal, setPayModal] = useState<PaymentModal | null>(null);
+  const { pay, loading: paystackLoading } = usePaystack();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function load() {
@@ -114,25 +116,49 @@ export default function RepairsPage() {
 
   async function sendPaymentPrompt() {
     if (!payModal) return;
-    setPayModal(m => m && { ...m, state: "sending" });
+    setPayModal(m => m && { ...m, state: "loading" });
     try {
+      // Get a Paystack reference from the backend
       const res = await adminApi.requestFinalPayment(payModal.booking.id);
-      setPayModal(m => m && { ...m, state: "link_ready", paymentUrl: res.authorization_url });
-      // Start polling for payment confirmation
-      let attempts = 0;
-      pollRef.current = setInterval(async () => {
-        attempts++;
-        try {
-          const status = await adminApi.getFinalPaymentStatus(payModal.booking.id);
-          if (status.final_payment_status === "paid") {
-            clearInterval(pollRef.current!);
-            setPayModal(m => m && { ...m, state: "paid", receipt: status.final_receipt });
-          } else if (attempts >= 36) {
-            // 3 minutes — stop polling, let admin check manually
-            clearInterval(pollRef.current!);
-          }
-        } catch { /* keep polling */ }
-      }, 5000);
+      const { authorization_url: _url, reference, amount } = res;
+
+      // Use the customer's phone as a placeholder email (Paystack requires valid email)
+      const email = payModal.booking.phone_number
+        ? `${payModal.booking.phone_number}@noemail.bluetech.co.ke`
+        : "customer@noemail.bluetech.co.ke";
+
+      // Open Paystack inline popup
+      await pay({
+        email,
+        amountKes: amount ?? payModal.amount,
+        reference,
+        metadata: {
+          booking_id: payModal.booking.id,
+          type: "final",
+          phone: payModal.booking.phone_number,
+        },
+        onSuccess: async (ref) => {
+          // Poll until backend confirms paid
+          let attempts = 0;
+          const interval = setInterval(async () => {
+            attempts++;
+            try {
+              const status = await adminApi.getFinalPaymentStatus(payModal.booking.id);
+              if (status.final_payment_status === "paid") {
+                clearInterval(interval);
+                setPayModal(m => m && { ...m, state: "paid", receipt: status.final_receipt ?? ref });
+                load();
+              }
+            } catch { /* keep polling */ }
+            if (attempts >= 12) clearInterval(interval); // 1 min max
+          }, 5000);
+          pollRef.current = interval;
+        },
+        onClose: () => {
+          // Popup closed without paying — go back to confirm
+          setPayModal(m => m && { ...m, state: "confirm" });
+        },
+      });
     } catch (err: any) {
       setPayModal(m => m && { ...m, state: "failed", error: err.message });
     }
@@ -376,48 +402,23 @@ export default function RepairsPage() {
 
             {payModal.state === "confirm" && (
               <div className="space-y-2">
-                <p className="text-xs text-ink-muted">Generates a <strong>Paystack payment link</strong> for <strong>{formatKES(payModal.amount)}</strong>. Share it with the customer to complete payment.</p>
+                <p className="text-xs text-ink-muted">
+                  Opens a <strong>Paystack payment popup</strong> for <strong>{formatKES(payModal.amount)}</strong>.
+                  The customer pays directly in this window.
+                </p>
                 <div className="flex gap-2 pt-1">
                   <button onClick={closePayModal} className="flex-1 py-2 rounded-lg border border-base-border text-xs text-ink-muted hover:text-ink">Cancel</button>
-                  <button onClick={sendPaymentPrompt} className="flex-1 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold flex items-center justify-center gap-1.5">
-                    <Send size={13} /> Generate Link
+                  <button onClick={sendPaymentPrompt} disabled={paystackLoading}
+                    className="flex-1 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
+                    {paystackLoading ? <Loader2 size={13} className="animate-spin" /> : <><Send size={13} /> Open Payment</>}
                   </button>
                 </div>
               </div>
             )}
-            {payModal.state === "sending" && (
+            {payModal.state === "loading" && (
               <div className="flex flex-col items-center gap-2 py-3">
                 <Loader2 size={28} className="text-green-500 animate-spin" />
-                <p className="text-xs text-ink-muted">Generating payment link…</p>
-              </div>
-            )}
-            {payModal.state === "link_ready" && (
-              <div className="space-y-3">
-                <p className="text-xs text-ink-dim">Payment link ready. Copy and share with the customer:</p>
-                <div className="flex items-center gap-2 bg-base-hover rounded-xl p-3">
-                  <p className="text-xs text-ink font-mono flex-1 break-all">{payModal.paymentUrl}</p>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(payModal.paymentUrl ?? "")}
-                    className="shrink-0 px-2 py-1 rounded-lg bg-volt text-white text-xs font-bold hover:bg-volt/90"
-                  >
-                    Copy
-                  </button>
-                </div>
-                <div className="flex flex-col items-center gap-1 py-1">
-                  <Loader2 size={16} className="text-green-500 animate-spin" />
-                  <p className="text-xs text-ink-dim">Waiting for payment confirmation…</p>
-                </div>
-                <button onClick={closePayModal} className="w-full text-xs text-ink-dim hover:text-ink underline">Dismiss (check later)</button>
-              </div>
-            )}
-            {payModal.state === "polling" && (
-              <div className="flex flex-col items-center gap-3 py-3">
-                <Loader2 size={28} className="text-green-500 animate-spin" />
-                <div className="text-center">
-                  <p className="text-sm font-bold text-ink">Waiting for payment</p>
-                  <p className="text-xs text-ink-dim mt-0.5">Polling for confirmation…</p>
-                </div>
-                <button onClick={closePayModal} className="text-xs text-ink-dim hover:text-ink underline">Dismiss (check later)</button>
+                <p className="text-xs text-ink-muted">Opening payment window…</p>
               </div>
             )}
             {payModal.state === "paid" && (
