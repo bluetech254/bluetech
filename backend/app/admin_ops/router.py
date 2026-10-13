@@ -293,6 +293,30 @@ def customer_history(user_id: str, admin: dict = Depends(get_current_admin)):
     }
 
 
+# ── Users list ────────────────────────────────────────────────────────────────
+
+@router.get("/users")
+def list_users(
+    q:      str | None = None,
+    limit:  int = Query(200, le=500),
+    offset: int = 0,
+    admin: dict = Depends(get_current_admin),
+):
+    """Return all client users with full fields, optionally filtered by name/phone/email."""
+    query = db.table("users").select(
+        "id,full_name,phone_number,email,is_active,is_verified,points,created_at,referred_by"
+    )
+    if q and q.strip():
+        term = q.strip()
+        query = query.or_(
+            f"phone_number.ilike.%{term}%,full_name.ilike.%{term}%,email.ilike.%{term}%"
+        )
+    query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
+    r = query.execute()
+    data = r.data or []
+    return {"data": data, "count": len(data)}
+
+
 # ── Global search ─────────────────────────────────────────────────────────────
 
 @router.get("/search")

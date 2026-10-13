@@ -158,9 +158,15 @@ export default function TransactionsPage() {
             <div className="overflow-y-auto flex-1 p-5 space-y-4 font-mono text-sm" id="receipt-body">
               {/* Logo / header */}
               <div className="text-center space-y-0.5 pb-3 border-b border-dashed border-base-border">
-                <p className="font-bold text-ink text-base not-italic">BLUE TECHNOLOGY</p>
-                <p className="text-xs text-ink-dim not-italic">1KM behind Kenyatta University, Nairobi</p>
-                <p className="text-xs text-ink-dim not-italic">bluetechnology58@gmail.com · 0707 454 182</p>
+                <p className="font-bold text-ink text-base not-italic">
+                  {process.env.NEXT_PUBLIC_BUSINESS_NAME?.toUpperCase() ?? "BLUE TECHNOLOGY"}
+                </p>
+                <p className="text-xs text-ink-dim not-italic">
+                  {process.env.NEXT_PUBLIC_BUSINESS_ADDRESS ?? ""}
+                </p>
+                <p className="text-xs text-ink-dim not-italic">
+                  {process.env.NEXT_PUBLIC_BUSINESS_EMAIL ?? ""}{process.env.NEXT_PUBLIC_BUSINESS_PHONE ? ` · ${process.env.NEXT_PUBLIC_BUSINESS_PHONE}` : ""}
+                </p>
               </div>
 
               {/* Ref + date */}
@@ -232,8 +238,8 @@ export default function TransactionsPage() {
               </div>
 
               <p className="text-center text-[10px] text-ink-dim border-t border-dashed border-base-border pt-3">
-                Thank you for choosing Blue Technology.<br />
-                Let's build the future together, one device at a time.
+                Thank you for choosing {process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Blue Technology"}.<br />
+                {process.env.NEXT_PUBLIC_BUSINESS_TAGLINE ?? ""}
               </p>
             </div>
 

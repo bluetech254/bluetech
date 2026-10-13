@@ -36,6 +36,12 @@ def initialize_transaction(
     Amount must be in KES (we convert to kobo/cents — Paystack uses smallest unit).
     Returns: { authorization_url, access_code, reference }
     """
+    if not settings.PAYSTACK_SECRET_KEY:
+        raise ValueError(
+            "PAYSTACK_SECRET_KEY is not set. "
+            "Add it to your .env file: PAYSTACK_SECRET_KEY=sk_live_..."
+        )
+
     # Paystack KES amounts are in cents (1 KES = 100 kobo)
     payload: dict = {
         "email":     email,
@@ -48,8 +54,21 @@ def initialize_transaction(
     if metadata:
         payload["metadata"] = metadata
 
-    resp = requests.post(f"{settings.PAYSTACK_API_URL}/transaction/initialize", json=payload, headers=_headers(), timeout=30)
-    resp.raise_for_status()
+    try:
+        resp = requests.post(
+            f"{settings.PAYSTACK_API_URL}/transaction/initialize",
+            json=payload, headers=_headers(), timeout=30,
+        )
+        resp.raise_for_status()
+    except requests.HTTPError as e:
+        body = ""
+        try:
+            body = e.response.json().get("message", e.response.text)
+        except Exception:
+            body = str(e)
+        logger.error(f"Paystack final payment failed: {e} — response: {body}")
+        raise ValueError(f"Paystack error: {body}") from e
+
     data = resp.json()
 
     if not data.get("status"):

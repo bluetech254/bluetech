@@ -54,7 +54,7 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
         raise PermissionError("You do not own this order")
 
     # Use customer email if available, fall back to a phone-derived placeholder
-    email = order.get("email") or f"{order['phone_number']}@paystack.placeholder"
+    email = order.get("email") or f"{order['phone_number']}@noemail.bluetech.co.ke"
 
     reference = _make_reference("ORD", order_id)
     result = initialize_transaction(
@@ -132,7 +132,7 @@ def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:
     if not booking.get("estimated_cost") and service_price > 0:
         db.table("bookings").update({"estimated_cost": float(service_price)}).eq("id", booking_id).execute()
 
-    email     = f"{booking['phone_number']}@paystack.placeholder"
+    email     = f"{booking['phone_number']}@noemail.bluetech.co.ke"
     reference = _make_reference("CMT", booking_id)
 
     result = initialize_transaction(
@@ -203,7 +203,7 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     commitment = int(booking.get("commitment_fee") or 0)
     remaining  = max(1, total - commitment)
 
-    email     = f"{booking['phone_number']}@paystack.placeholder"
+    email     = f"{booking['phone_number']}@noemail.bluetech.co.ke"
     reference = _make_reference("FNL", booking_id)
 
     result = initialize_transaction(

@@ -27,8 +27,8 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "text-green-500", cancelled: "text-red-500",
 };
 
-type PaymentModalState = "confirm" | "sending" | "polling" | "paid" | "failed";
-interface PaymentModal { booking: Booking; amount: number; state: PaymentModalState; receipt?: string; error?: string; }
+type PaymentModalState = "confirm" | "sending" | "link_ready" | "polling" | "paid" | "failed";
+interface PaymentModal { booking: Booking; amount: number; state: PaymentModalState; receipt?: string; error?: string; paymentUrl?: string; }
 
 export default function RepairsPage() {
   const [tab, setTab] = useState<BookingStatus | "">("");
@@ -116,19 +116,20 @@ export default function RepairsPage() {
     if (!payModal) return;
     setPayModal(m => m && { ...m, state: "sending" });
     try {
-      await adminApi.requestFinalPayment(payModal.booking.id);
-      setPayModal(m => m && { ...m, state: "polling" });
+      const res = await adminApi.requestFinalPayment(payModal.booking.id);
+      setPayModal(m => m && { ...m, state: "link_ready", paymentUrl: res.authorization_url });
+      // Start polling for payment confirmation
       let attempts = 0;
       pollRef.current = setInterval(async () => {
         attempts++;
         try {
-          const res = await adminApi.getFinalPaymentStatus(payModal.booking.id);
-          if (res.final_payment_status === "paid") {
+          const status = await adminApi.getFinalPaymentStatus(payModal.booking.id);
+          if (status.final_payment_status === "paid") {
             clearInterval(pollRef.current!);
-            setPayModal(m => m && { ...m, state: "paid", receipt: res.final_receipt });
-          } else if (res.final_payment_status === "failed" || attempts >= 24) {
+            setPayModal(m => m && { ...m, state: "paid", receipt: status.final_receipt });
+          } else if (attempts >= 36) {
+            // 3 minutes — stop polling, let admin check manually
             clearInterval(pollRef.current!);
-            setPayModal(m => m && { ...m, state: "failed", error: "Payment failed or timed out." });
           }
         } catch { /* keep polling */ }
       }, 5000);
@@ -375,11 +376,11 @@ export default function RepairsPage() {
 
             {payModal.state === "confirm" && (
               <div className="space-y-2">
-                <p className="text-xs text-ink-muted">Marks booking as <strong>completed</strong> and sends M-Pesa STK push of <strong>{formatKES(payModal.amount)}</strong>.</p>
+                <p className="text-xs text-ink-muted">Generates a <strong>Paystack payment link</strong> for <strong>{formatKES(payModal.amount)}</strong>. Share it with the customer to complete payment.</p>
                 <div className="flex gap-2 pt-1">
                   <button onClick={closePayModal} className="flex-1 py-2 rounded-lg border border-base-border text-xs text-ink-muted hover:text-ink">Cancel</button>
                   <button onClick={sendPaymentPrompt} className="flex-1 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold flex items-center justify-center gap-1.5">
-                    <Send size={13} /> Send Prompt
+                    <Send size={13} /> Generate Link
                   </button>
                 </div>
               </div>
@@ -387,7 +388,26 @@ export default function RepairsPage() {
             {payModal.state === "sending" && (
               <div className="flex flex-col items-center gap-2 py-3">
                 <Loader2 size={28} className="text-green-500 animate-spin" />
-                <p className="text-xs text-ink-muted">Sending M-Pesa prompt…</p>
+                <p className="text-xs text-ink-muted">Generating payment link…</p>
+              </div>
+            )}
+            {payModal.state === "link_ready" && (
+              <div className="space-y-3">
+                <p className="text-xs text-ink-dim">Payment link ready. Copy and share with the customer:</p>
+                <div className="flex items-center gap-2 bg-base-hover rounded-xl p-3">
+                  <p className="text-xs text-ink font-mono flex-1 break-all">{payModal.paymentUrl}</p>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(payModal.paymentUrl ?? "")}
+                    className="shrink-0 px-2 py-1 rounded-lg bg-volt text-white text-xs font-bold hover:bg-volt/90"
+                  >
+                    Copy
+                  </button>
+                </div>
+                <div className="flex flex-col items-center gap-1 py-1">
+                  <Loader2 size={16} className="text-green-500 animate-spin" />
+                  <p className="text-xs text-ink-dim">Waiting for payment confirmation…</p>
+                </div>
+                <button onClick={closePayModal} className="w-full text-xs text-ink-dim hover:text-ink underline">Dismiss (check later)</button>
               </div>
             )}
             {payModal.state === "polling" && (
@@ -395,7 +415,7 @@ export default function RepairsPage() {
                 <Loader2 size={28} className="text-green-500 animate-spin" />
                 <div className="text-center">
                   <p className="text-sm font-bold text-ink">Waiting for payment</p>
-                  <p className="text-xs text-ink-dim mt-0.5">STK push sent to <strong>{payModal.booking.phone_number}</strong>.<br />Client should enter M-Pesa PIN.</p>
+                  <p className="text-xs text-ink-dim mt-0.5">Polling for confirmation…</p>
                 </div>
                 <button onClick={closePayModal} className="text-xs text-ink-dim hover:text-ink underline">Dismiss (check later)</button>
               </div>

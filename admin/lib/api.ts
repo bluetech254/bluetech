@@ -34,6 +34,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -108,9 +109,9 @@ export const adminApi = {
   updateBookingNotes: (id: string, internal_notes: string | null) =>
     request(`/api/v1/admin/bookings/${id}/notes`, { method: "PUT", body: JSON.stringify({ internal_notes }) }),
   requestFinalPayment: (id: string) =>
-    request(`/api/v1/payments/mpesa/booking/${id}/request-final-payment`, { method: "POST" }),
+    request<{ authorization_url: string; reference: string; amount: number }>(`/api/v1/payments/booking/${id}/final/request`, { method: "POST" }),
   getFinalPaymentStatus: (id: string) =>
-    request<{ final_payment_status: string; final_receipt?: string }>(`/api/v1/payments/mpesa/booking/${id}/final/status`),
+    request<{ final_payment_status: string; final_receipt?: string }>(`/api/v1/payments/booking/${id}/final/status`),
   getTransactions: () =>
     request<{ data: any[]; count: number }>("/api/v1/admin/transactions"),
 
@@ -133,7 +134,7 @@ export const adminApi = {
   getServiceCategories: () => request("/api/v1/repair-services/categories"),
 
   // Users
-  getUsers: (q = "a") => request(`/api/v1/admin/search${qs({ q })}`),
+  getUsers: (q?: string) => request<{ data: any[]; count: number }>(`/api/v1/admin/users${qs({ q })}`),
 
   // Points
   getUserPoints: (user_id: string) => request(`/api/v1/points/admin/user/${user_id}`),
