@@ -109,9 +109,9 @@ export const adminApi = {
   updateBookingNotes: (id: string, internal_notes: string | null) =>
     request(`/api/v1/admin/bookings/${id}/notes`, { method: "PUT", body: JSON.stringify({ internal_notes }) }),
   requestFinalPayment: (id: string) =>
-    request(`/api/v1/payments/mpesa/booking/${id}/request-final-payment`, { method: "POST" }),
+    request<{ authorization_url: string; reference: string; amount: number }>(`/api/v1/payments/booking/${id}/final/request`, { method: "POST" }),
   getFinalPaymentStatus: (id: string) =>
-    request<{ final_payment_status: string; final_receipt?: string }>(`/api/v1/payments/mpesa/booking/${id}/final/status`),
+    request<{ final_payment_status: string; final_receipt?: string }>(`/api/v1/payments/booking/${id}/final/status`),
   getTransactions: () =>
     request<{ data: any[]; count: number }>("/api/v1/admin/transactions"),
 
