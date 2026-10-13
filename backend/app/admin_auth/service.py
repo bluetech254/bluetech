@@ -115,11 +115,10 @@ def change_password(admin_id: str, data: AdminChangePasswordRequest, admin_paylo
 
 def create_admin(data: AdminCreateRequest, acting_admin: dict) -> dict:
     """Create a new admin account. Superadmin only."""
-    # Check username and email uniqueness
-    existing = db.table("admins").select("id").or_(
-        f"username.eq.{data.username},email.eq.{data.email}"
-    ).execute()
-    if existing.data:
+    # Check username and email uniqueness (two separate queries — or_() not needed)
+    existing_username = db.table("admins").select("id").eq("username", data.username).execute()
+    existing_email    = db.table("admins").select("id").eq("email", data.email).execute()
+    if (existing_username.data or existing_email.data):
         raise AuthException("Username or email already exists")
 
     if data.role not in ("admin", "superadmin"):
