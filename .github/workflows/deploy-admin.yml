@@ -34,7 +34,7 @@ jobs:
           NEXT_PUBLIC_BUSINESS_EMAIL: info@fixit-bluetechnology.co.ke
           NEXT_PUBLIC_BUSINESS_PHONE: "+254 707 454182"
           NEXT_PUBLIC_BUSINESS_TAGLINE: "Your trusted repair & tech partner — fast, honest, professional."
-          NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY }}
+          NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: ${{ secrets.VITE_PAYSTACK_PUBLIC_KEY }}
 
       - name: Add .htaccess for client-side routing
         run: |
