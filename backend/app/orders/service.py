@@ -231,21 +231,33 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
 
 def get_order_by_id(order_id: UUID) -> dict:
     try:
-        resp = db.table("orders").select("*, order_items(*)").eq("id", str(order_id)).single().execute()
+        resp = db.table("orders").select("*").eq("id", str(order_id)).single().execute()
         data = resp.data
     except Exception:
         data = None
     if not data:
         raise OrderNotFoundException(f"Order {order_id} not found")
+    # Attach order items
+    items_resp = db.table("order_items").select("*").eq("order_id", str(order_id)).execute()
+    data["order_items"] = items_resp.data or []
     return data
 
 
 def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict]:
-    q = db.table("orders").select("*, order_items(*)")
+    q = db.table("orders").select("*")
     if status:
         q = q.eq("status", status)
     resp = q.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
-    return resp.data or []
+    orders = resp.data or []
+    if orders:
+        order_ids = [o["id"] for o in orders]
+        items_resp = db.table("order_items").select("*").in_("order_id", order_ids).execute()
+        items_by_order: dict = {}
+        for item in (items_resp.data or []):
+            items_by_order.setdefault(item["order_id"], []).append(item)
+        for o in orders:
+            o["order_items"] = items_by_order.get(o["id"], [])
+    return orders
 
 
 def update_order_status(order_id: UUID, status: str) -> dict:
