@@ -34,6 +34,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -133,7 +134,7 @@ export const adminApi = {
   getServiceCategories: () => request("/api/v1/repair-services/categories"),
 
   // Users
-  getUsers: (q = "a") => request(`/api/v1/admin/search${qs({ q })}`),
+  getUsers: (q?: string) => request<{ data: any[]; count: number }>(`/api/v1/admin/users${qs({ q })}`),
 
   // Points
   getUserPoints: (user_id: string) => request(`/api/v1/points/admin/user/${user_id}`),

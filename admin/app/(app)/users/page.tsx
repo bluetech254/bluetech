@@ -34,8 +34,6 @@ interface UserHistory {
   points_history: any[];
 }
 
-const DEFAULT_QUERY = "a";
-
 export default function UsersPage() {
   const [users, setUsers] = useState<ClientUser[]>([]);
   const [q, setQ] = useState("");
@@ -56,17 +54,15 @@ export default function UsersPage() {
 
   function load(query = q) {
     setLoading(true);
-    // Use at least 2 chars to satisfy backend min_length=2
-    const effectiveQ = query.trim().length >= 2 ? query.trim() : DEFAULT_QUERY;
     adminApi
-      .getUsers(effectiveQ)
-      .then((res: any) => setUsers(res.users ?? res.data ?? []))
+      .getUsers(query.trim() || undefined)
+      .then((res: any) => setUsers(res.data ?? []))
       .catch(() => setUsers([]))
       .finally(() => setLoading(false));
   }
 
-  // Initial load — broad search
-  useEffect(() => { load(DEFAULT_QUERY); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Initial load — fetch all users
+  useEffect(() => { load(""); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function toggleActive(u: ClientUser) {
     setToggling(u.id);
