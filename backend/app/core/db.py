@@ -82,6 +82,7 @@ class QueryBuilder:
         # For PostgreSQL: build query components
         self._select_cols = "*"
         self._filters: List[tuple] = []  # List of (column, operator, value)
+        self._or_filters: List[List[tuple]] = []  # List of OR groups [(col, op, val), ...]
         self._order_by: List[tuple] = []  # List of (column, desc)
         self._limit_val: Optional[int] = None
         self._range_start: Optional[int] = None
@@ -193,6 +194,38 @@ class QueryBuilder:
             self._sb_table = self._sb_table.like(column, pattern)
         else:
             self._filters.append((column, "LIKE", pattern))
+        return self
+
+    def or_(self, filters: str) -> "QueryBuilder":
+        """
+        Filter with OR conditions.
+        Accepts Supabase-style filter string: "col.op.val,col.op.val,..."
+        Supported ops: eq, neq, ilike, like, gt, gte, lt, lte, is
+        """
+        if self.is_supabase:
+            self._sb_table = self._sb_table.or_(filters)
+        else:
+            # Parse "col.op.val,col.op.val,..." into a list of (col, SQL_OP, val) tuples.
+            _op_map = {
+                "eq": "=", "neq": "!=",
+                "gt": ">", "gte": ">=", "lt": "<", "lte": "<=",
+                "ilike": "ILIKE", "like": "LIKE", "is": "IS",
+            }
+            group: List[tuple] = []
+            for part in filters.split(","):
+                part = part.strip()
+                # Format is col.op.value — value may itself contain dots
+                pieces = part.split(".", 2)
+                if len(pieces) < 3:
+                    continue
+                col, op_str, val = pieces
+                sql_op = _op_map.get(op_str.lower())
+                if sql_op is None:
+                    continue
+                # Wrap ILIKE/LIKE values that use % in the string as-is
+                group.append((col, sql_op, val))
+            if group:
+                self._or_filters.append(group)
         return self
 
     def is_(self, column: str, value: Any) -> "QueryBuilder":
@@ -322,18 +355,37 @@ class QueryBuilder:
     def _build_select_sql(self) -> tuple:
         """Build SELECT SQL statement."""
         sql = f"SELECT {self._select_cols} FROM {self.table_name}"
-        params = []
+        params: list = []
+        where_clauses: list = []
 
         if self._filters:
-            where_clauses = []
             for col, op, val in self._filters:
                 if op == "IN":
                     placeholders = ",".join(["%s"] * len(val))
                     where_clauses.append(f"{col} IN ({placeholders})")
                     params.extend(val)
+                elif op == "IS":
+                    where_clauses.append(f"{col} IS {'NULL' if val is None else '%s'}")
+                    if val is not None:
+                        params.append(val)
                 else:
                     where_clauses.append(f"{col} {op} %s")
                     params.append(val)
+
+        for group in self._or_filters:
+            group_parts: list = []
+            for col, op, val in group:
+                if op == "IS":
+                    group_parts.append(f"{col} IS {'NULL' if val is None else '%s'}")
+                    if val is not None:
+                        params.append(val)
+                else:
+                    group_parts.append(f"{col} {op} %s")
+                    params.append(val)
+            if group_parts:
+                where_clauses.append("(" + " OR ".join(group_parts) + ")")
+
+        if where_clauses:
             sql += " WHERE " + " AND ".join(where_clauses)
 
         if self._order_by:
