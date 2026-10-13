@@ -30,6 +30,7 @@ jobs:
         env:
           VITE_API_BASE_URL: https://api.fixit-bluetechnology.co.ke/api/v1
           VITE_APP_NAME: BlueTech
+          VITE_PAYSTACK_PUBLIC_KEY: ${{ secrets.VITE_PAYSTACK_PUBLIC_KEY }}
 
       - name: Add .htaccess for React Router
         run: |
