@@ -138,7 +138,12 @@ export default function RepairsPage() {
           phone: payModal.booking.phone_number,
         },
         onSuccess: async (ref) => {
-          // Poll until backend confirms paid
+          // Verify immediately with the reference Paystack gave us
+          try {
+            await adminApi.verifyFinalPayment(ref);
+          } catch { /* verification will be caught by polling below */ }
+
+          // Then poll DB until it reflects paid
           let attempts = 0;
           const interval = setInterval(async () => {
             attempts++;
