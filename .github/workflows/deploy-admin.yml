@@ -29,6 +29,11 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: https://api.fixit-bluetechnology.co.ke
+          NEXT_PUBLIC_BUSINESS_NAME: Fixit Blue Technology
+          NEXT_PUBLIC_BUSINESS_ADDRESS: Nairobi CBD
+          NEXT_PUBLIC_BUSINESS_EMAIL: info@fixit-bluetechnology.co.ke
+          NEXT_PUBLIC_BUSINESS_PHONE: "+254 707 454182"
+          NEXT_PUBLIC_BUSINESS_TAGLINE: "Your trusted repair & tech partner — fast, honest, professional."
 
       - name: Add .htaccess for client-side routing
         run: |
