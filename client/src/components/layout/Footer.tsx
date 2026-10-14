@@ -84,9 +84,10 @@ export const Footer = () => {
           {/* Brand + Socials */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="BlueTech" className="h-10 w-auto object-contain" />
-              <span className="text-xl font-black tracking-tight text-white">
-                Blue<span className="text-blue-500">Tech</span>
+              <img src="/logo.png" alt="Fixit Blue Technology" className="h-10 w-auto object-contain" />
+              <span className="flex flex-col leading-none">
+                <span className="text-xs font-black italic tracking-tight text-white">Fixit</span>
+                <span className="text-base font-black tracking-tight text-blue-500">Blue Technology</span>
               </span>
             </Link>
             <h3 className="text-white font-bold">Electronics</h3>
