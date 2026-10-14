@@ -59,8 +59,8 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
       <div className="flex items-center gap-2.5 px-2 py-3 mb-4">
         <Image src="/logo.png" alt="Fixit Blue Technology" width={36} height={36} className="rounded-lg" />
         <span className="flex flex-col leading-none">
-          <span className="font-display font-black italic text-[11px] tracking-tight text-ink">Fixit</span>
-          <span className="font-display font-bold text-[13px] tracking-tight text-blue-500">Blue Technology</span>
+          <span style={{fontFamily: "'Pacifico', cursive", display: 'inline-block', transform: 'skewX(-8deg) scaleX(1.5)', transformOrigin: 'left center', fontSize: '14px', color: 'var(--color-ink)', filter: 'drop-shadow(1px 1px 0px rgba(0,0,0,0.15))'}}>Fixit</span>
+          <span style={{fontSize: '9px', fontWeight: 800, letterSpacing: '0.18em', color: '#3b82f6', textTransform: 'uppercase', marginTop: '2px'}}>Blue Technology</span>
         </span>
       </div>
 

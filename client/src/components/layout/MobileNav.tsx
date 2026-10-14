@@ -29,8 +29,8 @@ export const MobileNav = ({ isOpen, onClose }: MobileNavProps) => {
             <Link to="/" onClick={onClose} className="flex items-center space-x-2">
               <img src="/logo.png" alt="Fixit Blue Technology" className="h-8 w-auto object-contain logo-wobble" />
               <span className="flex flex-col leading-none">
-                <span className="text-xs font-black italic tracking-tight text-slate-900">Fixit</span>
-                <span className="text-base font-black tracking-tight text-blue-600">Blue Technology</span>
+                <span className="brand-fixit text-xl">Fixit</span>
+                <span className="text-[10px] font-black tracking-widest text-blue-600 uppercase mt-0.5">Blue Technology</span>
               </span>
             </Link>
             <button

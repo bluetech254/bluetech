@@ -86,8 +86,8 @@ export const Footer = () => {
             <Link to="/" className="flex items-center gap-2">
               <img src="/logo.png" alt="Fixit Blue Technology" className="h-10 w-auto object-contain" />
               <span className="flex flex-col leading-none">
-                <span className="text-xs font-black italic tracking-tight text-white">Fixit</span>
-                <span className="text-base font-black tracking-tight text-blue-500">Blue Technology</span>
+                <span className="brand-fixit text-xl" style={{color: '#fff'}}>Fixit</span>
+                <span className="text-[10px] font-black tracking-widest text-blue-400 uppercase mt-0.5">Blue Technology</span>
               </span>
             </Link>
             <h3 className="text-white font-bold">Electronics</h3>
