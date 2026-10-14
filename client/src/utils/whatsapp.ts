@@ -13,10 +13,7 @@ export const openWhatsApp = (message: string): void => {
   window.open(url, '_blank', 'noopener,noreferrer');
 };
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-
 const fmt = (n: number) => `KES ${n.toLocaleString('en-KE')}`;
-const divider = '━━━━━━━━━━━━━━━━━━━━━━━━';
 
 // ─── Order message ─────────────────────────────────────────────────────────────
 
@@ -43,12 +40,10 @@ export const buildOrderMessage = ({
   const lines: string[] = [
     '🛍️ *ORDER REQUEST*',
     '*BlueTech — Fixit Blue Technology*',
-    divider,
     '',
     '*📦 Items Ordered:*',
     ...itemLines,
     '',
-    divider,
     `🧾 Subtotal:       ${fmt(subtotal)}`,
   ];
 
@@ -58,14 +53,12 @@ export const buildOrderMessage = ({
 
   lines.push(
     `💰 *TOTAL:          ${fmt(total)}*`,
-    divider,
     '',
     '📍 *Delivery Details:*',
     'Name:    _[Please fill in your name]_',
     'Address: _[Please fill in your delivery address]_',
     'Phone:   _[Please confirm your phone number]_',
     '',
-    divider,
     '✅ Please confirm stock availability and share payment details.',
     '⏱️ Expected response within *30 minutes* during business hours.',
     '',
@@ -95,7 +88,6 @@ export const buildBookingMessage = ({
   const lines: string[] = [
     '🔧 *REPAIR BOOKING REQUEST*',
     '*BlueTech — Fixit Blue Technology*',
-    divider,
     '',
     '📋 *Service Details:*',
   ];
@@ -116,7 +108,6 @@ export const buildBookingMessage = ({
 
   lines.push(
     '',
-    divider,
     '👤 *Your Details:*',
     'Name:  _[Your full name]_',
     'Phone: _[Your phone number]_',
@@ -125,7 +116,6 @@ export const buildBookingMessage = ({
     'Date: _[e.g. Tomorrow, 15 Oct]_',
     'Time: _[e.g. Morning / Afternoon]_',
     '',
-    divider,
     '✅ We\'ll confirm your booking and estimated cost within *30 minutes*.',
     '🏪 Drop-off or free pickup available in select areas.',
     '',
