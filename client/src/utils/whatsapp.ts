@@ -13,6 +13,11 @@ export const openWhatsApp = (message: string): void => {
   window.open(url, '_blank', 'noopener,noreferrer');
 };
 
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const fmt = (n: number) => `KES ${n.toLocaleString('en-KE')}`;
+const divider = '━━━━━━━━━━━━━━━━━━━━━━━━';
+
 // ─── Order message ─────────────────────────────────────────────────────────────
 
 export interface OrderWhatsAppParams {
@@ -30,28 +35,41 @@ export const buildOrderMessage = ({
   deliveryFee,
   total,
 }: OrderWhatsAppParams): string => {
+  const itemLines = items.map(
+    (it, i) =>
+      `${i + 1}. ${it.name}\n    Qty: ${it.quantity}  ×  ${fmt(it.price)}  =  *${fmt(it.price * it.quantity)}*`
+  );
+
   const lines: string[] = [
-    '🛒 *New Order Request — BlueTech*',
+    '🛍️ *ORDER REQUEST*',
+    '*BlueTech — Fixit Blue Technology*',
+    divider,
     '',
-    '*Items:*',
-    ...items.map(
-      (it) =>
-        `  • ${it.name} × ${it.quantity}  →  KES ${(it.price * it.quantity).toLocaleString()}`
-    ),
+    '*📦 Items Ordered:*',
+    ...itemLines,
     '',
-    `Subtotal:       KES ${subtotal.toLocaleString()}`,
+    divider,
+    `🧾 Subtotal:       ${fmt(subtotal)}`,
   ];
 
   if (deliveryZone) {
-    lines.push(
-      `Delivery Zone:  ${deliveryZone}  (KES ${(deliveryFee ?? 0).toLocaleString()})`
-    );
+    lines.push(`🚚 Delivery (${deliveryZone}):  ${fmt(deliveryFee ?? 0)}`);
   }
 
   lines.push(
-    `*Total:         KES ${total.toLocaleString()}*`,
+    `💰 *TOTAL:          ${fmt(total)}*`,
+    divider,
     '',
-    'Please confirm availability and share payment details. Thank you! 🙏'
+    '📍 *Delivery Details:*',
+    'Name:    _[Please fill in your name]_',
+    'Address: _[Please fill in your delivery address]_',
+    'Phone:   _[Please confirm your phone number]_',
+    '',
+    divider,
+    '✅ Please confirm stock availability and share payment details.',
+    '⏱️ Expected response within *30 minutes* during business hours.',
+    '',
+    '_BlueTech — Fast · Honest · Professional_ 🔵',
   );
 
   return lines.join('\n');
@@ -75,22 +93,43 @@ export const buildBookingMessage = ({
   issueDescription,
 }: BookingWhatsAppParams): string => {
   const lines: string[] = [
-    '🔧 *Repair Booking Request — BlueTech*',
+    '🔧 *REPAIR BOOKING REQUEST*',
+    '*BlueTech — Fixit Blue Technology*',
+    divider,
     '',
+    '📋 *Service Details:*',
   ];
 
-  if (serviceName) lines.push(`Service:      ${serviceName}`);
-  if (deviceType)  lines.push(`Device Type:  ${deviceType}`);
-  if (deviceBrand) lines.push(`Brand:        ${deviceBrand}`);
-  if (deviceModel) lines.push(`Model:        ${deviceModel}`);
+  if (serviceName) lines.push(`🔩 Service:      *${serviceName}*`);
+
+  lines.push('', '📱 *Device Information:*');
+  if (deviceType)  lines.push(`   Type:   ${deviceType.charAt(0).toUpperCase() + deviceType.slice(1)}`);
+  if (deviceBrand) lines.push(`   Brand:  ${deviceBrand}`);
+  if (deviceModel) lines.push(`   Model:  ${deviceModel}`);
+  if (!deviceBrand && !deviceModel) lines.push('   _[Please describe your device]_');
 
   if (issueDescription) {
-    lines.push('', `*Issue:*`, issueDescription);
+    lines.push('', '🚨 *Problem Description:*', `_${issueDescription}_`);
+  } else {
+    lines.push('', '🚨 *Problem Description:*', '_[Please describe the issue with your device]_');
   }
 
   lines.push(
     '',
-    'Please confirm availability and next steps. Thank you! 🙏'
+    divider,
+    '👤 *Your Details:*',
+    'Name:  _[Your full name]_',
+    'Phone: _[Your phone number]_',
+    '',
+    '🗓️ *Preferred Appointment:*',
+    'Date: _[e.g. Tomorrow, 15 Oct]_',
+    'Time: _[e.g. Morning / Afternoon]_',
+    '',
+    divider,
+    '✅ We\'ll confirm your booking and estimated cost within *30 minutes*.',
+    '🏪 Drop-off or free pickup available in select areas.',
+    '',
+    '_BlueTech — Fast · Honest · Professional_ 🔵',
   );
 
   return lines.join('\n');
