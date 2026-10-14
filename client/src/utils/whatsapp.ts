@@ -148,13 +148,5 @@ export const buildBookingMessage = ({
 
   if (notes) lines.push(`📝 Notes: ${notes}`);
 
-  lines.push(
-    '',
-    '✅ We\'ll confirm your booking and estimated cost within *30 minutes*.',
-    '🏪 Drop-off or free pickup available in select areas.',
-    '',
-    '_Fixit Blue Technology — Fast · Honest · Professional_ 🔵',
-  );
-
   return lines.join('\n');
 };
