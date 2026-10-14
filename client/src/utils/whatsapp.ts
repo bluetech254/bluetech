@@ -5,7 +5,7 @@
  */
 
 /** Business WhatsApp number in international format (no + or spaces). */
-export const BUSINESS_WHATSAPP = '254707454182';
+export const BUSINESS_WHATSAPP = '254739224825';
 
 /** Open a wa.me link in a new tab. */
 export const openWhatsApp = (message: string): void => {
