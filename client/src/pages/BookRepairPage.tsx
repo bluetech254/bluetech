@@ -115,7 +115,7 @@ export const BookRepairPage = () => {
     finally { setLoadingPrice(false); }
   };
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       customer_name: '', customer_phone: '', customer_email: '',
@@ -473,11 +473,18 @@ export const BookRepairPage = () => {
               <button
                 type="button"
                 onClick={() => {
+                  const vals = watch();
                   const msg = buildBookingMessage({
-                    serviceName:  service?.name,
-                    deviceType:   selectedCategory ?? undefined,
-                    deviceBrand:  selectedBrand?.name,
-                    deviceModel:  selectedModel?.name,
+                    serviceName:      service?.name,
+                    deviceType:       selectedCategory ?? undefined,
+                    deviceBrand:      selectedBrand?.name,
+                    deviceModel:      selectedModel?.name,
+                    issueDescription: vals.issue_description || undefined,
+                    customerName:     vals.customer_name    || undefined,
+                    customerPhone:    vals.customer_phone   || undefined,
+                    preferredDate:    vals.preferred_date   || undefined,
+                    preferredTime:    vals.preferred_time   || undefined,
+                    notes:            vals.notes            || undefined,
                   });
                   openWhatsApp(msg);
                 }}

@@ -23,6 +23,11 @@ export interface OrderWhatsAppParams {
   deliveryZone?: string;
   deliveryFee?: number;
   total: number;
+  // Customer details — prefilled from checkout form
+  customerName?: string;
+  customerPhone?: string;
+  deliveryAddress?: string;
+  notes?: string;
 }
 
 export const buildOrderMessage = ({
@@ -31,6 +36,10 @@ export const buildOrderMessage = ({
   deliveryZone,
   deliveryFee,
   total,
+  customerName,
+  customerPhone,
+  deliveryAddress,
+  notes,
 }: OrderWhatsAppParams): string => {
   const itemLines = items.map(
     (it, i) =>
@@ -39,7 +48,7 @@ export const buildOrderMessage = ({
 
   const lines: string[] = [
     '🛍️ *ORDER REQUEST*',
-    '*BlueTech — Fixit Blue Technology*',
+    '*Fixit Blue Technology*',
     '',
     '*📦 Items Ordered:*',
     ...itemLines,
@@ -51,18 +60,24 @@ export const buildOrderMessage = ({
     lines.push(`🚚 Delivery (${deliveryZone}):  ${fmt(deliveryFee ?? 0)}`);
   }
 
+  lines.push(`💰 *TOTAL:          ${fmt(total)}*`);
+
   lines.push(
-    `💰 *TOTAL:          ${fmt(total)}*`,
     '',
     '📍 *Delivery Details:*',
-    'Name:    _[Please fill in your name]_',
-    'Address: _[Please fill in your delivery address]_',
-    'Phone:   _[Please confirm your phone number]_',
+    `Name:    ${customerName     || '_[Please fill in your name]_'}`,
+    `Address: ${deliveryAddress  || '_[Please fill in your delivery address]_'}`,
+    `Phone:   ${customerPhone    || '_[Please confirm your phone number]_'}`,
+  );
+
+  if (notes) lines.push(`📝 Notes:   ${notes}`);
+
+  lines.push(
     '',
     '✅ Please confirm stock availability and share payment details.',
     '⏱️ Expected response within *30 minutes* during business hours.',
     '',
-    '_BlueTech — Fast · Honest · Professional_ 🔵',
+    '_Fixit Blue Technology — Fast · Honest · Professional_ 🔵',
   );
 
   return lines.join('\n');
@@ -76,6 +91,12 @@ export interface BookingWhatsAppParams {
   deviceBrand?: string;
   deviceModel?: string;
   issueDescription?: string;
+  // Customer details — prefilled from booking form
+  customerName?: string;
+  customerPhone?: string;
+  preferredDate?: string;
+  preferredTime?: string;
+  notes?: string;
 }
 
 export const buildBookingMessage = ({
@@ -84,10 +105,15 @@ export const buildBookingMessage = ({
   deviceBrand,
   deviceModel,
   issueDescription,
+  customerName,
+  customerPhone,
+  preferredDate,
+  preferredTime,
+  notes,
 }: BookingWhatsAppParams): string => {
   const lines: string[] = [
     '🔧 *REPAIR BOOKING REQUEST*',
-    '*BlueTech — Fixit Blue Technology*',
+    '*Fixit Blue Technology*',
     '',
     '📋 *Service Details:*',
   ];
@@ -109,17 +135,25 @@ export const buildBookingMessage = ({
   lines.push(
     '',
     '👤 *Your Details:*',
-    'Name:  _[Your full name]_',
-    'Phone: _[Your phone number]_',
+    `Name:  ${customerName  || '_[Your full name]_'}`,
+    `Phone: ${customerPhone || '_[Your phone number]_'}`,
+  );
+
+  lines.push(
     '',
     '🗓️ *Preferred Appointment:*',
-    'Date: _[e.g. Tomorrow, 15 Oct]_',
-    'Time: _[e.g. Morning / Afternoon]_',
+    `Date: ${preferredDate || '_[e.g. Tomorrow, 15 Oct]_'}`,
+    `Time: ${preferredTime || '_[e.g. Morning / Afternoon]_'}`,
+  );
+
+  if (notes) lines.push(`📝 Notes: ${notes}`);
+
+  lines.push(
     '',
     '✅ We\'ll confirm your booking and estimated cost within *30 minutes*.',
     '🏪 Drop-off or free pickup available in select areas.',
     '',
-    '_BlueTech — Fast · Honest · Professional_ 🔵',
+    '_Fixit Blue Technology — Fast · Honest · Professional_ 🔵',
   );
 
   return lines.join('\n');
