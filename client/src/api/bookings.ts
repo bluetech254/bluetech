@@ -29,27 +29,4 @@ export const trackBookingsByPhone = async (phoneNumber: string): Promise<Booking
   return Array.isArray(response.data) ? response.data : [];
 };
 
-export const initiateCommitmentPayment = async (bookingId: string, servicePrice: number): Promise<{ checkout_request_id: string; amount: number }> => {
-  const response = await api.post(`/payments/mpesa/booking/${bookingId}/commitment?service_price=${servicePrice}`);
-  return response.data;
-};
-
-export const getCommitmentPaymentStatus = async (bookingId: string): Promise<{ commitment_payment_status: string; commitment_receipt?: string; commitment_fee?: number }> => {
-  const response = await api.get(`/payments/mpesa/booking/${bookingId}/commitment/status`);
-  return response.data;
-};
-
-export const initiatePaystackCommitmentPayment = async (
-  bookingId: string,
-  servicePrice: number,
-): Promise<{ authorization_url: string; reference: string; amount: number }> => {
-  const response = await api.post(`/payments/booking/${bookingId}/commitment/initiate?service_price=${servicePrice}`);
-  return response.data;
-};
-
-export const verifyPaystackCommitment = async (
-  reference: string,
-): Promise<{ status: string; reference: string; amount: number }> => {
-  const response = await api.post(`/payments/booking/commitment/verify/${reference}`);
-  return response.data;
-};
+export const trackBookingsByPhone = async (phoneNumber: string): Promise<Booking[]> => {

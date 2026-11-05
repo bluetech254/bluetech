@@ -36,23 +36,8 @@ def _fetch_products(item_ids: list[str]) -> dict:
 
 
 def _get_delivery_fee(zone_name: str) -> Decimal:
-    """Look up delivery fee by zone name OR UUID id."""
-    # Try by zone_name first
-    q = db.table("delivery_zones").select("delivery_fee").eq("is_active", True)
-    resp = q.eq("zone_name", zone_name).execute()
-    if resp.data:
-        return Decimal(str(resp.data[0]["delivery_fee"]))
-
-    # Fall back to id lookup (client may pass UUID instead of name)
-    try:
-        UUID(zone_name)  # validate it looks like a UUID
-        resp2 = db.table("delivery_zones").select("delivery_fee").eq("id", zone_name).eq("is_active", True).execute()
-        if resp2.data:
-            return Decimal(str(resp2.data[0]["delivery_fee"]))
-    except (ValueError, AttributeError):
-        pass
-
-    raise DeliveryZoneNotFoundException(f"Delivery zone '{zone_name}' not found")
+    """Flat delivery fee — KES 1 for all zones."""
+    return Decimal("1")
 
 
 def _check_stock(items: list[OrderItemCreate], products: dict):
@@ -223,7 +208,7 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
             f"Order #{short_id}\n"
             f"Items: {items_text}\n"
             f"Subtotal: KES {float(subtotal):,.0f}\n"
-            f"Delivery: KES {float(delivery_fee):,.0f}\n"
+            f"Delivery: KES 1\n"
             f"Total: KES {float(total_amount):,.0f}\n"
             f"We'll contact you to confirm delivery. Thank you!"
         )

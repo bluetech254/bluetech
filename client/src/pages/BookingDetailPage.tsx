@@ -105,17 +105,9 @@ export const BookingDetailPage = () => {
       </div>
 
       {/* Costs */}
-      {(booking.commitment_fee || booking.estimated_cost || booking.final_cost) && (
+      {(booking.estimated_cost > 0 || booking.final_cost > 0) && (
         <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2 text-sm">
           <p className="text-xs font-black text-slate-500 uppercase tracking-wide mb-2">Cost Summary</p>
-          {booking.commitment_fee > 0 && (
-            <div className="flex justify-between text-slate-600">
-              <span>Commitment fee</span>
-              <span className="flex items-center gap-2">{formatCurrency(booking.commitment_fee)}
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${booking.commitment_payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{booking.commitment_payment_status ?? 'unpaid'}</span>
-              </span>
-            </div>
-          )}
           {booking.estimated_cost > 0 && <div className="flex justify-between text-slate-600"><span>Estimated</span><span>{formatCurrency(booking.estimated_cost)}</span></div>}
           {booking.final_cost > 0 && (
             <div className="flex justify-between font-black text-slate-900 pt-2 border-t border-slate-100">

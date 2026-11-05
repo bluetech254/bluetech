@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { getRepairServiceById } from '../api/services';
-import { createBooking, initiatePaystackCommitmentPayment, verifyPaystackCommitment } from '../api/bookings';
+import { createBooking } from '../api/bookings';
 import { RepairService } from '../types';
 import { bookingSchema } from '../utils/validation';
 import { formatCurrency } from '../utils/formatters';
@@ -12,7 +12,6 @@ import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import PaystackModal from '../components/cart/PaystackModal';
 import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, Loader2, Tag, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -49,7 +48,6 @@ export const BookRepairPage = () => {
   const [paymentModal, setPaymentModal] = useState<{
     bookingId: string; amount: number; email: string; reference: string; servicePrice: number;
   } | null>(null);
-  const [verifyStatus, setVerifyStatus] = useState<'idle' | 'verifying' | 'paid' | 'failed'>('idle');
 
   const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
@@ -141,19 +139,8 @@ export const BookRepairPage = () => {
         pickup_address: undefined,
       });
 
-      toast.success('Booking created! Initialising payment...', { id: toastId });
-      const servicePrice = estimatedPrice ?? service?.price ?? 0;
-      const commitmentAmount = Math.max(1, Math.round(servicePrice * 0.20));
-
-      try {
-        const { reference } = await initiatePaystackCommitmentPayment(response.id, servicePrice);
-        const email = `${phoneNumber}@paystack.placeholder`;
-        setPaymentModal({ bookingId: response.id, amount: commitmentAmount, email, reference, servicePrice });
-      } catch {
-        // Payment init failed — still navigate, they can pay from booking detail
-        toast.success('Booking created! You can pay the commitment fee from your bookings page.', { id: toastId });
-        navigate(`/booking-success/${response.id}`);
-      }
+      toast.success('Booking created! Your booking is free for life — no commitment fee required.', { id: toastId });
+      navigate(`/booking-success/${response.id}`);
     } catch (err: any) {
       const detail = err.response?.data?.detail;
       let msg = 'Failed to submit booking.';
@@ -175,7 +162,7 @@ export const BookRepairPage = () => {
   useEffect(() => {
     document.body.style.overflow = paymentModal ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [paymentModal]);
+  }, []);
 
   if (loadingService) return <Loading fullScreen message="Loading service details..." />;
 
@@ -468,36 +455,7 @@ export const BookRepairPage = () => {
         </div>
       </div>
 
-      {paymentModal && (
-        <PaystackModal
-          amountKes={paymentModal.amount}
-          email={paymentModal.email}
-          reference={paymentModal.reference}
-          label="Repair Commitment Fee (20%)"
-          verifyStatus={verifyStatus}
-          onSuccess={async (ref) => {
-            setVerifyStatus('verifying');
-            try {
-              const result = await verifyPaystackCommitment(ref);
-              if (result.status === 'success') {
-                setVerifyStatus('paid');
-                setTimeout(() => navigate(`/booking-success/${paymentModal.bookingId}`), 1500);
-              } else {
-                setVerifyStatus('failed');
-              }
-            } catch {
-              setVerifyStatus('failed');
-            }
-          }}
-          onDismiss={() => setVerifyStatus('idle')}
-          onCancel={() => {
-            setPaymentModal(null);
-            setVerifyStatus('idle');
-            navigate(`/booking-success/${paymentModal.bookingId}`);
-          }}
-        />
-      )}
-    </div>
+      </div>
   );
 };
 

@@ -7,10 +7,8 @@ Imports from:
   notifications/sms  — SMS at create + status changes
 """
 import logging
-import math
-from uuid import UUID
 
-from bookings.models import BookingCreate, CostUpdate
+from bookings.models import BookingCreate
 from core.db import db
 from core.exceptions import BookingNotFoundException
 from notifications.sms import send_sms
@@ -19,12 +17,12 @@ logger = logging.getLogger(__name__)
 
 # SMS messages per status change
 _STATUS_SMS = {
-    "confirmed":    "Your repair booking #{sid} is confirmed. We'll contact you shortly.",
-    "in_diagnosis": "Your device (#{sid}) is being diagnosed. We'll send a cost estimate soon.",
-    "in_repair":    "Good news! Your device #{sid} is now in repair.",
-    "ready":        "Your device #{sid} is ready for collection! Final cost: KES {cost:,.0f}.",
-    "completed":    "Repair #{sid} complete. Thank you for choosing BlueTech!",
-    "cancelled":    "Your booking #{sid} has been cancelled. Contact us if this was a mistake.",
+    "confirmed":       "Your repair booking #{sid} is confirmed. We'll contact you shortly.",
+    "in_diagnosis":    "Your device (#{sid}) is being diagnosed. We'll contact you soon.",
+    "in_repair":       "Good news! Your device #{sid} is being repaired.",
+    "ready":           "Your device #{sid} is ready for collection! We'll share the final cost after diagnosis.",
+    "completed":       "Repair #{sid} complete. Thank you for choosing BlueTech!",
+    "cancelled":       "Your booking #{sid} has been cancelled. Contact us if this was a mistake.",
 }
 
 
@@ -85,26 +83,44 @@ def track_bookings_by_phone(phone: str) -> list[dict]:
 
 
 def update_booking_status(booking_id: UUID, status: str) -> dict:
-    """Update booking status. Sends SMS notification. Awards points on completion."""
+    """Update booking status. Sends SMS notification.
+    
+    Status transitions are forward-only:
+    pending → confirmed → in_diagnosis → in_repair → ready → completed
+    At any point, the booking may be cancelled.
+    Going backward (e.g. confirmed → pending) is not allowed — use cancel instead."""
     resp = db.table("bookings").update({"status": status}).eq("id", str(booking_id)).execute()
     if not resp.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
     booking = resp.data[0]
     sid     = str(booking_id)[:8].upper()
-
+    
+    # Forward-only status transition validation
+    _status_order = ["pending", "confirmed", "in_diagnosis", "in_repair", "ready", "completed", "cancelled"]
+    current = booking.get("status", "")
+    try:
+        current_idx = _status_order.index(current)
+        new_idx = _status_order.index(status)
+        if new_idx < current_idx and status != "cancelled":
+            # Going backward without cancelling — not allowed
+            # Exception: from confirmed/cancelled can go to pending only via full cancel
+            raise ValueError(
+                f"Invalid status transition from '{current}' to '{status}'. "
+                f"Statuses must move forward: {_status_order}. "
+                f'Use "cancelled" to reset, or follow the forward path.'
+            )
+    except ValueError as e:
+        # Raised if status not in _status_order
+        raise ValueError(str(e))
+    
     # Send SMS for key status changes
     if status in _STATUS_SMS:
         try:
-            cost = float(booking.get("final_cost") or booking.get("estimated_cost") or 0)
-            msg  = _STATUS_SMS[status].format(sid=sid, cost=cost)
+            msg  = _STATUS_SMS[status].format(sid=sid)
             send_sms(booking["phone_number"], f"BlueTech: {msg}")
         except Exception:
             pass  # SMS failure must never break a status update
-
-    # Award 10% of repair cost as points when completed
-    if status == "completed":
-        _award_completion_points(booking)
-
+    
     return booking
 
 
@@ -123,30 +139,3 @@ def update_booking_cost(booking_id: UUID, cost_data: CostUpdate) -> dict:
     if not resp.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
     return resp.data[0]
-
-
-def _award_completion_points(booking: dict):
-    """Award 10% of final/estimated cost as loyalty points on repair completion."""
-    user_id    = booking.get("user_id")
-    final_cost = float(booking.get("final_cost") or booking.get("estimated_cost") or 0)
-    booking_id = booking["id"]
-
-    if not user_id or final_cost <= 0:
-        return
-
-    earned = math.floor(final_cost * 0.10)
-    if earned <= 0:
-        return
-
-    try:
-        u  = db.table("users").select("points").eq("id", user_id).single().execute()
-        current = u.data.get("points", 0) if u.data else 0
-        db.table("users").update({"points": current + earned}).eq("id", user_id).execute()
-        db.table("points_ledger").insert({
-            "user_id":     user_id,
-            "points":      earned,
-            "type":        "booking_earn",
-            "description": f"Earned {earned} points on repair #{booking_id[:8].upper()}",
-        }).execute()
-    except Exception as e:
-        logger.warning(f"Award repair points failed: {e}")
