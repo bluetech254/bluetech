@@ -28,5 +28,3 @@ export const trackBookingsByPhone = async (phoneNumber: string): Promise<Booking
   }
   return Array.isArray(response.data) ? response.data : [];
 };
-
-export const trackBookingsByPhone = async (phoneNumber: string): Promise<Booking[]> => {

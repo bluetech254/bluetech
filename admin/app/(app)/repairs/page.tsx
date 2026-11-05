@@ -102,7 +102,7 @@ export default function RepairsPage() {
 
   function openPaymentModal(b: Booking) {
     const total = b.final_cost ?? b.estimated_cost ?? 0;
-    const remaining = Math.max(1, total - (b.commitment_fee ?? 0));
+    const remaining = Math.max(1, total);
     setPayModal({ booking: b, amount: remaining, state: "confirm" });
   }
 
@@ -273,18 +273,11 @@ export default function RepairsPage() {
                 <p className="text-xs text-ink-dim font-bold uppercase tracking-wider">Payments</p>
                 <div className="space-y-1.5 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-ink-muted">Commitment fee</span>
-                    <span className={`font-bold capitalize ${detail.commitment_payment_status === "paid" ? "text-green-500" : "text-amber-500"}`}>
-                      {detail.commitment_payment_status ?? "unpaid"} {detail.commitment_fee ? `· ${formatKES(detail.commitment_fee)}` : ""}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-ink-muted">Final payment</span>
                     <span className={`font-bold capitalize ${detail.final_payment_status === "paid" ? "text-green-500" : "text-ink-dim"}`}>
                       {detail.final_payment_status ?? "unpaid"}
                     </span>
                   </div>
-                  {detail.commitment_receipt && <div className="flex justify-between"><span className="text-ink-dim">Commitment receipt</span><span className="text-green-500 font-mono">{detail.commitment_receipt}</span></div>}
                   {detail.final_receipt && <div className="flex justify-between"><span className="text-ink-dim">Final receipt</span><span className="text-green-500 font-mono">{detail.final_receipt}</span></div>}
                 </div>
               </div>
@@ -399,9 +392,9 @@ export default function RepairsPage() {
 
             <div className="bg-base-hover rounded-xl p-3 space-y-1.5 text-xs">
               <div className="flex justify-between text-ink-muted"><span>Total repair cost</span><span>{formatKES(payModal.booking.final_cost ?? payModal.booking.estimated_cost ?? 0)}</span></div>
-              {(payModal.booking.commitment_fee ?? 0) > 0 && (
-                <div className="flex justify-between text-ink-muted"><span>Commitment paid</span><span className="text-green-500">− {formatKES(payModal.booking.commitment_fee!)}</span></div>
-              )}
+{(payModal.amount ?? 0) > 0 && (
+                  <div className="flex justify-between text-ink-muted"><span>Amount to pay</span><span className="text-green-500">− {formatKES(payModal.amount!)}</span></div>
+                )}
               <div className="flex justify-between font-bold text-ink border-t border-base-border pt-1.5 mt-1"><span>Amount to send</span><span className="text-green-500">{formatKES(payModal.amount)}</span></div>
             </div>
 

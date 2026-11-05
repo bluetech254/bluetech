@@ -7,8 +7,9 @@ Imports from:
   notifications/sms  — SMS at create + status changes
 """
 import logging
+from uuid import UUID
 
-from bookings.models import BookingCreate
+from bookings.models import BookingCreate, CostUpdate
 from core.db import db
 from core.exceptions import BookingNotFoundException
 from notifications.sms import send_sms
@@ -84,7 +85,7 @@ def track_bookings_by_phone(phone: str) -> list[dict]:
 
 def update_booking_status(booking_id: UUID, status: str) -> dict:
     """Update booking status. Sends SMS notification.
-    
+
     Status transitions are forward-only:
     pending → confirmed → in_diagnosis → in_repair → ready → completed
     At any point, the booking may be cancelled.
@@ -94,7 +95,7 @@ def update_booking_status(booking_id: UUID, status: str) -> dict:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
     booking = resp.data[0]
     sid     = str(booking_id)[:8].upper()
-    
+
     # Forward-only status transition validation
     _status_order = ["pending", "confirmed", "in_diagnosis", "in_repair", "ready", "completed", "cancelled"]
     current = booking.get("status", "")
@@ -112,7 +113,7 @@ def update_booking_status(booking_id: UUID, status: str) -> dict:
     except ValueError as e:
         # Raised if status not in _status_order
         raise ValueError(str(e))
-    
+
     # Send SMS for key status changes
     if status in _STATUS_SMS:
         try:
@@ -120,7 +121,7 @@ def update_booking_status(booking_id: UUID, status: str) -> dict:
             send_sms(booking["phone_number"], f"BlueTech: {msg}")
         except Exception:
             pass  # SMS failure must never break a status update
-    
+
     return booking
 
 

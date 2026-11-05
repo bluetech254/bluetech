@@ -17,7 +17,6 @@ from uuid import UUID
 
 from core.db import db
 from core.exceptions import (
-    DeliveryZoneNotFoundException,
     InsufficientStockException,
     OrderNotFoundException,
     ProductNotFoundException,
