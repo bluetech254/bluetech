@@ -379,13 +379,18 @@ export default function RepairsPage() {
                 </p>
               </div>
 
-              {/* Complete & Request Payment */}
+              {/* Complete & Request Payment — gated to ready only */}
               {detail.status !== "completed" && detail.status !== "cancelled" && detail.final_payment_status !== "paid" && (
-                <button onClick={() => openPaymentModal(detail)}
-                  disabled={!detail.final_cost && !detail.estimated_cost}
-                  className="w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors">
-                  <Send size={14} /> Complete & Request Final Payment
-                </button>
+                <>
+                  <button onClick={() => openPaymentModal(detail)}
+                    disabled={detail.status !== "ready" || (!detail.final_cost && !detail.estimated_cost)}
+                    className="w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors">
+                    <Send size={14} /> Request Final Payment
+                  </button>
+                  {detail.status !== "ready" && (
+                    <p className="text-center text-[11px] text-ink-dim">Payment available when booking is in <b>Ready</b> state (current: {detail.status.replace(/_/g, " ")}).</p>
+                  )}
+                </>
               )}
               {detail.final_payment_status === "paid" && (
                 <p className="text-center text-sm text-green-500 font-bold">✅ Fully paid</p>
