@@ -187,7 +187,13 @@ def get_commitment_status(booking_id: str) -> dict:
 # ── Booking final payment ──────────────────────────────────────────────────────
 
 def request_final_payment(booking_id: str, admin: dict) -> dict:
-    """Admin initializes final payment (remaining balance after commitment)."""
+    """Admin initializes final payment.
+
+    Total = service (final_cost or estimated_cost, admin-set) + pickup_fee.
+      - dropoff: pickup_fee 0 → service only.
+      - pickup:  pickup_fee 200 → service + 200 delivery.
+    Remaining = total - commitment already paid (0 for free-for-life bookings).
+    """
     resp = db.table("bookings").select("*").eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")
@@ -196,10 +202,12 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     if booking.get("final_payment_status") == "paid":
         raise ValueError("Final payment already received")
 
-    total = int(booking.get("final_cost") or booking.get("estimated_cost") or 0)
-    if total <= 0:
+    service_total = int(booking.get("final_cost") or booking.get("estimated_cost") or 0)
+    if service_total <= 0:
         raise ValueError("Set a final cost before requesting payment")
 
+    pickup = int(booking.get("pickup_fee") or 0)
+    total = service_total + pickup
     commitment = int(booking.get("commitment_fee") or 0)
     remaining  = max(1, total - commitment)
 
@@ -223,19 +231,21 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
         "final_payment_reference":  reference,
     }).eq("id", booking_id).execute()
 
-    log_action(admin, "booking.final_payment_requested", f"booking:{booking_id}", {"amount": remaining})
+    log_action(admin, "booking.final_payment_requested", f"booking:{booking_id}", {"amount": remaining, "pickup_fee": pickup})
 
     return {
         "authorization_url": result["authorization_url"],
         "reference":         reference,
         "amount":            remaining,
+        "service_total":     service_total,
+        "pickup_fee":        pickup,
         "message":           f"Send authorization_url to customer for KES {remaining} payment.",
     }
 
 
 def get_final_payment_status(booking_id: str) -> dict:
     resp = db.table("bookings").select(
-        "final_payment_status, final_receipt, final_cost, commitment_fee, final_payment_reference"
+        "final_payment_status, final_receipt, final_cost, estimated_cost, pickup_fee, fulfillment_type, commitment_fee, final_payment_reference"
     ).eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")

@@ -11,6 +11,7 @@ router = APIRouter(prefix="/api/v1/track", tags=["Tracking"])
 _HIDDEN_FIELDS = {
     "estimated_cost",
     "final_cost",
+    "pickup_fee",
     "commitment_fee",
     "commitment_payment_status",
     "commitment_payment_reference",

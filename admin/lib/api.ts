@@ -104,8 +104,8 @@ export const adminApi = {
   getBooking: (id: string) => request(`/api/v1/bookings/${id}`),
   updateBookingStatus: (id: string, status: string) =>
     request(`/api/v1/bookings/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
-  updateBookingCost: (id: string, estimated_cost?: number, final_cost?: number) =>
-    request(`/api/v1/bookings/${id}/cost`, { method: "PUT", body: JSON.stringify({ estimated_cost, final_cost }) }),
+  updateBookingCost: (id: string, estimated_cost?: number, final_cost?: number, pickup_fee?: number) =>
+    request(`/api/v1/bookings/${id}/cost`, { method: "PUT", body: JSON.stringify({ estimated_cost, final_cost, pickup_fee }) }),
   updateBookingNotes: (id: string, internal_notes: string | null) =>
     request(`/api/v1/admin/bookings/${id}/notes`, { method: "PUT", body: JSON.stringify({ internal_notes }) }),
   requestFinalPayment: (id: string) =>

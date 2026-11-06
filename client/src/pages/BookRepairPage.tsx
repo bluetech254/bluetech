@@ -40,6 +40,9 @@ export const BookRepairPage = () => {
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [fulfillmentType, setFulfillmentType] = useState<'dropoff' | 'pickup'>('dropoff');
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [fulfillmentError, setFulfillmentError] = useState('');
 
   const [paymentModal, setPaymentModal] = useState<{
     bookingId: string; amount: number; email: string; reference: string; servicePrice: number;
@@ -106,17 +109,30 @@ export const BookRepairPage = () => {
       if (phoneNumber.startsWith('0')) phoneNumber = phoneNumber.substring(1);
       if (!phoneNumber.startsWith('254')) phoneNumber = '254' + phoneNumber;
 
+      if (fulfillmentType === 'pickup' && pickupAddress.trim().length < 10) {
+        toast.error('Please provide a pickup address (min 10 chars) for pickup service.', { id: toastId });
+        setFulfillmentError('Pickup address is required for pickup (min 10 chars).');
+        setSubmitting(false);
+        return;
+      }
+      setFulfillmentError('');
+
       const response = await createBooking({
         full_name: formData.customer_name,
         phone_number: phoneNumber,
         device_type: selectedBrand?.name ?? formData.device_brand,
         device_model: (selectedModel?.name ?? formData.device_model) || undefined,
         issue_description: formData.issue_description,
-        fulfillment_type: 'dropoff',
-        pickup_address: undefined,
+        fulfillment_type: fulfillmentType,
+        pickup_address: fulfillmentType === 'pickup' ? pickupAddress.trim() : undefined,
       });
 
-      toast.success('Booking created! Your booking is free for life — no commitment fee required.', { id: toastId });
+      toast.success(
+        fulfillmentType === 'pickup'
+          ? 'Booking created! We will pick up your device (KSH 200 pickup fee).'
+          : 'Booking created! Please drop off your device at the shop.',
+        { id: toastId }
+      );
       navigate(`/booking-success/${response.id}`);
     } catch (err: any) {
       const detail = err.response?.data?.detail;
@@ -319,7 +335,48 @@ export const BookRepairPage = () => {
             {/* Step 2: Contact */}
             <Card className="p-4 sm:p-6 space-y-4">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-600" />Step 2: Contact Information
+                <User className="w-4 h-4 text-blue-600" />Step 2: How will we get your device?
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setFulfillmentType('dropoff'); setFulfillmentError(''); }}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${fulfillmentType === 'dropoff' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-blue-300'}`}
+                >
+                  <p className="text-sm font-black text-slate-900">Drop-off at shop</p>
+                  <p className="text-xs text-slate-500 mt-1">You bring your device to us — no delivery fee.</p>
+                  <p className="text-xs font-bold text-blue-600 mt-2">Free · Service only</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setFulfillmentType('pickup'); setFulfillmentError(''); }}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${fulfillmentType === 'pickup' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-blue-300'}`}
+                >
+                  <p className="text-sm font-black text-slate-900">Pickup from you</p>
+                  <p className="text-xs text-slate-500 mt-1">We collect your device from your address.</p>
+                  <p className="text-xs font-bold text-blue-600 mt-2">KSH 200 pickup fee</p>
+                </button>
+              </div>
+              {fulfillmentType === 'pickup' && (
+                <div>
+                  <label htmlFor="pickup_address" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    Pickup Address <span className="text-red-500">*</span>
+                  </label>
+                  <textarea id="pickup_address" rows={2}
+                    value={pickupAddress}
+                    onChange={e => setPickupAddress(e.target.value)}
+                    placeholder="E.g. Nairobi CBD, Kimathi Street, BlueTech Building, Floor 2..."
+                    className="w-full py-3 px-4 border-2 border-slate-200 focus:border-blue-500 rounded-lg outline-none text-sm bg-white"
+                  />
+                  {fulfillmentError && <p className="text-red-600 text-xs mt-1">{fulfillmentError}</p>}
+                </div>
+              )}
+            </Card>
+
+            {/* Step 3: Contact */}
+            <Card className="p-4 sm:p-6 space-y-4">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600" />Step 3: Contact Information
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input id="customer_name" label="Full Name (required)" placeholder="e.g. Dennis Mutua"
@@ -332,10 +389,10 @@ export const BookRepairPage = () => {
                 error={errors.customer_email?.message} {...register('customer_email')} />
             </Card>
 
-            {/* Step 3: Appointment */}
+            {/* Step 4: Appointment */}
             <Card className="p-4 sm:p-6 space-y-4">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-blue-600" />Step 3: Appointment
+                <Calendar className="w-4 h-4 text-blue-600" />Step 4: Appointment
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input id="preferred_date" type="date" min={tomorrowStr} label="Preferred Date (required)"
@@ -360,10 +417,10 @@ export const BookRepairPage = () => {
               </div>
             </Card>
 
-            {/* Step 4: Submit */}
+            {/* Step 5: Submit */}
             <Card className="p-4 sm:p-6 space-y-4">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-600" />Step 4: Confirm Booking
+                <FileText className="w-4 h-4 text-blue-600" />Step 5: Confirm Booking
               </h2>
               <div className="flex items-start gap-3">
                 <input type="checkbox" id="terms_accepted"

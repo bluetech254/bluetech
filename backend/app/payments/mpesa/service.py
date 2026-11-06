@@ -139,7 +139,10 @@ def get_commitment_status(booking_id: str) -> dict:
 # ── Booking final payment ──────────────────────────────────────────────────────
 
 def request_final_payment(booking_id: str, admin: dict) -> dict:
-    """Admin triggers STK push for remaining balance after repair is done."""
+    """Admin triggers STK push for remaining balance after repair is done.
+
+    Total = service (final/estimated, admin-set) + pickup_fee.
+    """
     resp = db.table("bookings").select("*").eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")
@@ -148,10 +151,12 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     if booking.get("final_payment_status") == "paid":
         raise ValueError("Final payment already received")
 
-    total = int(booking.get("final_cost") or booking.get("estimated_cost") or 0)
-    if total <= 0:
+    service_total = int(booking.get("final_cost") or booking.get("estimated_cost") or 0)
+    if service_total <= 0:
         raise ValueError("Set a final cost before requesting payment")
 
+    pickup = int(booking.get("pickup_fee") or 0)
+    total = service_total + pickup
     commitment = int(booking.get("commitment_fee") or 0)
     remaining  = max(1, total - commitment)
 

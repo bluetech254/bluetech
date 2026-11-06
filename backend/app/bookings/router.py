@@ -27,6 +27,7 @@ router = APIRouter(prefix="/api/v1/bookings", tags=["Repair Bookings"])
 _HIDDEN_FIELDS = {
     "estimated_cost",
     "final_cost",
+    "pickup_fee",
     "commitment_fee",
     "commitment_payment_status",
     "commitment_payment_reference",
@@ -54,10 +55,16 @@ def _sanitize(booking: dict, is_admin: bool = False) -> dict:
 
 @router.post("")
 def create_booking(body: BookingCreate, request: Request, user_id: str | None = Depends(get_optional_user)):
-    """Create a new repair booking. Works for guests and authenticated users."""
+    """Create a new repair booking. Works for guests and authenticated users.
+
+    - dropoff: no delivery fee, service only
+    - pickup: 200 flat pickup fee, pickup_address required
+    """
     try:
         booking = service.create_booking(body, user_id=user_id)
         return _sanitize(booking, _is_admin_request(request))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Create booking error: {e}")
         raise HTTPException(status_code=500, detail="Booking creation failed.")
@@ -102,13 +109,21 @@ def update_booking_status(
     body: StatusUpdate,
     admin: dict = Depends(get_current_admin),
 ):
-    """Update booking status. Sends SMS to customer. Awards points on completion. Admin only."""
+    """Update booking status. Sends SMS to customer. Admin only.
+
+    Strict single-step lifecycle (no skipping):
+    pending → confirmed → picked_up → in_diagnosis → in_repair → ready → completed.
+    Cancellation: any non-terminal state → cancelled.
+    Invalid transitions return 400.
+    """
     try:
         updated = service.update_booking_status(booking_id, body.status)
         log_action(admin, "booking.status_update", f"booking:{booking_id}", {"status": body.status})
         return updated
     except BookingNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Update booking status error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -120,12 +135,13 @@ def update_booking_cost(
     body: CostUpdate,
     admin: dict = Depends(get_current_admin),
 ):
-    """Set estimated or final repair cost. Admin only."""
+    """Set estimated/final/pickup fee. Admin only (prices set manually by admin)."""
     try:
         updated = service.update_booking_cost(booking_id, body)
         log_action(admin, "booking.cost_update", f"booking:{booking_id}", {
             "estimated_cost": str(body.estimated_cost),
             "final_cost": str(body.final_cost),
+            "pickup_fee": str(body.pickup_fee),
         })
         return updated
     except BookingNotFoundException as e:

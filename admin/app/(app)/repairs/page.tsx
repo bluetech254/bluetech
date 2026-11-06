@@ -22,6 +22,19 @@ const STATUS_OPTIONS: BookingStatus[] = [
   "pending", "confirmed", "picked_up", "in_diagnosis", "in_repair", "ready", "completed", "cancelled",
 ];
 
+// Strict lifecycle: pending → confirmed → picked_up → in_diagnosis → in_repair → ready → completed
+// Cancelled allowed from any non-terminal state. No skipping.
+const STATUS_CHAIN: BookingStatus[] = [
+  "pending", "confirmed", "picked_up", "in_diagnosis", "in_repair", "ready", "completed",
+];
+const TERMINAL: BookingStatus[] = ["completed", "cancelled"];
+
+function nextStatus(current: BookingStatus): BookingStatus | null {
+  const idx = STATUS_CHAIN.indexOf(current);
+  if (TERMINAL.includes(current) || idx < 0 || idx + 1 >= STATUS_CHAIN.length) return null;
+  return STATUS_CHAIN[idx + 1];
+}
+
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-amber-500", confirmed: "text-blue-500", picked_up: "text-indigo-400",
   in_diagnosis: "text-purple-400", in_repair: "text-orange-400", ready: "text-cyan-500",
@@ -36,7 +49,7 @@ export default function RepairsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<Booking | null>(null);
-  const [costDraft, setCostDraft] = useState<{ estimated_cost?: number; final_cost?: number }>({});
+  const [costDraft, setCostDraft] = useState<{ estimated_cost?: number; final_cost?: number; pickup_fee?: number }>({});
   const [savingCost, setSavingCost] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -63,7 +76,7 @@ export default function RepairsPage() {
 
   function openDetail(b: Booking) {
     setDetail(b);
-    setCostDraft({ estimated_cost: b.estimated_cost, final_cost: b.final_cost });
+    setCostDraft({ estimated_cost: b.estimated_cost, final_cost: b.final_cost, pickup_fee: (b as any).pickup_fee });
     setNotesDraft(b.internal_notes ?? "");
   }
 
@@ -83,8 +96,8 @@ export default function RepairsPage() {
     if (!detail) return;
     setSavingCost(true);
     try {
-      await adminApi.updateBookingCost(detail.id, costDraft.estimated_cost, costDraft.final_cost);
-      setDetail({ ...detail, estimated_cost: costDraft.estimated_cost, final_cost: costDraft.final_cost });
+      await adminApi.updateBookingCost(detail.id, costDraft.estimated_cost, costDraft.final_cost, costDraft.pickup_fee);
+      setDetail({ ...detail, estimated_cost: costDraft.estimated_cost, final_cost: costDraft.final_cost, pickup_fee: costDraft.pickup_fee });
       load();
     } finally { setSavingCost(false); }
   }
@@ -101,7 +114,9 @@ export default function RepairsPage() {
   }
 
   function openPaymentModal(b: Booking) {
-    const total = b.final_cost ?? b.estimated_cost ?? 0;
+    const service = b.final_cost ?? b.estimated_cost ?? 0;
+    const pickup = (b as any).pickup_fee ?? 0;
+    const total = service + pickup;
     const remaining = Math.max(1, total);
     setPayModal({ booking: b, amount: remaining, state: "confirm" });
   }
@@ -206,11 +221,16 @@ export default function RepairsPage() {
                 <td className="td">{b.full_name}<br /><span className="text-xs text-ink-dim">{b.phone_number}</span></td>
                 <td className="td">{b.device_type} · {b.device_model}</td>
                 <td className="td capitalize text-xs">{b.fulfillment_type}</td>
-                <td className="td tabular">{b.final_cost ? formatKES(b.final_cost) : b.estimated_cost ? `~${formatKES(b.estimated_cost)}` : "—"}</td>
+                <td className="td tabular">{b.final_cost ? formatKES(b.final_cost + ((b as any).pickup_fee ?? 0)) : b.estimated_cost ? `~${formatKES(b.estimated_cost + ((b as any).pickup_fee ?? 0))}` : "—"}</td>
                 <td className="td" onClick={(e) => e.stopPropagation()}>
                   <select className="select-field text-xs !py-1 !px-2" value={b.status}
-                    onChange={(e) => adminApi.updateBookingStatus(b.id, e.target.value).then(load)}>
-                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                    onChange={(e) => adminApi.updateBookingStatus(b.id, e.target.value).then(load).catch(() => alert("Invalid transition — must move one step at a time or cancel."))}>
+                    <option key={b.status} value={b.status}>{b.status}</option>
+                    {(() => {
+                      const nxt = nextStatus(b.status);
+                      return nxt ? <option key={nxt} value={nxt}>{nxt}</option> : null;
+                    })()}
+                    {!TERMINAL.includes(b.status) && <option key="cancelled" value="cancelled">cancelled</option>}
                   </select>
                 </td>
                 <td className="td text-xs text-ink-muted">{new Date(b.created_at).toLocaleDateString()}</td>
@@ -332,17 +352,31 @@ export default function RepairsPage() {
                 </div>
               </div>
 
-              {/* Status update */}
+              {/* Status update — strict single-step */}
               <div className="space-y-2">
-                <p className="text-xs text-ink-dim font-bold uppercase tracking-wider">Update Status</p>
+                <p className="text-xs text-ink-dim font-bold uppercase tracking-wider">
+                  Update Status — one step at a time
+                </p>
                 <div className="flex gap-2 flex-wrap">
-                  {STATUS_OPTIONS.filter(s => s !== detail.status && s !== "cancelled").map(s => (
-                    <button key={s} onClick={() => handleStatusChange(s)} disabled={updatingStatus}
-                      className="px-3 py-1.5 rounded-lg border border-base-border text-xs font-medium text-ink-muted hover:text-ink hover:bg-base-hover transition-colors disabled:opacity-50 capitalize">
-                      {s.replace(/_/g, " ")}
-                    </button>
-                  ))}
+                  {(() => {
+                    const nxt = nextStatus(detail.status);
+                    return nxt && !TERMINAL.includes(detail.status) ? (
+                      <button
+                        key={nxt}
+                        onClick={() => handleStatusChange(nxt)}
+                        disabled={updatingStatus}
+                        className="px-3 py-1.5 rounded-lg border border-base-border text-xs font-medium text-ink-muted hover:text-ink hover:bg-base-hover transition-colors disabled:opacity-50 capitalize"
+                      >
+                        → {nxt.replace(/_/g, " ")}
+                      </button>
+                    ) : (
+                      <p className="text-xs text-ink-dim">Terminal state — no further transitions.</p>
+                    );
+                  })()}
                 </div>
+                <p className="text-[11px] text-ink-dim">
+                  Flow: pending → confirmed → picked_up → diagnosis → repair → ready → completed. Cancel is the only jump allowed.
+                </p>
               </div>
 
               {/* Complete & Request Payment */}
@@ -391,7 +425,9 @@ export default function RepairsPage() {
             </div>
 
             <div className="bg-base-hover rounded-xl p-3 space-y-1.5 text-xs">
-              <div className="flex justify-between text-ink-muted"><span>Total repair cost</span><span>{formatKES(payModal.booking.final_cost ?? payModal.booking.estimated_cost ?? 0)}</span></div>
+              <div className="flex justify-between text-ink-muted"><span>Service cost</span><span>{formatKES(payModal.booking.final_cost ?? payModal.booking.estimated_cost ?? 0)}</span></div>
+              <div className="flex justify-between text-ink-muted"><span>Pickup fee ({payModal.booking.fulfillment_type === "pickup" ? "pickup" : "dropoff"})</span><span>{formatKES((payModal.booking as any).pickup_fee ?? 0)}</span></div>
+              <div className="flex justify-between text-ink-muted font-bold"><span>Total repair cost</span><span>{formatKES((payModal.booking.final_cost ?? payModal.booking.estimated_cost ?? 0) + ((payModal.booking as any).pickup_fee ?? 0))}</span></div>
 {(payModal.amount ?? 0) > 0 && (
                   <div className="flex justify-between text-ink-muted"><span>Amount to pay</span><span className="text-green-500">− {formatKES(payModal.amount!)}</span></div>
                 )}
