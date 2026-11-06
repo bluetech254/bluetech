@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getBookingById } from '../api/bookings';
-import { formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
 import { ChevronLeft, Smartphone, Calendar, Clock, Phone, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -103,29 +102,6 @@ export const BookingDetailPage = () => {
         {booking.preferred_time && <p className="flex items-center gap-2"><Clock className="w-4 h-4 text-slate-400" />{booking.preferred_time}</p>}
         <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" />{booking.phone_number}</p>
       </div>
-
-      {/* Costs */}
-      {(booking.estimated_cost > 0 || booking.final_cost > 0) && (
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2 text-sm">
-          <p className="text-xs font-black text-slate-500 uppercase tracking-wide mb-2">Cost Summary</p>
-          {booking.estimated_cost > 0 && <div className="flex justify-between text-slate-600"><span>Estimated</span><span>{formatCurrency(booking.estimated_cost)}</span></div>}
-          {booking.final_cost > 0 && (
-            <div className="flex justify-between font-black text-slate-900 pt-2 border-t border-slate-100">
-              <span>Final cost</span>
-              <span className="flex items-center gap-2">{formatCurrency(booking.final_cost)}
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${booking.final_payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{booking.final_payment_status ?? 'unpaid'}</span>
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {booking.internal_notes && (
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
-          <p className="text-xs font-black text-blue-700 mb-1">Technician Notes</p>
-          <p className="text-sm text-blue-800">{booking.internal_notes}</p>
-        </div>
-      )}
     </div>
   );
 };

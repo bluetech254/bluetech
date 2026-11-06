@@ -17,17 +17,47 @@ from bookings import service
 from bookings.models import BookingCreate, CostUpdate, StatusUpdate
 from core.audit import log_action
 from core.exceptions import BookingNotFoundException
-from fastapi import APIRouter, Depends, HTTPException, Query
+from core.security import decode_token
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/bookings", tags=["Repair Bookings"])
 
+# Never exposed to clients — server/admin-internal only.
+_HIDDEN_FIELDS = {
+    "estimated_cost",
+    "final_cost",
+    "commitment_fee",
+    "commitment_payment_status",
+    "commitment_payment_reference",
+    "commitment_receipt",
+    "final_payment_status",
+    "final_payment_reference",
+    "final_receipt",
+    "final_checkout_id",
+    "internal_notes",
+}
+
+def _is_admin_request(request: Request) -> bool:
+    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth:
+        return False
+    token = auth.split()[-1] if auth else ""
+    payload = decode_token(token)
+    return bool(payload and payload.get("type") == "admin")
+
+def _sanitize(booking: dict, is_admin: bool = False) -> dict:
+    if is_admin:
+        return booking
+    return {k: v for k, v in booking.items() if k not in _HIDDEN_FIELDS}
+
 
 @router.post("")
-def create_booking(body: BookingCreate, user_id: str | None = Depends(get_optional_user)):
+def create_booking(body: BookingCreate, request: Request, user_id: str | None = Depends(get_optional_user)):
     """Create a new repair booking. Works for guests and authenticated users."""
     try:
-        return service.create_booking(body, user_id=user_id)
+        booking = service.create_booking(body, user_id=user_id)
+        return _sanitize(booking, _is_admin_request(request))
     except Exception as e:
         logger.error(f"Create booking error: {e}")
         raise HTTPException(status_code=500, detail="Booking creation failed.")
@@ -46,21 +76,22 @@ def get_bookings(
 
 
 @router.get("/track/{phone}")
-def track_bookings(phone: str):
-    """Track bookings by phone number. Public — no auth required."""
+def track_bookings(phone: str, request: Request):
+    """Track bookings by phone number. Public — no auth required. Costs hidden from clients."""
+    is_admin = _is_admin_request(request)
     bookings = service.track_bookings_by_phone(phone)
-    return {"data": bookings, "count": len(bookings)}
+    return {"data": [_sanitize(b, is_admin) for b in bookings], "count": len(bookings)}
 
 
 @router.get("/{booking_id}")
-def get_booking(booking_id: UUID, user_id: str | None = Depends(get_optional_user)):
-    """Get a single booking by ID."""
+def get_booking(booking_id: UUID, request: Request, user_id: str | None = Depends(get_optional_user)):
+    """Get a single booking by ID. Costs hidden from clients."""
     try:
         booking = service.get_booking_by_id(booking_id)
         # Authenticated users can only view their own bookings
         if user_id and booking.get("user_id") and str(booking["user_id"]) != str(user_id):
             raise HTTPException(status_code=403, detail="Access denied")
-        return booking
+        return _sanitize(booking, _is_admin_request(request))
     except BookingNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
 

@@ -31,7 +31,7 @@ export const PromotionalDealsCarousel = () => {
         }));
         const services = (servicesRes.data.data || []).map((s: any) => ({
           id: s.id, title: s.service_name, type: 'service' as const,
-          price: s.base_price, image: s.image_url, cta: 'Book Now',
+          price: 0, image: s.image_url, cta: 'Book Now',
         }));
         const merged: Deal[] = [];
         for (let i = 0; i < 10; i++) {
@@ -111,7 +111,9 @@ export const PromotionalDealsCarousel = () => {
                       {deal.type === 'product' ? 'Product' : 'Service'}
                     </span>
                   </div>
-                  <span className="text-lg font-bold text-blue-600">KSH {deal.price.toFixed(0)}</span>
+                  {deal.type !== 'service' && (
+                    <span className="text-lg font-bold text-blue-600">KSH {deal.price.toFixed(0)}</span>
+                  )}
                   <button
                     onClick={() => navigate(deal.type === 'service' ? `/book-repair/${deal.id}` : `/products/${deal.id}`)}
                     className={`w-full mt-3 py-2 rounded text-sm font-medium transition-colors ${

@@ -38,7 +38,6 @@ export interface RepairService {
   name: string;
   description: string;
   category: string;
-  price: number;
   estimated_duration: string;
   warranty_period?: string;
   image?: string;
@@ -88,15 +87,7 @@ export interface Booking {
   fulfillment_type: 'dropoff' | 'pickup';
   pickup_address?: string;
   status: 'pending' | 'confirmed' | 'picked_up' | 'in_diagnosis' | 'in_repair' | 'ready' | 'completed' | 'cancelled';
-  estimated_cost?: number;
-  final_cost?: number;
   user_id?: string;
-  commitment_payment_status?: string;
-  commitment_payment_reference?: string;
-  commitment_receipt?: string;
-  commitment_fee?: number;
-  final_payment_status?: string;
-  final_checkout_id?: string;
   notes?: string;
   created_at: string;
 }

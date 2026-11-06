@@ -34,14 +34,14 @@ export const normalizeProduct = (raw: any): Product => {
 
 /**
  * Normalize a raw backend repair service to the frontend RepairService type.
- * Backend uses `service_name`, `base_price`, `service_category`.
+ * Backend uses `service_name`, `service_category`.
+ * Price is never exposed to clients.
  */
 export const normalizeService = (raw: any): RepairService => ({
   id:                 raw.id,
   name:               raw.service_name  || raw.name || '',
   description:        raw.long_description || raw.short_description || raw.description || '',
   category:           raw.service_category || raw.category || '',
-  price:              raw.base_price    ?? raw.price ?? 0,
   estimated_duration: raw.duration      || raw.estimated_duration || '',
   warranty_period:    raw.warranty      || raw.warranty_period,
   image:              raw.image_url     || raw.image,

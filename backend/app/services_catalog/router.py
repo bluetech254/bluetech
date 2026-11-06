@@ -1,4 +1,4 @@
-"""services_catalog/router.py — Repair services catalog. Public read-only."""
+"""Repair services catalog. Public read-only."""
 import logging
 
 from core.db import db
@@ -6,6 +6,12 @@ from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/repair-services", tags=["Repair Services"])
+
+# Public columns. base_price and updated_at are intentionally excluded.
+PUBLIC_COLUMNS = (
+    "id, service_name, service_category, description, "
+    "is_active, created_at"
+)
 
 
 @router.get("/categories")
@@ -23,12 +29,12 @@ def get_categories():
 @router.get("")
 def get_repair_services(
     category: str | None = Query(None),
-    search:   str | None = Query(None),
-    limit:    int | None = Query(None, ge=1),
+    search: str | None = Query(None),
+    limit: int | None = Query(None, ge=1),
 ):
     """Get active repair services with optional category/search filter."""
     try:
-        q = db.table("repair_services").select("*").eq("is_active", True)
+        q = db.table("repair_services").select(PUBLIC_COLUMNS).eq("is_active", True)
         if category:
             q = q.eq("service_category", category)
         if search:
@@ -47,7 +53,7 @@ def get_repair_services(
 def get_repair_service(service_id: str):
     """Get a single repair service by ID."""
     try:
-        resp = db.table("repair_services").select("*").eq("id", service_id).single().execute()
+        resp = db.table("repair_services").select(PUBLIC_COLUMNS).eq("id", service_id).single().execute()
         if not resp.data:
             raise HTTPException(status_code=404, detail="Service not found")
         return resp.data

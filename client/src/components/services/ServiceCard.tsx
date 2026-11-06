@@ -1,7 +1,6 @@
 import React from 'react';
 import { Clock, Shield, Smartphone, Laptop, Tablet, Headphones, Gamepad, Watch, Wrench, ArrowRight } from 'lucide-react';
 import { RepairService } from '../../types';
-import { formatCurrency } from '../../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
@@ -13,7 +12,7 @@ interface ServiceCardProps {
 
 export const ServiceCard = ({ service }: ServiceCardProps) => {
   const navigate = useNavigate();
-  const { id, name, category, price, estimated_duration, warranty_period } = service;
+  const { id, name, category, estimated_duration, warranty_period } = service;
 
   // Dynamically select an icon based on category keywords
   const getCategoryIcon = (cat: string) => {

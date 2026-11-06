@@ -6,13 +6,12 @@ import { getRepairServiceById } from '../api/services';
 import { createBooking } from '../api/bookings';
 import { RepairService } from '../types';
 import { bookingSchema } from '../utils/validation';
-import { formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
 import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, Loader2, Tag, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, Loader2, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DEVICE_CATEGORIES = [
@@ -39,11 +38,8 @@ export const BookRepairPage = () => {
   const [models, setModels] = useState<any[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<any>(null);
   const [selectedModel, setSelectedModel] = useState<any>(null);
-  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
-  const [priceLevel, setPriceLevel] = useState<'model' | 'brand' | 'default' | null>(null);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
-  const [loadingPrice, setLoadingPrice] = useState(false);
 
   const [paymentModal, setPaymentModal] = useState<{
     bookingId: string; amount: number; email: string; reference: string; servicePrice: number;
@@ -65,8 +61,6 @@ export const BookRepairPage = () => {
     setSelectedCategory(type);
     setSelectedBrand(null);
     setSelectedModel(null);
-    setEstimatedPrice(null);
-    setPriceLevel(null);
     setBrands([]);
     setModels([]);
     setLoadingBrands(true);
@@ -81,35 +75,18 @@ export const BookRepairPage = () => {
   const handleBrandSelect = async (brand: any, category: string | null) => {
     setSelectedBrand(brand);
     setSelectedModel(null);
-    setEstimatedPrice(null);
-    setPriceLevel(null);
     setModels([]);
     setLoadingModels(true);
-    setLoadingPrice(true);
     try {
       const categoryParam = category ? `?device_type=${category}` : '';
-      const [modelsRes, priceRes] = await Promise.all([
-        fetch(`${API_BASE}/devices/brands/${brand.id}/models${categoryParam}`).then(r => r.json()),
-        fetch(`${API_BASE}/devices/services/${serviceId}/price?brand_id=${brand.id}`).then(r => r.json()),
-      ]);
+      const modelsRes = await fetch(`${API_BASE}/devices/brands/${brand.id}/models${categoryParam}`).then(r => r.json());
       setModels(modelsRes.data ?? []);
-      setEstimatedPrice(priceRes.price ?? null);
-      setPriceLevel(priceRes.level ?? null);
     } catch (e) { console.error('Brand select error:', e); }
-    finally { setLoadingModels(false); setLoadingPrice(false); }
+    finally { setLoadingModels(false); }
   };
 
   const handleModelSelect = async (model: any) => {
     setSelectedModel(model);
-    if (!serviceId) return;
-    setLoadingPrice(true);
-    try {
-      const r = await fetch(`${API_BASE}/devices/services/${serviceId}/price?brand_id=${selectedBrand.id}&model_id=${model.id}`);
-      const d = await r.json();
-      setEstimatedPrice(d.price ?? null);
-      setPriceLevel(d.level ?? null);
-    } catch {}
-    finally { setLoadingPrice(false); }
   };
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -166,8 +143,6 @@ export const BookRepairPage = () => {
 
   if (loadingService) return <Loading fullScreen message="Loading service details..." />;
 
-  const displayPrice = estimatedPrice ?? service?.price ?? 0;
-
   return (
     <div className="space-y-6 py-4 sm:py-6 animate-fade-in text-left">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
@@ -192,29 +167,6 @@ export const BookRepairPage = () => {
               )}
             </div>
             <div className="border-t border-b border-slate-100 py-3 space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="font-semibold text-slate-500">
-                  {priceLevel === 'model' ? 'Model Price' : priceLevel === 'brand' ? 'Brand Price' : 'Base Price'}
-                </span>
-                <div className="text-right">
-                  {loadingPrice ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-400 ml-auto" />
-                  ) : (
-                    <span className={`font-black text-lg ${priceLevel && priceLevel !== 'default' ? 'text-emerald-600' : 'text-blue-600'}`}>
-                      {formatCurrency(displayPrice)}
-                    </span>
-                  )}
-                  {priceLevel === 'model' && selectedModel && (
-                    <p className="text-[10px] text-emerald-600 font-semibold">for {selectedModel.name}</p>
-                  )}
-                  {priceLevel === 'brand' && selectedBrand && (
-                    <p className="text-[10px] text-amber-600 font-semibold">{selectedBrand.name} · pick model for exact price</p>
-                  )}
-                  {(!priceLevel || priceLevel === 'default') && !selectedBrand && (
-                    <p className="text-[10px] text-slate-400 font-semibold">select device for exact price</p>
-                  )}
-                </div>
-              </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-500">Duration</span>
                 <span className="font-bold text-slate-800">{service?.estimated_duration || '1–3 Hours'}</span>
@@ -258,7 +210,7 @@ export const BookRepairPage = () => {
               {(selectedCategory || selectedBrand) && (
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 flex-wrap">
                   {selectedCategory && (
-                    <button type="button" onClick={() => { setSelectedCategory(null); setSelectedBrand(null); setSelectedModel(null); setEstimatedPrice(null); setBrands([]); setModels([]); }}
+                    <button type="button" onClick={() => { setSelectedCategory(null); setSelectedBrand(null); setSelectedModel(null); setBrands([]); setModels([]); }}
                       className="text-blue-600 font-semibold hover:underline">
                       {DEVICE_CATEGORIES.find(c => c.type === selectedCategory)?.label}
                     </button>
@@ -266,7 +218,7 @@ export const BookRepairPage = () => {
                   {selectedBrand && (
                     <>
                       <ChevronRight className="w-3 h-3" />
-                      <button type="button" onClick={() => { setSelectedBrand(null); setSelectedModel(null); setEstimatedPrice(null); setModels([]); }}
+                      <button type="button" onClick={() => { setSelectedBrand(null); setSelectedModel(null); setModels([]); }}
                         className="text-blue-600 font-semibold hover:underline">
                         {selectedBrand.name}
                       </button>
@@ -333,7 +285,7 @@ export const BookRepairPage = () => {
                       onChange={e => {
                         const m = models.find(m => m.id === e.target.value);
                         if (m) handleModelSelect(m);
-                        else { setSelectedModel(null); setEstimatedPrice(null); }
+                        else { setSelectedModel(null); }
                       }}>
                       <option value="">-- Select Model --</option>
                       {models.map(m => (
@@ -341,23 +293,6 @@ export const BookRepairPage = () => {
                       ))}
                     </select>
                   )}
-                </div>
-              )}
-
-              {/* Price estimate banner */}
-              {estimatedPrice !== null && !loadingPrice && (
-                <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${priceLevel === 'model' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
-                  <Tag className={`w-4 h-4 shrink-0 ${priceLevel === 'model' ? 'text-emerald-600' : 'text-amber-600'}`} />
-                  <div>
-                    <p className={`text-sm font-black ${priceLevel === 'model' ? 'text-emerald-800' : 'text-amber-800'}`}>
-                      {priceLevel === 'model' ? 'Exact Price' : 'Estimated Price'}: {formatCurrency(estimatedPrice)}
-                    </p>
-                    <p className={`text-xs ${priceLevel === 'model' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                      {priceLevel === 'model'
-                        ? `For ${service?.name ?? 'this service'} on ${selectedBrand?.name} ${selectedModel?.name}`
-                        : `For ${selectedBrand?.name} devices · select a model for exact price`}
-                    </p>
-                  </div>
                 </div>
               )}
 

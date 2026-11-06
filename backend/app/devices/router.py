@@ -36,7 +36,6 @@ class PricingBody(BaseModel):
 
 
 # ── Public: device lookup for booking form ────────────────────────────────────
-
 @router.get("/api/v1/devices/brands")
 def get_brands(device_type: str | None = Query(None)):
     """Get active device brands. Optionally filter by device_type (includes 'multi' brands)."""
@@ -58,31 +57,8 @@ def get_models(brand_id: UUID, device_type: str | None = Query(None)):
     return {"data": resp.data or []}
 
 
-@router.get("/api/v1/devices/services/{service_id}/price")
-def get_service_price(
-    service_id: UUID,
-    brand_id:   UUID | None = Query(None),
-    model_id:   UUID | None = Query(None),
-):
-    """Smart price lookup: model-specific → brand-specific → service default."""
-    if model_id and brand_id:
-        r = db.table("service_pricing").select("price")\
-            .eq("service_id", str(service_id)).eq("brand_id", str(brand_id))\
-            .eq("model_id", str(model_id)).limit(1).execute()
-        if r["data"]:
-            return {"price": float(r["data"][0]["price"]), "level": "model"}
-
-    if brand_id:
-        r = db.table("service_pricing").select("price")\
-            .eq("service_id", str(service_id)).eq("brand_id", str(brand_id))\
-            .is_("model_id", "null").limit(1).execute()
-        if r["data"]:
-            return {"price": float(r["data"][0]["price"]), "level": "brand"}
-
-    r = db.table("repair_services").select("base_price").eq("id", str(service_id)).single().execute()
-    if not r["data"]:
-        raise HTTPException(status_code=404, detail="Service not found")
-    return {"price": float(r["data"]["base_price"] or 0), "level": "default"}
+# NOTE: Public service pricing was removed — no service price is exposed to clients.
+# Pricing lookup path removed intentionally (admin pricing CRUD below remains for internal use).
 
 
 # ── Admin: brand CRUD ─────────────────────────────────────────────────────────

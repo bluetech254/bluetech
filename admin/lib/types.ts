@@ -93,7 +93,6 @@ export interface RepairService {
   id: string;
   service_name: string;
   service_category: string;
-  base_price: number;
   duration_minutes: number;
   warranty_days: number;
   is_active: boolean;
