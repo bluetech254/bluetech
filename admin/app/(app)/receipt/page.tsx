@@ -25,7 +25,7 @@ export default function ReceiptPage() {
   if (!data) return <p className="p-8 text-ink-muted text-sm">Loading receipt…</p>;
 
   const isOrder = type === "order";
-  const isPaid = isOrder ? data.payment_status === "paid" : data.commitment_payment_status === "paid";
+  const isPaid = isOrder ? data.payment_status === "paid" : data.final_payment_status === "paid";
   const date = new Date(data.created_at).toLocaleString("en-KE", {
     day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
@@ -125,12 +125,12 @@ export default function ReceiptPage() {
               </>
             ) : (
               <>
-                {(data.commitment_fee ?? 0) > 0 && <SummaryRow label="Commitment fee" value={formatKES(data.commitment_fee)} />}
+                {(data.pickup_fee ?? 0) > 0 && <SummaryRow label="Pickup fee" value={formatKES(data.pickup_fee)} />}
                 {(data.estimated_cost ?? 0) > 0 && <SummaryRow label="Estimated cost" value={formatKES(data.estimated_cost)} />}
                 {(data.final_cost ?? 0) > 0 && (
                   <div className="border-t border-gray-200 pt-3 mt-1 flex justify-between items-center">
-                    <span className="font-bold text-gray-800 text-base">Final cost</span>
-                    <span className="font-black text-gray-900 text-xl tabular-nums">{formatKES(data.final_cost)}</span>
+                    <span className="font-bold text-gray-800 text-base">Final cost{data.pickup_fee > 0 ? " (+ pickup)" : ""}</span>
+                    <span className="font-black text-gray-900 text-xl tabular-nums">{formatKES(data.final_cost + (data.pickup_fee ?? 0))}</span>
                   </div>
                 )}
                 {data.commitment_receipt && (

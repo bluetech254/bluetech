@@ -189,6 +189,10 @@ def get_commitment_status(booking_id: str) -> dict:
 def request_final_payment(booking_id: str, admin: dict) -> dict:
     """Admin initializes final payment.
 
+    Gated: booking must be in 'ready' state (device repaired, awaiting collection).
+    Completed transition happens only on successful payment verification,
+    respecting strict single-step lifecycle (ready → completed).
+
     Total = service (final_cost or estimated_cost, admin-set) + pickup_fee.
       - dropoff: pickup_fee 0 → service only.
       - pickup:  pickup_fee 200 → service + 200 delivery.
@@ -198,6 +202,9 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     if not resp.data:
         raise ValueError("Booking not found")
     booking = resp.data
+
+    if booking.get("status") != "ready":
+        raise ValueError(f"Booking must be in 'ready' state before payment (current: {booking.get('status')}).")
 
     if booking.get("final_payment_status") == "paid":
         raise ValueError("Final payment already received")
@@ -226,8 +233,8 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
         },
     )
 
+    # Do NOT force completed here — lifecycle moves completed on verify.
     db.table("bookings").update({
-        "status":                   "completed",
         "final_payment_reference":  reference,
     }).eq("id", booking_id).execute()
 
@@ -253,13 +260,16 @@ def get_final_payment_status(booking_id: str) -> dict:
 
 
 def verify_final_payment(reference: str) -> dict:
-    """Verify a final payment by Paystack reference (client polling). Updates DB if paid."""
+    """Verify a final payment by Paystack reference. On success, moves ready → completed (strict lifecycle)."""
     txn = verify_transaction(reference)
     if txn.get("status") == "success":
-        db.table("bookings").update({
-            "final_payment_status": "paid",
-            "final_receipt":        txn.get("reference", reference),
-        }).eq("final_payment_reference", reference).execute()
+        existing = db.table("bookings").select("id,status").eq("final_payment_reference", reference).single().execute()
+        if existing.data:
+            updates = {"final_payment_status": "paid", "final_receipt": txn.get("reference", reference)}
+            # Only ready → completed single step; if already completed, keep.
+            if existing.data.get("status") == "ready":
+                updates["status"] = "completed"
+            db.table("bookings").update(updates).eq("final_payment_reference", reference).execute()
     return {
         "status":    txn.get("status"),
         "reference": reference,
@@ -331,12 +341,12 @@ def _handle_commitment_webhook(reference: str, receipt: str, meta: dict) -> bool
 
 
 def _handle_final_webhook(reference: str, receipt: str, meta: dict) -> bool:
-    r = db.table("bookings").select("id").eq("final_payment_reference", reference).execute()
+    r = db.table("bookings").select("id,status").eq("final_payment_reference", reference).execute()
     if r.data:
-        db.table("bookings").update({
-            "final_payment_status": "paid",
-            "final_receipt":        receipt,
-        }).eq("final_payment_reference", reference).execute()
+        updates = {"final_payment_status": "paid", "final_receipt": receipt}
+        if r.data[0].get("status") == "ready":
+            updates["status"] = "completed"
+        db.table("bookings").update(updates).eq("final_payment_reference", reference).execute()
         logger.info(f"Final payment paid via webhook: ref={reference}")
         return True
     return False

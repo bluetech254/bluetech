@@ -14,7 +14,7 @@ export default function ZonesPage() {
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-ink-muted">Delivery zones are managed by the backend. This view is read-only.</p>
+      <p className="text-sm text-ink-muted">Delivery zones are managed by the backend (flat KES 1 per order). This view is read-only.</p>
       <div className="card overflow-x-auto">
         <table className="w-full">
           <thead>

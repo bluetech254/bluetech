@@ -18,6 +18,15 @@ const TABS: { label: string; value: OrderStatus | "" }[] = [
 
 const STATUS_OPTIONS: OrderStatus[] = ["pending", "confirmed", "processing", "dispatched", "delivered", "cancelled"];
 
+// Strict lifecycle: pending → confirmed → processing → dispatched → delivered
+const ORDER_CHAIN: OrderStatus[] = ["pending", "confirmed", "processing", "dispatched", "delivered"];
+const ORDER_TERMINAL: OrderStatus[] = ["delivered", "cancelled"];
+function nextOrderStatus(current: OrderStatus): OrderStatus | null {
+  const idx = ORDER_CHAIN.indexOf(current);
+  if (ORDER_TERMINAL.includes(current) || idx < 0 || idx + 1 >= ORDER_CHAIN.length) return null;
+  return ORDER_CHAIN[idx + 1];
+}
+
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-amber-500",
   confirmed: "text-blue-500",
@@ -62,15 +71,28 @@ export default function OrdersPage() {
   }
 
   async function updateStatus(id: string, status: string) {
-    await adminApi.updateOrderStatus(id, status);
-    load();
+    try {
+      await adminApi.updateOrderStatus(id, status);
+      load();
+    } catch (e: any) {
+      alert(e.message ?? "Invalid transition — must move one step at a time or cancel.");
+      load();
+    }
   }
 
   async function applyBulk() {
     if (selected.size === 0) return;
-    await adminApi.bulkOrderStatus(Array.from(selected), bulkStatus);
-    setSelected(new Set());
-    load();
+    try {
+      const res: any = await adminApi.bulkOrderStatus(Array.from(selected), bulkStatus);
+      const failed = (res?.failed ?? []) as any[];
+      if (failed.length) {
+        alert(`${res?.message ?? "Bulk update failed"}\nFailed: ${failed.map(f => `${String(f.id).slice(0,8)}: ${f.error}`).join("; ")}`);
+      }
+      setSelected(new Set());
+      load();
+    } catch (e: any) {
+      alert(e.message ?? "Bulk update failed");
+    }
   }
 
   async function handleModalStatusChange(status: string) {
@@ -80,6 +102,8 @@ export default function OrdersPage() {
       await adminApi.updateOrderStatus(detailOrder.id, status);
       setDetailOrder({ ...detailOrder, status: status as OrderStatus });
       load();
+    } catch (e: any) {
+      alert(e.message ?? "Invalid transition — must move one step at a time or cancel.");
     } finally {
       setUpdatingStatus(false);
     }
@@ -167,7 +191,12 @@ export default function OrdersPage() {
                 <td className="td" onClick={(e) => e.stopPropagation()}>
                   <select className="select-field text-xs !py-1 !px-2" value={o.status}
                     onChange={(e) => updateStatus(o.id, e.target.value)}>
-                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                    <option key={o.status} value={o.status}>{o.status}</option>
+                    {(() => {
+                      const nxt = nextOrderStatus(o.status);
+                      return nxt ? <option key={nxt} value={nxt}>{nxt}</option> : null;
+                    })()}
+                    {!ORDER_TERMINAL.includes(o.status) && <option key="cancelled" value="cancelled">cancelled</option>}
                   </select>
                 </td>
                 <td className="td text-ink-muted text-xs">{new Date(o.created_at).toLocaleDateString()}</td>
@@ -263,19 +292,44 @@ export default function OrdersPage() {
                 </div>
               )}
 
-              {/* Update Status */}
+              {/* Update Status — single step */}
               <div className="space-y-2">
-                <p className="text-xs text-ink-dim font-bold uppercase tracking-wider">Update Status</p>
+                <p className="text-xs text-ink-dim font-bold uppercase tracking-wider">Update Status — one step at a time</p>
                 <div className="flex gap-2 flex-wrap">
-                  {STATUS_OPTIONS.filter(s => s !== detailOrder.status && s !== "cancelled").map(s => (
-                    <button key={s} onClick={() => handleModalStatusChange(s)}
-                      disabled={updatingStatus}
-                      className="px-3 py-1.5 rounded-lg border border-base-border text-xs font-medium text-ink-muted hover:text-ink hover:bg-base-hover transition-colors disabled:opacity-50 capitalize">
-                      {updatingStatus ? <Loader2 size={12} className="animate-spin" /> : s}
-                    </button>
-                  ))}
+                  {(() => {
+                    const nxt = nextOrderStatus(detailOrder.status);
+                    return nxt ? (
+                      <button key={nxt} onClick={() => handleModalStatusChange(nxt)}
+                        disabled={updatingStatus}
+                        className="px-3 py-1.5 rounded-lg border border-base-border text-xs font-medium text-ink-muted hover:text-ink hover:bg-base-hover transition-colors disabled:opacity-50 capitalize">
+                        {updatingStatus ? <Loader2 size={12} className="animate-spin" /> : `→ ${nxt}`}
+                      </button>
+                    ) : (
+                      <p className="text-xs text-ink-dim">Terminal state — no further transitions.</p>
+                    );
+                  })()}
                 </div>
+                <p className="text-[11px] text-ink-dim">Flow: pending → confirmed → processing → dispatched → delivered.</p>
               </div>
+
+              {/* Request payment for unpaid orders */}
+              {detailOrder.payment_status !== "paid" && detailOrder.status !== "cancelled" && detailOrder.status !== "delivered" && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res: any = await adminApi.requestOrderPayment(detailOrder.id);
+                      const url = res?.authorization_url;
+                      if (url) window.open(url, "_blank");
+                      else alert(res?.message ?? "Payment link requested");
+                    } catch (e: any) {
+                      alert(e.message ?? "Failed to request payment");
+                    }
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"
+                >
+                  Request Payment ({formatKES(detailOrder.total_amount)})
+                </button>
+              )}
             </div>
 
             {/* Footer actions */}

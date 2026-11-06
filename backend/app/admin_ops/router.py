@@ -54,16 +54,17 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
     users_today    = [u for u in users    if _date(u.get("created_at")) in today_set]
 
     order_revenue      = sum(float(o.get("total_amount", 0) or 0) for o in orders if o.get("payment_status") == "paid")
-    booking_commitment = sum(float(b.get("commitment_fee", 0) or 0) for b in bookings if b.get("commitment_payment_status") == "paid")
+    # Booking revenue: final total (service + pickup) minus commitment already paid.
+    # Commitment is legacy (bookings free-for-life); pickup fee is included.
     booking_final      = sum(
-        max(0, float(b.get("final_cost") or b.get("estimated_cost") or 0) - float(b.get("commitment_fee") or 0))
+        float(b.get("final_cost") or b.get("estimated_cost") or 0) + float(b.get("pickup_fee") or 0) - float(b.get("commitment_fee") or 0)
         for b in bookings if b.get("final_payment_status") == "paid"
     )
-    booking_revenue = booking_commitment + booking_final
+    booking_revenue = max(0, booking_final)
 
     revenue_today = (
         sum(float(o.get("total_amount", 0) or 0) for o in orders_today if o.get("payment_status") == "paid") +
-        sum(float(b.get("commitment_fee", 0) or 0) for b in bookings_today if b.get("commitment_payment_status") == "paid")
+        sum(float(b.get("final_cost") or b.get("estimated_cost") or 0) + float(b.get("pickup_fee") or 0) for b in bookings_today if b.get("final_payment_status") == "paid")
     )
 
     active_statuses = {"pending", "confirmed", "picked_up", "in_diagnosis", "in_repair"}
@@ -211,12 +212,14 @@ def get_transactions(admin: dict = Depends(get_current_admin)):
             txns.append({"id": f"{b['id']}-fnl", "type": "booking_final",
                          "ref": f"FNL-{b['id'][:8].upper()}", "customer": b.get("full_name"),
                          "phone": b.get("phone_number"),
-                         "amount": float(b.get("final_cost") or b.get("estimated_cost") or 0) - float(b.get("commitment_fee") or 0),
+                         "amount": float(b.get("final_cost") or b.get("estimated_cost") or 0) + float(b.get("pickup_fee") or 0) - float(b.get("commitment_fee") or 0),
                          "payment_status": b.get("final_payment_status"),
                          "payment_receipt": b.get("final_receipt"), "status": b.get("status"),
                          "payment_method": "paystack", "created_at": b.get("created_at"),
                          "detail": {"device": f"{b.get('device_type','')} {b.get('device_model','')}".strip(),
-                                    "booking_id": b["id"]}})
+                                    "booking_id": b["id"],
+                                    "pickup_fee": float(b.get("pickup_fee") or 0),
+                                    "fulfillment_type": b.get("fulfillment_type")}})
     txns.sort(key=lambda x: x.get("created_at") or "", reverse=True)
     return {"data": txns, "count": len(txns)}
 
@@ -229,11 +232,38 @@ class BulkStatusUpdate(BaseModel):
 
 @router.post("/orders/bulk-status")
 def bulk_update_order_status(body: BulkStatusUpdate, admin: dict = Depends(get_current_admin)):
+    """Bulk update respecting single-step lifecycle. Per-order validation via orders service.
+
+    Returns per-order results (ok + failed) so partial failures are explicit.
+    Invalid transitions for an order are skipped with an error, not silently applied.
+    """
     if not body.order_ids:
         raise HTTPException(status_code=400, detail="No order IDs provided")
-    db.table("orders").update({"status": body.status}).in_("id", body.order_ids).execute()
-    log_action(admin, "order.bulk_status_update", detail={"ids": body.order_ids, "status": body.status})
-    return {"message": f"Updated {len(body.order_ids)} orders to '{body.status}'"}
+    if len(body.order_ids) > 100:
+        raise HTTPException(status_code=400, detail="Max 100 orders per bulk operation")
+    from uuid import UUID
+    from orders import service as order_service
+    from core.exceptions import OrderNotFoundException
+
+    succeeded: list[str] = []
+    failed: list[dict] = []
+    for oid in body.order_ids:
+        try:
+            order_service.update_order_status(UUID(oid), body.status)
+            log_action(admin, "order.status_update", f"order:{oid}", {"status": body.status, "bulk": True})
+            succeeded.append(oid)
+        except OrderNotFoundException:
+            failed.append({"id": oid, "error": "not found"})
+        except ValueError as e:
+            failed.append({"id": oid, "error": str(e)})
+        except Exception as e:
+            failed.append({"id": oid, "error": str(e)})
+    log_action(admin, "order.bulk_status_update", detail={"requested": len(body.order_ids), "succeeded": len(succeeded), "failed": len(failed), "status": body.status})
+    return {
+        "message": f"Updated {len(succeeded)} of {len(body.order_ids)} orders to '{body.status}'",
+        "succeeded": succeeded,
+        "failed": failed,
+    }
 
 
 # ── Referral tracking ─────────────────────────────────────────────────────────

@@ -139,14 +139,18 @@ def get_commitment_status(booking_id: str) -> dict:
 # ── Booking final payment ──────────────────────────────────────────────────────
 
 def request_final_payment(booking_id: str, admin: dict) -> dict:
-    """Admin triggers STK push for remaining balance after repair is done.
+    """Admin triggers STK push for remaining balance. Gated: status must be 'ready'.
 
     Total = service (final/estimated, admin-set) + pickup_fee.
+    Completed happens on callback/verify, not on request.
     """
     resp = db.table("bookings").select("*").eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")
     booking = resp.data
+
+    if booking.get("status") != "ready":
+        raise ValueError(f"Booking must be in 'ready' state before payment (current: {booking.get('status')}).")
 
     if booking.get("final_payment_status") == "paid":
         raise ValueError("Final payment already received")
@@ -168,7 +172,6 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
     )
     checkout_id = result.get("CheckoutRequestID")
     db.table("bookings").update({
-        "status":               "completed",
         "final_checkout_id":    checkout_id,
         "final_payment_status": "pending",
     }).eq("id", booking_id).execute()
@@ -177,11 +180,13 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
         admin,
         "booking.final_payment_requested",
         f"booking:{booking_id}",
-        {"amount": remaining},
+        {"amount": remaining, "pickup_fee": pickup},
     )
     return {
         "checkout_request_id": checkout_id,
         "amount":              remaining,
+        "service_total":       service_total,
+        "pickup_fee":          pickup,
         "message":             f"STK push of KES {remaining} sent to {booking['phone_number']}",
     }
 
@@ -244,12 +249,12 @@ def process_callback(payload: dict) -> None:
                 return
 
             # 3. Booking final payment
-            r = db.table("bookings").select("id").eq("final_checkout_id", checkout_id).execute()
+            r = db.table("bookings").select("id,status").eq("final_checkout_id", checkout_id).execute()
             if r.data:
-                db.table("bookings").update({
-                    "final_payment_status": "paid",
-                    "final_receipt":        receipt,
-                }).eq("final_checkout_id", checkout_id).execute()
+                updates = {"final_payment_status": "paid", "final_receipt": receipt}
+                if r.data[0].get("status") == "ready":
+                    updates["status"] = "completed"
+                db.table("bookings").update(updates).eq("final_checkout_id", checkout_id).execute()
                 return
 
         else:

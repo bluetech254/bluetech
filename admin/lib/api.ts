@@ -98,6 +98,8 @@ export const adminApi = {
     request(`/api/v1/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
   cancelOrder: (id: string) =>
     request(`/api/v1/orders/${id}`, { method: "DELETE" }),
+  requestOrderPayment: (id: string) =>
+    request<{ authorization_url?: string; reference?: string; message?: string }>(`/api/v1/payments/order/${id}/initiate`, { method: "POST" }),
 
   // Bookings
   getBookings: (status?: string) => request<{ data: any[]; count: number }>(`/api/v1/bookings${qs({ status })}`),

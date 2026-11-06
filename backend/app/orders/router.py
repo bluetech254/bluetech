@@ -89,13 +89,19 @@ def update_order_status(
     body: StatusUpdate,
     admin: dict = Depends(get_current_admin),
 ):
-    """Update order status. Admin only. Awards points on delivery."""
+    """Update order status. Admin only. Strict single-step lifecycle; awards points on delivery.
+
+    Chain: pending → confirmed → processing → dispatched → delivered.
+    Cancel allowed from any non-terminal state. Invalid transitions return 400.
+    """
     try:
         updated = service.update_order_status(order_id, body.status)
         log_action(admin, "order.status_update", f"order:{order_id}", {"status": body.status})
         return updated
     except OrderNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Update order status error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -119,13 +125,15 @@ def cancel_order_client(order_id: UUID, user_id: str | None = Depends(get_option
 
 @router.delete("/{order_id}")
 def cancel_order_admin(order_id: UUID, admin: dict = Depends(get_current_admin)):
-    """Admin: cancel/delete an order."""
+    """Admin: cancel an order (refunds stock/points). Cannot cancel delivered."""
     try:
         result = service.cancel_order_by_admin(order_id)
         log_action(admin, "order.cancelled", f"order:{order_id}")
         return result
     except OrderNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Admin cancel order error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

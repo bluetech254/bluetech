@@ -1,14 +1,14 @@
 """
 orders/service.py — Orders domain business logic.
 
-Imports from:
-  core/database       — DB clients
-  core/exceptions     — typed exceptions
-  notifications/sms   — SMS confirmations
-  products/service    — stock check (read only, no circular writes)
+Lifecycle (strict, single-step, no skipping):
+  pending → confirmed → processing → dispatched → delivered
+  Any non-terminal (not delivered) → cancelled.
+  Delivered and cancelled are terminal.
 
-Points logic is called here but lives in points/ — we import the
-function directly. No inline DB queries for points.
+Fees: flat delivery KES 1 (delivery_zones table values are informational only).
+Rewards: loyalty (10%%) + referral (50 pts, first delivered order) awarded only
+on the transition to delivered, exactly once. Cancel restores stock and points.
 """
 import logging
 import math
@@ -25,6 +25,10 @@ from notifications.sms import send_sms
 from orders.models import OrderCreate, OrderItemCreate
 
 logger = logging.getLogger(__name__)
+
+
+ORDER_CHAIN = ["pending", "confirmed", "processing", "dispatched", "delivered"]
+ORDER_TERMINAL = {"delivered", "cancelled"}
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
@@ -248,15 +252,86 @@ def get_orders(status: str | None = None, limit: int = 100, offset: int = 0) -> 
     return orders
 
 
+def _restore_stock_and_points(order: dict):
+    """Refund stock and redeem points for a cancelled order (idempotent-ish).
+
+    Looks up order_items to restore quantities; if already cancelled, no-op.
+    Points refund = points_redeemed added back to user balance + ledger entry.
+    """
+    order_id = order["id"]
+    # Restore stock
+    items_resp = db.table("order_items").select("product_id,quantity").eq("order_id", order_id).execute()
+    for it in (items_resp.data or []):
+        prod = db.table("products").select("stock_quantity").eq("id", it["product_id"]).single().execute()
+        if prod.data:
+            new_qty = int(prod.data.get("stock_quantity", 0)) + int(it.get("quantity", 0))
+            db.table("products").update({"stock_quantity": new_qty}).eq("id", it["product_id"]).execute()
+    # Refund redeemed points
+    pts = int(order.get("points_redeemed") or 0)
+    user_id = order.get("user_id")
+    if pts > 0 and user_id:
+        u = db.table("users").select("points").eq("id", user_id).single().execute()
+        current = u.data.get("points", 0) if u.data else 0
+        db.table("users").update({"points": current + pts}).eq("id", user_id).execute()
+        try:
+            db.table("points_ledger").insert({
+                "user_id":     user_id,
+                "points":      pts,
+                "type":        "redemption_refund",
+                "description": f"Refund {pts} points on cancelled order #{str(order_id)[:8].upper()}",
+                "order_id":    order_id,
+            }).execute()
+        except Exception:
+            pass
+
+
 def update_order_status(order_id: UUID, status: str) -> dict:
-    """Update status. Awards loyalty + referral points on delivery."""
+    """Update status with strict single-step lifecycle. Awards loyalty + referral points on delivery.
+
+    Raises ValueError (mapped to 400) on skip/backward/terminal transitions and
+    on impossible cancels (e.g. cancelling delivered).
+    """
+    order = get_order_by_id(order_id)
+    current = order.get("status", "pending")
+    status = status.lower()
+
+    if current in ORDER_TERMINAL:
+        # Cancelled cannot move; delivered cannot be cancelled or moved.
+        raise ValueError(f"Order is in terminal state '{current}'; no further transitions allowed.")
+    if status not in ORDER_CHAIN and status != "cancelled":
+        raise ValueError(f"Unknown status '{status}'. Must be one of {ORDER_CHAIN} or 'cancelled'.")
+
+    if status == "cancelled":
+        # Admin cancel allowed from any non-terminal state; delivered already blocked above.
+        # Refund stock/points then cancel.
+        _restore_stock_and_points(order)
+    else:
+        if current == status:
+            raise ValueError(f"Order is already '{current}'.")
+        if current not in ORDER_CHAIN:
+            raise ValueError(f"Order has unknown current status '{current}'.")
+        idx = ORDER_CHAIN.index(current)
+        expected = ORDER_CHAIN[idx + 1] if idx + 1 < len(ORDER_CHAIN) else None
+        if expected is None:
+            raise ValueError(f"Order in state '{current}' has no next step.")
+        if status != expected:
+            raise ValueError(
+                f"Invalid transition {current} → {status}. "
+                f"Must move one step at a time ({current} → {expected}) or cancel."
+            )
+
     resp = db.table("orders").update({"status": status}).eq("id", str(order_id)).execute()
     if not resp.data:
         raise OrderNotFoundException(f"Order {order_id} not found")
     order = resp.data[0]
 
     if status == "delivered":
+        # Reward only on actual transition (current was dispatched, not delivered).
         _handle_delivery_rewards(order)
+        try:
+            send_sms(order.get("phone_number", ""), f"BlueTech: Your order #{str(order_id)[:8].upper()} has been delivered. Thank you!")
+        except Exception:
+            pass
 
     return order
 
@@ -311,7 +386,7 @@ def track_orders_by_phone(phone: str) -> list[dict]:
 
 
 def cancel_order_by_client(order_id: UUID, user_id: str | None) -> dict:
-    """Client cancels their own order. Only allowed when status is 'pending'."""
+    """Client cancels their own order. Only allowed when status is 'pending'. Refunds stock/points."""
     resp = db.table("orders").select("status, user_id").eq("id", str(order_id)).single().execute()
     if not resp.data:
         raise OrderNotFoundException(f"Order {order_id} not found")
@@ -322,13 +397,19 @@ def cancel_order_by_client(order_id: UUID, user_id: str | None) -> dict:
     if order["status"] != "pending":
         raise ValueError(f"Cannot cancel an order with status '{order['status']}'")
 
+    full = get_order_by_id(order_id)
+    _restore_stock_and_points(full)
     db.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
     return {"message": "Order cancelled"}
 
 
 def cancel_order_by_admin(order_id: UUID) -> dict:
-    """Admin cancels any order."""
-    resp = db.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
-    if not resp.data:
-        raise OrderNotFoundException(f"Order {order_id} not found")
+    """Admin cancels any non-delivered, non-cancelled order. Refunds stock/points."""
+    order = get_order_by_id(order_id)
+    if order["status"] == "delivered":
+        raise ValueError("Cannot cancel a delivered order")
+    if order["status"] == "cancelled":
+        raise ValueError("Order is already cancelled")
+    _restore_stock_and_points(order)
+    db.table("orders").update({"status": "cancelled"}).eq("id", str(order_id)).execute()
     return {"message": "Order cancelled"}
