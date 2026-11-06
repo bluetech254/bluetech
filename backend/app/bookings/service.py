@@ -138,7 +138,7 @@ def update_booking_status(booking_id: UUID, status: str) -> dict:
     resp = db.table("bookings").update({"status": status}).eq("id", str(booking_id)).execute()
     if not resp.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
-    booking = resp.data[0]
+    booking = get_booking_by_id(booking_id)
     sid     = str(booking_id)[:8].upper()
 
     # Send SMS for key status changes
@@ -172,4 +172,4 @@ def update_booking_cost(booking_id: UUID, cost_data: CostUpdate) -> dict:
     resp = db.table("bookings").update(updates).eq("id", str(booking_id)).execute()
     if not resp.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
-    return resp.data[0]
+    return get_booking_by_id(booking_id)

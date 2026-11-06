@@ -323,7 +323,8 @@ def update_order_status(order_id: UUID, status: str) -> dict:
     resp = db.table("orders").update({"status": status}).eq("id", str(order_id)).execute()
     if not resp.data:
         raise OrderNotFoundException(f"Order {order_id} not found")
-    order = resp.data[0]
+    # DB update returns only the update payload (not full row) on Postgres — refetch.
+    order = get_order_by_id(order_id)
 
     if status == "delivered":
         # Reward only on actual transition (current was dispatched, not delivered).
