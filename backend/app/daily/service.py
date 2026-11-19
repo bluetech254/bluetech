@@ -101,7 +101,7 @@ def lock_report(report_date: date, admin: dict) -> dict:
 
     db.table("daily_reports").update({
         "status":     "closed",
-        "closed_by":  admin["id"],
+        "closed_by":  admin["admin_id"],
         "closed_at":  datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat(),
     }).eq("report_date", str(report_date)).execute()
@@ -242,7 +242,7 @@ def add_expense(report_date: date, payload: ExpenseCreate, admin: dict) -> dict:
         "bill_ref":        payload.bill_ref,
         "payment_method":  payload.payment_method,
         "amount":          payload.amount,
-        "recorded_by":     admin["id"],
+        "recorded_by":     admin["admin_id"],
     }).execute()
 
     if r.error:
