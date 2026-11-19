@@ -252,7 +252,8 @@ def request_final_payment(booking_id: str, admin: dict) -> dict:
 
 def get_final_payment_status(booking_id: str) -> dict:
     resp = db.table("bookings").select(
-        "final_payment_status, final_receipt, final_cost, estimated_cost, pickup_fee, fulfillment_type, commitment_fee, final_payment_reference"
+        "final_payment_status, final_receipt, final_cost, estimated_cost,"
+        " pickup_fee, fulfillment_type, commitment_fee, final_payment_reference"
     ).eq("id", booking_id).single().execute()
     if not resp.data:
         raise ValueError("Booking not found")

@@ -64,7 +64,10 @@ def admin_dashboard(admin: dict = Depends(get_current_admin)):
 
     revenue_today = (
         sum(float(o.get("total_amount", 0) or 0) for o in orders_today if o.get("payment_status") == "paid") +
-        sum(float(b.get("final_cost") or b.get("estimated_cost") or 0) + float(b.get("pickup_fee") or 0) for b in bookings_today if b.get("final_payment_status") == "paid")
+        sum(
+            float(b.get("final_cost") or b.get("estimated_cost") or 0) + float(b.get("pickup_fee") or 0)
+            for b in bookings_today if b.get("final_payment_status") == "paid"
+        )
     )
 
     active_statuses = {"pending", "confirmed", "picked_up", "in_diagnosis", "in_repair"}
@@ -212,7 +215,11 @@ def get_transactions(admin: dict = Depends(get_current_admin)):
             txns.append({"id": f"{b['id']}-fnl", "type": "booking_final",
                          "ref": f"FNL-{b['id'][:8].upper()}", "customer": b.get("full_name"),
                          "phone": b.get("phone_number"),
-                         "amount": float(b.get("final_cost") or b.get("estimated_cost") or 0) + float(b.get("pickup_fee") or 0) - float(b.get("commitment_fee") or 0),
+                         "amount": (
+                             float(b.get("final_cost") or b.get("estimated_cost") or 0)
+                             + float(b.get("pickup_fee") or 0)
+                             - float(b.get("commitment_fee") or 0)
+                         ),
                          "payment_status": b.get("final_payment_status"),
                          "payment_receipt": b.get("final_receipt"), "status": b.get("status"),
                          "payment_method": "paystack", "created_at": b.get("created_at"),
@@ -258,7 +265,13 @@ def bulk_update_order_status(body: BulkStatusUpdate, admin: dict = Depends(get_c
             failed.append({"id": oid, "error": str(e)})
         except Exception as e:
             failed.append({"id": oid, "error": str(e)})
-    log_action(admin, "order.bulk_status_update", detail={"requested": len(body.order_ids), "succeeded": len(succeeded), "failed": len(failed), "status": body.status})
+    log_action(
+        admin, "order.bulk_status_update",
+        detail={
+            "requested": len(body.order_ids), "succeeded": len(succeeded),
+            "failed": len(failed), "status": body.status,
+        },
+    )
     return {
         "message": f"Updated {len(succeeded)} of {len(body.order_ids)} orders to '{body.status}'",
         "succeeded": succeeded,

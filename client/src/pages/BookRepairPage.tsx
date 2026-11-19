@@ -300,36 +300,20 @@ export const BookRepairPage = () => {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {/* Selected model badge */}
-                      {selectedModel && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-blue-50 border-2 border-blue-400 rounded-lg">
-                          <span className="text-sm font-semibold text-blue-700">
-                            {selectedModel.name}{selectedModel.release_year ? ` (${selectedModel.release_year})` : ''}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => { setSelectedModel(null); setModelSearch(''); }}
-                            className="text-blue-400 hover:text-blue-700 ml-2"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Search input */}
+                      {/* Search input — always visible once a brand is chosen */}
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                         <input
                           type="text"
                           value={modelSearch}
-                          onChange={e => setModelSearch(e.target.value)}
-                          placeholder={`Search ${selectedBrand.name} models...`}
+                          onChange={e => { setModelSearch(e.target.value); setSelectedModel(null); }}
+                          placeholder={selectedModel ? selectedModel.name : `Search ${selectedBrand.name} models...`}
                           className="w-full pl-9 pr-4 py-2.5 border-2 border-slate-200 focus:border-blue-500 rounded-lg outline-none text-sm bg-white"
                         />
-                        {modelSearch && (
+                        {(modelSearch || selectedModel) && (
                           <button
                             type="button"
-                            onClick={() => setModelSearch('')}
+                            onClick={() => { setModelSearch(''); setSelectedModel(null); }}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -337,8 +321,25 @@ export const BookRepairPage = () => {
                         )}
                       </div>
 
-                      {/* Filtered model list */}
-                      {(() => {
+                      {/* Selected model badge — shown below search when a model is picked and not actively searching */}
+                      {selectedModel && !modelSearch && (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border-2 border-blue-400 rounded-lg">
+                          <CheckCircle className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span className="text-sm font-semibold text-blue-700 flex-1">
+                            {selectedModel.name}{selectedModel.release_year ? ` (${selectedModel.release_year})` : ''}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setSelectedModel(null); setModelSearch(''); }}
+                            className="text-blue-400 hover:text-blue-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Filtered model list — shown when searching or no model selected yet */}
+                      {(!selectedModel || modelSearch) && (() => {
                         const filtered = models.filter(m =>
                           m.name.toLowerCase().includes(modelSearch.toLowerCase())
                         );
