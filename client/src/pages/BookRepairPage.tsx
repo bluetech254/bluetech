@@ -11,7 +11,7 @@ import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, Loader2, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Calendar, User, Smartphone, Laptop, Tv, Camera, Speaker, Cpu, AlertCircle, FileText, CheckCircle, ShieldAlert, Loader2, ChevronRight, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DEVICE_CATEGORIES = [
@@ -40,6 +40,7 @@ export const BookRepairPage = () => {
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
   const [fulfillmentType, setFulfillmentType] = useState<'dropoff' | 'pickup'>('dropoff');
   const [pickupAddress, setPickupAddress] = useState('');
   const [fulfillmentError, setFulfillmentError] = useState('');
@@ -79,6 +80,7 @@ export const BookRepairPage = () => {
     setSelectedBrand(brand);
     setSelectedModel(null);
     setModels([]);
+    setModelSearch('');
     setLoadingModels(true);
     try {
       const categoryParam = category ? `?device_type=${category}` : '';
@@ -129,7 +131,7 @@ export const BookRepairPage = () => {
 
       toast.success(
         fulfillmentType === 'pickup'
-          ? 'Booking created! We will pick up your device (KSH 200 pickup fee).'
+          ? 'Booking created! We will pick up your device (KSH 5 pickup fee).'
           : 'Booking created! Please drop off your device at the shop.',
         { id: toastId }
       );
@@ -286,28 +288,89 @@ export const BookRepairPage = () => {
                 </div>
               )}
 
-              {/* Step C: Model dropdown */}
+              {/* Step C: Model picker with search */}
               {selectedBrand && (
                 <div>
                   <p className="text-sm font-semibold text-slate-700 mb-2">
                     {selectedBrand.name} Model <span className="text-red-500">*</span>
                   </p>
                   {loadingModels ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="w-4 h-4 animate-spin" />Loading models...</div>
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />Loading models...
+                    </div>
                   ) : (
-                    <select
-                      className="w-full py-3 px-4 border-2 border-slate-200 focus:border-blue-500 rounded-lg outline-none text-sm bg-white"
-                      value={selectedModel?.id ?? ''}
-                      onChange={e => {
-                        const m = models.find(m => m.id === e.target.value);
-                        if (m) handleModelSelect(m);
-                        else { setSelectedModel(null); }
-                      }}>
-                      <option value="">-- Select Model --</option>
-                      {models.map(m => (
-                        <option key={m.id} value={m.id}>{m.name} {m.release_year ? `(${m.release_year})` : ''}</option>
-                      ))}
-                    </select>
+                    <div className="space-y-2">
+                      {/* Selected model badge */}
+                      {selectedModel && (
+                        <div className="flex items-center justify-between px-3 py-2 bg-blue-50 border-2 border-blue-400 rounded-lg">
+                          <span className="text-sm font-semibold text-blue-700">
+                            {selectedModel.name}{selectedModel.release_year ? ` (${selectedModel.release_year})` : ''}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setSelectedModel(null); setModelSearch(''); }}
+                            className="text-blue-400 hover:text-blue-700 ml-2"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Search input */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={modelSearch}
+                          onChange={e => setModelSearch(e.target.value)}
+                          placeholder={`Search ${selectedBrand.name} models...`}
+                          className="w-full pl-9 pr-4 py-2.5 border-2 border-slate-200 focus:border-blue-500 rounded-lg outline-none text-sm bg-white"
+                        />
+                        {modelSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setModelSearch('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Filtered model list */}
+                      {(() => {
+                        const filtered = models.filter(m =>
+                          m.name.toLowerCase().includes(modelSearch.toLowerCase())
+                        );
+                        return (
+                          <div className="max-h-52 overflow-y-auto rounded-lg border-2 border-slate-100 divide-y divide-slate-50">
+                            {filtered.length === 0 ? (
+                              <p className="text-sm text-slate-400 text-center py-4">
+                                No models match &quot;{modelSearch}&quot;
+                              </p>
+                            ) : (
+                              filtered.map(m => (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => { handleModelSelect(m); setModelSearch(''); }}
+                                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                                    selectedModel?.id === m.id
+                                      ? 'bg-blue-50 text-blue-700 font-semibold'
+                                      : 'text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  {m.name}
+                                  {m.release_year && (
+                                    <span className="ml-1.5 text-xs text-slate-400">({m.release_year})</span>
+                                  )}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   )}
                 </div>
               )}
@@ -354,7 +417,7 @@ export const BookRepairPage = () => {
                 >
                   <p className="text-sm font-black text-slate-900">Pickup from you</p>
                   <p className="text-xs text-slate-500 mt-1">We collect your device from your address.</p>
-                  <p className="text-xs font-bold text-blue-600 mt-2">KSH 200 pickup fee</p>
+                  <p className="text-xs font-bold text-blue-600 mt-2">KSH 5 pickup fee</p>
                 </button>
               </div>
               {fulfillmentType === 'pickup' && (
