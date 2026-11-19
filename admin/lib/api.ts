@@ -161,6 +161,36 @@ export const adminApi = {
   getServicePricing: () => request<{ data: any[] }>("/api/v1/admin/devices/pricing"),
   upsertServicePricing: (body: any) => request("/api/v1/admin/devices/pricing", { method: "POST", body: JSON.stringify(body) }),
   deleteServicePricing: (id: string) => request(`/api/v1/admin/devices/pricing/${id}`, { method: "DELETE" }),
+
+  // ── Daily Ops ────────────────────────────────────────────────────────────
+  dailyGetReport:   (date: string) =>
+    request<any>(`/api/v1/daily/report/${date}`),
+  dailyUpdateReport:(date: string, body: { opening_cash?: number; counted_cash?: number }) =>
+    request<any>(`/api/v1/daily/report/${date}`, { method: "PATCH", body: JSON.stringify(body) }),
+  dailyLockReport:  (date: string) =>
+    request<any>(`/api/v1/daily/report/${date}/lock`, { method: "POST" }),
+  dailyEod:         (date: string) =>
+    request<any>(`/api/v1/daily/report/${date}/eod`),
+
+  dailyGetLeads:    (date: string) => request<any[]>(`/api/v1/daily/report/${date}/leads`),
+  dailyAddLeads:    (date: string, body: { channel: string; source?: string; quantity: number; customer_name?: string; phone?: string; notes?: string }) =>
+    request<any[]>(`/api/v1/daily/report/${date}/leads`, { method: "POST", body: JSON.stringify(body) }),
+  dailyUpdateLead:  (id: string, date: string, body: { status: string; invoice_id?: string; phone?: string }) =>
+    request<any>(`/api/v1/daily/leads/${id}${qs({ date_str: date })}`, { method: "PATCH", body: JSON.stringify(body) }),
+  dailyDeleteLead:  (id: string, date: string) =>
+    request<any>(`/api/v1/daily/leads/${id}${qs({ date_str: date })}`, { method: "DELETE" }),
+
+  dailyGetLogistics: (date: string) => request<any[]>(`/api/v1/daily/report/${date}/logistics`),
+  dailyAddLogistics: (date: string, body: { movement_type: string; fulfillment_by: string; zone_id: string; quantity: number; notes?: string }) =>
+    request<any>(`/api/v1/daily/report/${date}/logistics`, { method: "POST", body: JSON.stringify(body) }),
+  dailyDeleteLogistics:(id: string, date: string) =>
+    request<any>(`/api/v1/daily/logistics/${id}${qs({ date_str: date })}`, { method: "DELETE" }),
+
+  dailyGetExpenses:  (date: string) => request<any[]>(`/api/v1/daily/report/${date}/expenses`),
+  dailyAddExpense:   (date: string, body: { vendor: string; reason: string; bill_ref?: string; payment_method: string; amount: number }) =>
+    request<any>(`/api/v1/daily/report/${date}/expenses`, { method: "POST", body: JSON.stringify(body) }),
+  dailyDeleteExpense:(id: string, date: string) =>
+    request<any>(`/api/v1/daily/expenses/${id}${qs({ date_str: date })}`, { method: "DELETE" }),
 };
 
 export const formatKES = (n: number) => `KES ${Math.round(n).toLocaleString("en-KE")}`;

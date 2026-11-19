@@ -93,6 +93,12 @@ body {
   .select-field {
     @apply bg-base-hover border border-base-border rounded-xl px-3 py-2.5 text-sm text-ink outline-none focus:border-volt/60 transition-colors appearance-none cursor-pointer w-full;
   }
+  .input-sm {
+    @apply bg-base-hover border border-base-border rounded-lg px-2.5 py-1.5 text-xs text-ink placeholder:text-ink-dim outline-none focus:border-volt/60 transition-colors;
+  }
+  .select-sm {
+    @apply bg-base-hover border border-base-border rounded-lg px-2.5 py-1.5 text-xs text-ink outline-none focus:border-volt/60 transition-colors cursor-pointer;
+  }
   .pill {
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
   }

@@ -8,11 +8,12 @@ import Image from "next/image";
 import {
   LayoutGrid, ShoppingBag, Wrench, Package, MapPin, ListChecks,
   Users, Gift, BarChart3, ShieldCheck, LogOut, Sparkles, Bell,
-  DollarSign, Receipt, Cpu, Sun, Moon, ScrollText,
+  DollarSign, Receipt, Cpu, Sun, Moon, ScrollText, ClipboardList,
 } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
+  { href: "/daily", label: "Daily Ops", icon: ClipboardList },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/repairs", label: "Repair Bookings", icon: Wrench },
   { href: "/transactions", label: "Transactions", icon: Receipt },
