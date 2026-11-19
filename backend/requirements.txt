@@ -7,7 +7,10 @@ python-multipart==0.0.31
 pytz==2024.1
 bcrypt==4.3.0
 python-jose[cryptography]==3.4.0
-pyasn1>=0.6.5         # pin to fix GHSA-2qm8-x737-gmw5 / GHSA-fm9c-5rcf-2q5p / GHSA-mm57-4v3p-rchx / GHSA-9m75-vc3g-4x39
+# pyasn1 CVEs (GHSA-2qm8 / GHSA-fm9c / GHSA-mm57 / GHSA-9m75) cannot be patched here:
+# python-jose==3.4.0 hard-requires pyasn1<0.5.0, making >=0.6.5 unresolvable.
+# Mitigation: pyasn1 is only used for JWT decode internals, not exposed to untrusted input directly.
+# Revisit when python-jose releases a version that drops the pyasn1<0.5.0 constraint.
 boto3==1.35.0
 email-validator==2.3.0
 slowapi==0.1.9
