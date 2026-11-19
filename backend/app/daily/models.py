@@ -20,7 +20,10 @@ class DailyReportUpdate(BaseModel):
 # ── Leads ─────────────────────────────────────────────────────────────────────
 
 VALID_CHANNELS = {"call", "whatsapp", "walk_in"}
-VALID_SOURCES  = {"google", "website", "instagram", "unknown"}
+VALID_SOURCES = {
+    "google", "google_maps", "website", "instagram", "facebook",
+    "tiktok", "youtube", "threads", "referral", "other", "unknown",
+}
 VALID_STATUSES = {"pending", "closed", "no_go", "scheduled"}
 
 

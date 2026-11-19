@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Clock, Ban, Plus, Trash2, RefreshCw,
   Phone, MessageCircle, User, Globe, Instagram, Search,
   Package, ArrowDownToLine, ArrowUpFromLine, ChevronDown,
-  Receipt, Download, Share2,
+  Receipt, Download, Share2, MousePointerClick,
 } from "lucide-react";
 import { adminApi, formatKES, getSession } from "@/lib/api";
 
@@ -245,6 +245,12 @@ function KpiChip({ label, value, color }: { label: string; value: string | numbe
 // ═══════════════════════════════════════════════════════════════════════════
 function OperationsTab({ report, eod, leads, logistics, expenses, dateStr, onViewEod, loadEod }: any) {
   useEffect(() => { loadEod(); }, []);
+  const [clicks, setClicks] = useState<any[]>([]);
+  useEffect(() => {
+    let done = false;
+    adminApi.dailyGetClicks(dateStr).then((r: any) => { if (!done) setClicks(Array.isArray(r) ? r : []); }).catch(() => {});
+    return () => { done = true; };
+  }, [dateStr]);
 
   const totalLeads   = leads.length;
   const closedLeads  = leads.filter((l: any) => l.status === "closed").length;
@@ -317,6 +323,25 @@ function OperationsTab({ report, eod, leads, logistics, expenses, dateStr, onVie
         </div>
       </div>
 
+      {/* Link clicks today (Phase 2) */}
+      {clicks.length > 0 && (
+        <div className="card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MousePointerClick size={15} className="text-ink-dim" />
+            <span className="text-sm font-semibold text-ink">Link Clicks Today</span>
+            <span className="text-xs text-ink-dim ml-auto">{clicks.reduce((s: number, c: any) => s + (c.clicks || 0), 0)} total</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {clicks.map((c: any) => (
+              <div key={c.slug} className="flex items-center justify-between rounded-lg bg-base-hover px-3 py-2 text-xs">
+                <span className="text-ink-dim">{c.label}</span>
+                <span className="text-ink font-bold">{c.clicks}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Expenses quick view */}
       {expenses.length > 0 && (
         <div className="card p-4">
@@ -361,14 +386,12 @@ function LeadsTab({ leads, setLeads, dateStr, locked }: any) {
   const schedLeads   = leads.filter((l: any) => l.status === "scheduled").length;
   const convPct      = totalLeads ? Math.round(closedLeads / totalLeads * 100) : 0;
 
-  const needsSource = channel === "call" || channel === "whatsapp";
-
   async function handleAdd() {
     if (locked) return;
     setAdding(true);
     try {
       const rows = await adminApi.dailyAddLeads(dateStr, {
-        channel, source: needsSource ? source : undefined, quantity: qty,
+        channel, source, quantity: qty,
         customer_name: name || undefined, phone: phone || undefined,
       });
       setLeads((prev: any[]) => [...prev, ...(Array.isArray(rows) ? rows : [rows])]);
@@ -420,17 +443,22 @@ function LeadsTab({ leads, setLeads, dateStr, locked }: any) {
                 <option value="walk_in">Walk-in</option>
               </select>
             </div>
-            {needsSource && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-ink-dim">Source</label>
-                <select value={source} onChange={e => setSource(e.target.value)} className="select-sm">
-                  <option value="google">Google</option>
-                  <option value="website">Website</option>
-                  <option value="instagram">Instagram</option>
-                  <option value="unknown">Unknown</option>
-                </select>
-              </div>
-            )}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-ink-dim">Source</label>
+              <select value={source} onChange={e => setSource(e.target.value)} className="select-sm">
+                <option value="unknown">Unknown</option>
+                <option value="google">Google</option>
+                <option value="google_maps">Google Maps</option>
+                <option value="website">Website</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+                <option value="tiktok">TikTok</option>
+                <option value="youtube">YouTube</option>
+                <option value="threads">Threads</option>
+                <option value="referral">Referral</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-ink-dim">Qty</label>
               <select value={qty} onChange={e => setQty(Number(e.target.value))} className="select-sm w-16">
@@ -504,7 +532,12 @@ function LeadsTab({ leads, setLeads, dateStr, locked }: any) {
 }
 
 function LeadRow({ lead, idx, locked, onStatus, onDelete }: any) {
-  const srcLabel: Record<string, string> = { google: "Google", website: "Website", instagram: "Instagram", unknown: "Unknown" };
+  const srcLabel: Record<string, string> = {
+    google: "Google", google_maps: "Google Maps", website: "Website",
+    instagram: "Instagram", facebook: "Facebook", tiktok: "TikTok",
+    youtube: "YouTube", threads: "Threads", referral: "Referral",
+    other: "Other", unknown: "Unknown",
+  };
   const chLabel:  Record<string, string> = { call: "Call", whatsapp: "WhatsApp", walk_in: "Walk-in" };
   const label = lead.source ? `${chLabel[lead.channel] ?? lead.channel} · ${srcLabel[lead.source] ?? lead.source}` : chLabel[lead.channel] ?? lead.channel;
 

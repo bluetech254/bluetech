@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../utils/constants';
 
 const SOCIALS = [
   {
     name: 'WhatsApp',
-    href: 'https://wa.me/254707454182',
+    slug: 'whatsapp',
     color: 'hover:text-emerald-400',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -14,7 +15,7 @@ const SOCIALS = [
   },
   {
     name: 'Facebook',
-    href: 'https://www.facebook.com/share/1HLEwcEx22/',
+    slug: 'facebook',
     color: 'hover:text-blue-400',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -24,7 +25,7 @@ const SOCIALS = [
   },
   {
     name: 'Instagram',
-    href: 'https://www.instagram.com/fixitbluetechnology58',
+    slug: 'instagram',
     color: 'hover:text-pink-400',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -34,7 +35,7 @@ const SOCIALS = [
   },
   {
     name: 'TikTok',
-    href: 'https://www.tiktok.com/@fixitbluetechnology58',
+    slug: 'tiktok',
     color: 'hover:text-slate-100',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -44,7 +45,7 @@ const SOCIALS = [
   },
   {
     name: 'YouTube',
-    href: 'https://www.youtube.com/@BlueTechnology58',
+    slug: 'youtube',
     color: 'hover:text-red-400',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -54,7 +55,7 @@ const SOCIALS = [
   },
   {
     name: 'Threads',
-    href: 'https://www.threads.com/@fixitbluetechnology58',
+    slug: 'threads',
     color: 'hover:text-slate-100',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -64,7 +65,7 @@ const SOCIALS = [
   },
   {
     name: 'Google Maps',
-    href: 'https://share.google/iKWWoeTxXsnOqGA9U',
+    slug: 'google-maps',
     color: 'hover:text-yellow-400',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -99,7 +100,7 @@ export const Footer = () => {
                 {SOCIALS.map(s => (
                   <a
                     key={s.name}
-                    href={s.href}
+                    href={`${API_BASE_URL}/go/${s.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     title={s.name}

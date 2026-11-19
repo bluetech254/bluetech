@@ -171,6 +171,8 @@ export const adminApi = {
     request<any>(`/api/v1/daily/report/${date}/lock`, { method: "POST" }),
   dailyEod:         (date: string) =>
     request<any>(`/api/v1/daily/report/${date}/eod`),
+  dailyGetClicks:   (date: string) =>
+    request<any[]>(`/api/v1/daily/report/${date}/clicks`),
 
   dailyGetLeads:    (date: string) => request<any[]>(`/api/v1/daily/report/${date}/leads`),
   dailyAddLeads:    (date: string, body: { channel: string; source?: string; quantity: number; customer_name?: string; phone?: string; notes?: string }) =>
@@ -191,6 +193,12 @@ export const adminApi = {
     request<any>(`/api/v1/daily/report/${date}/expenses`, { method: "POST", body: JSON.stringify(body) }),
   dailyDeleteExpense:(id: string, date: string) =>
     request<any>(`/api/v1/daily/expenses/${id}${qs({ date_str: date })}`, { method: "DELETE" }),
+
+  // ── Customers (CRM) ────────────────────────────────────────────────────────
+  customersList:    (search?: string, page = 1) =>
+    request<any>(`/api/v1/customers${qs({ search, page })}`),
+  customerDetail:   (id: string) =>
+    request<any>(`/api/v1/customers/${id}`),
 };
 
 export const formatKES = (n: number) => `KES ${Math.round(n).toLocaleString("en-KE")}`;

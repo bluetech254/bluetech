@@ -80,6 +80,17 @@ def get_eod(date_str: str, admin: dict = Depends(get_current_admin)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/report/{date_str}/clicks")
+def get_clicks(date_str: str, admin: dict = Depends(get_current_admin)):
+    """Link-click counts per source for the date (Phase 2)."""
+    try:
+        from link_tracking import service as lt_service
+        return lt_service.get_clicks_for_date(_date(date_str))
+    except Exception as e:
+        logger.error(f"get_clicks failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Leads ─────────────────────────────────────────────────────────────────────
 
 @router.get("/report/{date_str}/leads")

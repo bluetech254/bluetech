@@ -10,6 +10,8 @@ from admin_ops.router import router as admin_ops_router
 # ── Domain routers ────────────────────────────────────────────────────────────
 from auth.router import router as auth_router
 from daily.router import router as daily_router
+from link_tracking.router import router as link_tracking_router
+from customers.router import router as customers_router
 from bookings.router import router as bookings_router
 from contact.router import router as contact_router
 from core.config import settings
@@ -132,6 +134,8 @@ app.include_router(devices_router)
 app.include_router(contact_router)
 app.include_router(places_router)
 app.include_router(daily_router, prefix="/api/v1")
+app.include_router(link_tracking_router, prefix="/api/v1")
+app.include_router(customers_router, prefix="/api/v1")
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 @app.on_event("startup")
