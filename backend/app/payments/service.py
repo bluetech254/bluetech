@@ -260,6 +260,48 @@ def get_final_payment_status(booking_id: str) -> dict:
     return resp.data
 
 
+def record_cash_payment(booking_id: str, admin: dict) -> dict:
+    """Admin records cash collection for the final balance.
+
+    Gated: booking must be 'ready' with a cost set and no prior payment.
+    Sets final_payment_status=paid, final_receipt=CASH-{ref}, advances ready→completed.
+    """
+    import datetime
+    resp = db.table("bookings").select("*").eq("id", booking_id).single().execute()
+    if not resp.data:
+        raise ValueError("Booking not found")
+    booking = resp.data
+
+    if booking.get("status") != "ready":
+        raise ValueError(f"Booking must be in 'ready' state (current: {booking.get('status')})")
+    if booking.get("final_payment_status") == "paid":
+        raise ValueError("Final payment already recorded")
+
+    service_total = int(booking.get("final_cost") or booking.get("estimated_cost") or 0)
+    if service_total <= 0:
+        raise ValueError("Set a final cost before recording payment")
+
+    pickup = int(booking.get("pickup_fee") or 0)
+    commitment = int(booking.get("commitment_fee") or 0)
+    amount = max(0, service_total + pickup - commitment)
+
+    ts = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    receipt = f"CASH-{booking_id[:8].upper()}-{ts}"
+
+    db.table("bookings").update({
+        "final_payment_status": "paid",
+        "final_receipt": receipt,
+        "final_payment_reference": receipt,
+        "status": "completed",
+    }).eq("id", booking_id).execute()
+
+    log_action(admin, "booking.cash_payment_recorded", f"booking:{booking_id}", {
+        "amount": amount, "receipt": receipt,
+    })
+
+    return {"status": "paid", "receipt": receipt, "amount": amount}
+
+
 def verify_final_payment(reference: str) -> dict:
     """Verify a final payment by Paystack reference. On success, moves ready → completed (strict lifecycle)."""
     txn = verify_transaction(reference)

@@ -116,6 +116,8 @@ export const adminApi = {
     request<{ final_payment_status: string; final_receipt?: string }>(`/api/v1/payments/booking/${id}/final/status`),
   verifyFinalPayment: (reference: string) =>
     request<{ status: string; reference: string }>(`/api/v1/payments/booking/final/verify/${reference}`, { method: "POST" }),
+  recordCashPayment: (id: string) =>
+    request<{ status: string; receipt: string; amount: number }>(`/api/v1/payments/booking/${id}/final/cash`, { method: "POST" }),
   getTransactions: () =>
     request<{ data: any[]; count: number }>("/api/v1/admin/transactions"),
 

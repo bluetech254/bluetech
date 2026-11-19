@@ -61,6 +61,7 @@ export interface Booking {
   estimated_cost?: number;
   final_cost?: number;
   pickup_fee?: number;
+  commitment_fee?: number;
   internal_notes?: string;
   final_payment_status?: string;
   final_receipt?: string;

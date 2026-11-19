@@ -120,6 +120,18 @@ def get_commitment_status(booking_id: str):
 
 # ── Booking final payment ─────────────────────────────────────────────────────
 
+@router.post("/booking/{booking_id}/final/cash")
+def record_cash_payment(booking_id: str, admin: dict = Depends(get_current_admin)):
+    """Admin records cash collection for the final repair balance. Advances ready → completed."""
+    try:
+        return service.record_cash_payment(booking_id, admin)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Cash payment record failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to record cash payment.")
+
+
 @router.post("/booking/{booking_id}/final/request")
 def request_final_payment(booking_id: str, admin: dict = Depends(get_current_admin)):
     """
