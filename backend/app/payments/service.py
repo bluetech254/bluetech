@@ -108,6 +108,32 @@ def get_order_payment_status(order_id: str) -> dict:
     return resp.data
 
 
+def record_order_cash_payment(order_id: str, admin: dict) -> dict:
+    """Admin records cash collection for an order. Marks payment_status=paid."""
+    import datetime
+    resp = db.table("orders").select("id, payment_status, total_amount").eq("id", order_id).single().execute()
+    if not resp.data:
+        raise ValueError("Order not found")
+    order = resp.data
+    if order.get("payment_status") == "paid":
+        raise ValueError("Order already paid")
+
+    ts = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    receipt = f"CASH-{order_id[:8].upper()}-{ts}"
+
+    db.table("orders").update({
+        "payment_status":  "paid",
+        "payment_method":  "cash",
+        "payment_receipt": receipt,
+    }).eq("id", order_id).execute()
+
+    log_action(admin, "order.cash_payment_recorded", f"order:{order_id}", {
+        "amount": float(order.get("total_amount") or 0), "receipt": receipt,
+    })
+
+    return {"status": "paid", "receipt": receipt, "amount": float(order.get("total_amount") or 0)}
+
+
 # ── Booking commitment payment ─────────────────────────────────────────────────
 
 def initiate_commitment_payment(booking_id: str, service_price: int) -> dict:

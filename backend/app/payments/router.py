@@ -33,6 +33,18 @@ limiter = Limiter(key_func=get_remote_address)
 
 # ── Order payments ────────────────────────────────────────────────────────────
 
+@router.post("/order/{order_id}/cash")
+def record_order_cash_payment(order_id: str, admin: dict = Depends(get_current_admin)):
+    """Admin records cash collection for an order. Marks payment_status=paid."""
+    try:
+        return service.record_order_cash_payment(order_id, admin)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Order cash payment record failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to record cash payment.")
+
+
 @router.post("/order/{order_id}/initiate")
 @limiter.limit("5/minute")
 def initiate_order_payment(
