@@ -160,13 +160,18 @@ id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
 daily_report_id UUID NOT NULL REFERENCES daily_reports(id)
 movement_type   TEXT NOT NULL   -- pickup | delivery
 fulfillment_by  TEXT NOT NULL   -- us | not_us
-driver_id       UUID            -- optional, for future named driver assignment
-zone            TEXT NOT NULL
+driver_id       UUID            -- nullable, future named driver assignment
+zone_id         UUID REFERENCES delivery_zones(id)   -- reuse existing delivery_zones table
+zone_name       TEXT NOT NULL   -- denormalised snapshot of zone_name at time of entry
 quantity        INT DEFAULT 1
 invoice_id      UUID            -- optional link
 notes           TEXT
 created_at      TIMESTAMPTZ DEFAULT now()
 ```
+
+> `delivery_zones` table already exists and is seeded with 5 Nairobi zones:
+> Nairobi CBD · Westlands/Parklands · Kilimani/Ngong Road · Thika/Kiambu Outskirts · Mombasa/Kisumu/Upcountry
+> The logistics quick-add bar fetches zones from `GET /delivery-zones` (already in the backend).
 
 ### `daily_expenses`
 ```sql
@@ -294,15 +299,23 @@ Step 20  Deploy — git commit, push, docker rebuild + restart
 
 ---
 
-## Open Questions (answer before Step 1)
+## Open Questions — RESOLVED
 
-| # | Question | Why it matters |
+| # | Question | Decision |
 |---|---|---|
-| 1 | Does an `expenses` table already exist in the DB? | Avoid schema conflict |
-| 2 | Zones/regions to use for logistics? | Nairobi areas or configurable list? |
-| 3 | Named driver assignment needed now or future? | Affects `daily_logistics` schema |
-| 4 | Currency KES throughout? | EOD report formatting |
-| 5 | Who can lock a day — any admin, or manager role only? | Lock endpoint auth guard |
+| 1 | Does an `expenses` table already exist? | **No** — confirmed. Create `daily_expenses` fresh. |
+| 2 | Zones/regions for logistics? | **Reuse `delivery_zones` table** — already seeded with 5 Nairobi zones (CBD, Westlands/Parklands, Kilimani/Ngong Road, Thika/Kiambu Outskirts, Mombasa/Kisumu/Upcountry). Logistics zone selector pulls from this table. |
+| 3 | Named driver assignment? | **Future only** — `driver_id` column added to schema as nullable, not exposed in UI yet. |
+| 4 | Currency? | **KES throughout** — confirmed. |
+| 5 | Who can lock a day? | **Any admin for now.** Manager/admin role split is a future staff portal project — scaffold noted below. |
+
+### Future: Staff Portal (noted, not built now)
+When ready, scaffold a separate staff portal with limited permissions:
+- Log leads and logistics (no delete, no lock)
+- View their own day's work
+- No access to cash drawer figures or EOD report
+- Admin portal gets a "Manager" role tier with lock + override permissions
+Roles table and permission middleware will be added at that point.
 
 ---
 
