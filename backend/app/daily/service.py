@@ -70,6 +70,13 @@ def get_or_create_report(report_date: date) -> dict:
     }).execute()
 
     if new_resp.error:
+        # Race: another concurrent request created this report between our
+        # SELECT and INSERT (report_date is UNIQUE). Re-fetch and return it
+        # instead of erroring — get_or_create must be idempotent under races.
+        recheck = db.table("daily_reports").select("*").eq("report_date", str(report_date)).execute()
+        if recheck.data:
+            row = recheck.data[0] if isinstance(recheck.data, list) else recheck.data
+            return _serialize(row)
         raise RuntimeError(f"Failed to create daily report: {new_resp.error}")
 
     created = new_resp.data[0] if isinstance(new_resp.data, list) else new_resp.data
