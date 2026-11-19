@@ -132,18 +132,18 @@ export const OrderSuccessPage = () => {
         </Card>
       </div>
 
-      {/* Conditional M-Pesa Instructions */}
-      {order.payment_method === 'mpesa' && order.payment_status === 'pending' && (
+      {/* Conditional STK instructions */}
+      {(order.payment_method === 'mpesa' || order.payment_method === 'mpesa') && order.payment_status === 'pending' && (
         <Card className="p-6 bg-green-50 border-green-100 text-green-800 text-xs sm:text-sm space-y-2.5 font-medium">
           <h3 className="font-bold text-base flex items-center">
             <ShieldCheck className="w-5 h-5 text-green-600 mr-2" />
-            Lipa Na M-Pesa Verification Reminder
+            M-Pesa STK Verification Reminder
           </h3>
           <p>
-            Your order payment method is listed as M-Pesa. If you have not completed the mobile checkout already, please execute the Lipa Na M-Pesa Paybill payment matching the totals above:
+            Your order payment method is M-Pesa. If you have not completed the prompt already, please approve the STK prompt sent to your phone matching the totals above:
           </p>
           <div className="p-3 bg-white/70 rounded-xl inline-block space-y-1 text-slate-800">
-            <p>Paybill Business Number: <strong>{MPESA_PAYBILL}</strong></p>
+            
             <p>Account Name/Number: <strong>{order.phone_number}</strong></p>
             <p>Amount to Pay: <strong>{formatCurrency(order.total_amount)}</strong></p>
           </div>

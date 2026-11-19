@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
-import { getOrderById, cancelOrder, initiatePaystackOrderPayment, verifyPaystackOrderPayment } from '../api/orders';
+import { getOrderById, cancelOrder } from '../api/orders';
 import { getProductById } from '../api/products';
 import { formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
-import PaystackModal from '../components/cart/PaystackModal';
+import StkModal from '../components/cart/StkModal';
+import { orderTarget } from '../hooks/useStk';
 import {
   ChevronLeft, MapPin, Phone, CreditCard, Star,
   RotateCcw, X, Package, CheckCircle2, Truck, Box, Clock, Smartphone
@@ -45,8 +46,8 @@ export const OrderDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [paying, setPaying] = useState(false);
-  const [paystackModal, setPaystackModal] = useState<{
-    reference: string; email: string; amount: number;
+  const [stkModal, setStkModal] = useState<{
+    orderId: string; amount: number;
   } | null>(null);
   const [verifyStatus, setVerifyStatus] = useState<'idle' | 'verifying' | 'paid' | 'failed'>('idle');
   const [productImages, setProductImages] = useState<Record<string, string>>({});
@@ -96,16 +97,8 @@ export const OrderDetailPage = () => {
 
   const handlePay = async () => {
     if (!id) return;
-    setPaying(true);
-    try {
-      const { reference } = await initiatePaystackOrderPayment(id);
-      const email = order.email || `${order.phone_number}@paystack.placeholder`;
-      setPaystackModal({ reference, email, amount: Number(order.total_amount) });
-    } catch (e: any) {
-      toast.error(e?.response?.data?.detail ?? 'Failed to initiate payment. Try again.');
-    } finally {
-      setPaying(false);
-    }
+    // StkModal initiates the STK prompt on mount.
+    setStkModal({ orderId: id, amount: Number(order.total_amount) });
   };
 
   if (loading) return <Loading fullScreen message="Loading order…" />;
@@ -327,33 +320,21 @@ export const OrderDetailPage = () => {
         )}
       </div>
 
-      {paystackModal && (
-        <PaystackModal
-          amountKes={paystackModal.amount}
-          email={paystackModal.email}
-          reference={paystackModal.reference}
+      {stkModal && (
+        <StkModal
+          amountKes={stkModal.amount}
+          target={orderTarget(stkModal.orderId)}
           label="Order Payment"
           verifyStatus={verifyStatus}
-          onSuccess={async (ref) => {
-            setVerifyStatus('verifying');
-            try {
-              const result = await verifyPaystackOrderPayment(ref);
-              if (result.status === 'success') {
-                setVerifyStatus('paid');
-                setOrder((o: any) => ({ ...o, payment_status: 'paid' }));
-                setTimeout(() => {
-                  setPaystackModal(null);
-                  setVerifyStatus('idle');
-                }, 1800);
-              } else {
-                setVerifyStatus('failed');
-              }
-            } catch {
-              setVerifyStatus('failed');
-            }
+          onSuccess={() => {
+            setVerifyStatus('paid');
+            setOrder((o: any) => ({ ...o, payment_status: 'paid' }));
+            setTimeout(() => {
+              setStkModal(null);
+              setVerifyStatus('idle');
+            }, 1800);
           }}
-          onDismiss={() => setVerifyStatus('idle')}
-          onCancel={() => { setPaystackModal(null); setVerifyStatus('idle'); }}
+          onCancel={() => { setStkModal(null); setVerifyStatus('idle'); }}
         />
       )}
     </div>

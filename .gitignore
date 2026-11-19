@@ -86,3 +86,7 @@ x.java
 x.txt
 git-commands.md
 x.txt
+
+# Ad-hoc seed/migration scripts
+*.sql
+admin/tsconfig.tsbuildinfo

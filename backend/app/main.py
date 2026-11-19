@@ -1193,7 +1193,7 @@ def root():
       <div class="stat-label">Auth Method</div>
     </div>
     <div class="stat-item">
-      <div class="stat-value">M-Pesa</div>
+      <div class="stat-value">PayHero</div>
       <div class="stat-label">Payments</div>
     </div>
     <div class="stat-item">
@@ -1246,7 +1246,7 @@ def root():
       'Products':               { icon: '&#x1F4E6;', cls: 'icon-indigo'  },
       'Orders':                 { icon: '&#x1F6D2;', cls: 'icon-emerald' },
       'Repair Bookings':        { icon: '&#x1F527;', cls: 'icon-purple'  },
-      'Payments — M-Pesa': { icon: '&#x1F4B3;', cls: 'icon-amber'   },
+      'Payments — PayHero': { icon: '&#x1F4B3;', cls: 'icon-amber'   },
       'Payments':               { icon: '&#x1F4B3;', cls: 'icon-amber'   },
       'Loyalty & Referrals':    { icon: '&#x2B50;',  cls: 'icon-indigo'  },
       'Repair Services':        { icon: '&#x1F6E0;', cls: 'icon-blue'    },

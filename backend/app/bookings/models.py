@@ -3,7 +3,7 @@ bookings/models.py — Pydantic schemas for the bookings domain.
 
 Fulfillment rules:
   - dropoff: client takes device to shop. No delivery fee. Pays service only.
-  - pickup: staff collects device from client. Pickup fee KSH 200 (env PICKUP_FEE_KES, default 200).
+  - pickup: staff collects device from client. Pickup fee KSH 5 (env PICKUP_FEE_KES, default 5).
             pickup_address is REQUIRED.
 """
 
@@ -14,7 +14,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 
-PICKUP_FEE_KES = 200  # flat pickup fee for pickup bookings (configurable via env if needed)
+PICKUP_FEE_KES = 5  # flat pickup fee for pickup bookings (configurable via env if needed) — KES 5 for testing
 
 
 class FulfillmentType(str, Enum):

@@ -58,7 +58,7 @@ def create_booking(body: BookingCreate, request: Request, user_id: str | None = 
     """Create a new repair booking. Works for guests and authenticated users.
 
     - dropoff: no delivery fee, service only
-    - pickup: 200 flat pickup fee, pickup_address required
+    - pickup: 5 flat pickup fee, pickup_address required
     """
     try:
         booking = service.create_booking(body, user_id=user_id)

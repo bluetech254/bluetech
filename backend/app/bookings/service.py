@@ -10,7 +10,7 @@ Lifecycle (strict, single-step, no skipping):
 
 Fees:
   - dropoff: pickup_fee = 0, client pays service (estimated/final) only
-  - pickup:  pickup_fee = 200 (PICKUP_FEE_KES), client pays service + 200
+  - pickup:  pickup_fee = 5 (PICKUP_FEE_KES), client pays service + 200
   Estimated/final costs are set manually by admin (PUT /bookings/{id}/cost),
   never from service catalog.
 """
@@ -135,19 +135,20 @@ def update_booking_status(booking_id: UUID, status: str) -> dict:
                 f"Must move one step at a time ({current} → {expected}) or cancel."
             )
 
+        # Payment gate: a booking cannot be Completed until the final payment is paid.
+        # No way around it — prompt the customer for payment instead.
+        if status == "completed" and booking.get("final_payment_status") != "paid":
+            raise ValueError(
+                "Final payment not received — prompt the customer for payment before completing. "
+                "Status cannot move to 'completed' while unpaid."
+            )
+
     resp = db.table("bookings").update({"status": status}).eq("id", str(booking_id)).execute()
     if not resp.data:
         raise BookingNotFoundException(f"Booking {booking_id} not found")
     booking = get_booking_by_id(booking_id)
     sid     = str(booking_id)[:8].upper()
 
-    # Send SMS for key status changes
-    if status in _STATUS_SMS:
-        try:
-            msg  = _STATUS_SMS[status].format(sid=sid)
-            send_sms(booking["phone_number"], f"BlueTech: {msg}")
-        except Exception:
-            pass  # SMS failure must never break a status update
 
     return booking
 
@@ -155,7 +156,7 @@ def update_booking_status(booking_id: UUID, status: str) -> dict:
 def update_booking_cost(booking_id: UUID, cost_data: CostUpdate) -> dict:
     """Update estimated or final cost on a booking (admin only).
 
-    For pickup bookings pickup_fee is auto-set to 200 at creation; admin may
+    For pickup bookings pickup_fee is auto-set to 5 at creation; admin may
     override it here. For dropoff bookings it stays 0 unless admin overrides.
     """
     updates = {}

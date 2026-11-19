@@ -83,11 +83,13 @@ export const TrackOrderPage = () => {
   
   // 1. Order Timeline
   const renderOrderTimeline = (ord: Order) => {
-    const orderStatuses: { key: Order['status']; title: string; desc: string }[] = [
+    const orderStatuses: { key: string; title: string; desc: string }[] = [
       { key: 'pending', title: 'Order Placed', desc: 'Order logged and awaiting payment authorization.' },
+      { key: 'confirmed', title: 'Confirmed', desc: 'Payment verified and order accepted by our team.' },
       { key: 'processing', title: 'Preparing Dispatch', desc: 'Catalog items are being picked, checked, and securely wrapped.' },
-      { key: 'shipped', title: 'In Transit', desc: 'Package dispatched to shipping courier, heading to your location.' },
+      { key: 'dispatched', title: 'Dispatched', desc: 'Package dispatched to shipping courier, heading to your location.' },
       { key: 'delivered', title: 'Delivered', desc: 'Courier handoff complete and verified.' },
+      { key: 'cancelled', title: 'Cancelled', desc: 'This order was cancelled before fulfilment.' },
     ];
 
     // Find active step index
@@ -166,8 +168,12 @@ export const TrackOrderPage = () => {
     const bookingStatuses: { key: Booking['status']; title: string; desc: string }[] = [
       { key: 'pending', title: 'Booking Logged', desc: 'Repair appointment scheduled. Awaiting device dropoff or courier pickup.' },
       { key: 'confirmed', title: 'Appointment Confirmed', desc: 'Hardware received and registered into our diagnostics intake lab.' },
-      { key: 'in_repair', title: 'Repairs Active', desc: 'Diagnostics complete. Technician active in micro-soldering and spares replacement.' },
+      { key: 'picked_up', title: 'Device Picked Up', desc: 'Device collected from the pickup point or a courier.' },
+      { key: 'in_diagnosis', title: 'Diagnostics', desc: 'Technician is diagnosing the issue and listing required parts.' },
+      { key: 'in_repair', title: 'Repairs Active', desc: 'Bench work in progress — micro-soldering and spares replacement.' },
+      { key: 'ready', title: 'Device Ready', desc: 'Repairs complete and tested. Device is ready for pickup or redelivery.' },
       { key: 'completed', title: 'Device Ready & Returned', desc: 'Post-repair benchmark stress tests passed. Device returned to client with active warranty.' },
+      { key: 'cancelled', title: 'Cancelled', desc: 'This booking was cancelled before completion.' },
     ];
 
     const activeIndex = bookingStatuses.findIndex(step => step.key === bk.status);

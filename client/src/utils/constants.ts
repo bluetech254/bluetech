@@ -13,3 +13,6 @@ export const API_BASE_URL: string = _apiBase;
 
 export const MPESA_PAYBILL: string = import.meta.env.VITE_MPESA_PAYBILL ?? '';
 export const APP_NAME: string      = import.meta.env.VITE_APP_NAME      ?? 'BlueTech';
+
+export const PAYMENTS_API_URL: string = import.meta.env.VITE_PAYMENTS_API_URL ?? '';
+export const PAYMENTS_API_KEY: string = import.meta.env.VITE_PAYMENTS_API_KEY ?? '';

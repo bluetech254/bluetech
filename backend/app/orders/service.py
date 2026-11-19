@@ -38,9 +38,12 @@ def _fetch_products(item_ids: list[str]) -> dict:
     return {p["id"]: p for p in (resp.data or [])}
 
 
+DELIVERY_FEE_KES = Decimal("5")  # flat delivery fee — KES 5 for all zones (testing)
+
+
 def _get_delivery_fee(zone_name: str) -> Decimal:
-    """Flat delivery fee — KES 1 for all zones."""
-    return Decimal("1")
+    """Flat delivery fee — KES 5 for all zones."""
+    return DELIVERY_FEE_KES
 
 
 def _check_stock(items: list[OrderItemCreate], products: dict):
@@ -308,6 +311,13 @@ def update_order_status(order_id: UUID, status: str) -> dict:
     else:
         if current == status:
             raise ValueError(f"Order is already '{current}'.")
+        # Payment gate: an order cannot move to Delivered until it is paid.
+        # No way around it — prompt the customer for payment instead.
+        if status == "delivered" and order.get("payment_status") != "paid":
+            raise ValueError(
+                "Payment not received — prompt the customer for payment before delivering. "
+                "Status cannot move to 'delivered' while unpaid."
+            )
         if current not in ORDER_CHAIN:
             raise ValueError(f"Order has unknown current status '{current}'.")
         idx = ORDER_CHAIN.index(current)
@@ -329,10 +339,6 @@ def update_order_status(order_id: UUID, status: str) -> dict:
     if status == "delivered":
         # Reward only on actual transition (current was dispatched, not delivered).
         _handle_delivery_rewards(order)
-        try:
-            send_sms(order.get("phone_number", ""), f"BlueTech: Your order #{str(order_id)[:8].upper()} has been delivered. Thank you!")
-        except Exception:
-            pass
 
     return order
 

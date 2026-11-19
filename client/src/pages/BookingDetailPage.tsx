@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getBookingById } from '../api/bookings';
+import StkModal from '../components/cart/StkModal';
+import { initiateBookingFinalPayment, verifyBookingFinalPayment } from '../api/payments';
+import { formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
 import { ChevronLeft, Smartphone, Calendar, Clock, Phone, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const STATUS_STEPS = ['pending', 'confirmed', 'picked_up', 'in_diagnosis', 'in_repair', 'completed'];
+const STATUS_STEPS = ['pending', 'confirmed', 'picked_up', 'in_diagnosis', 'in_repair', 'ready', 'completed'];
 const STATUS_COLOR: Record<string, string> = {
   pending:     'bg-amber-100 text-amber-700',
   confirmed:   'bg-blue-100 text-blue-700',
   picked_up:   'bg-indigo-100 text-indigo-700',
   in_diagnosis:'bg-purple-100 text-purple-700',
   in_repair:   'bg-orange-100 text-orange-700',
+  ready:       'bg-cyan-100 text-cyan-700',
   completed:   'bg-green-100 text-green-700',
   cancelled:   'bg-red-100 text-red-700',
 };
@@ -21,6 +25,8 @@ export const BookingDetailPage = () => {
   const navigate = useNavigate();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [stkModal, setStkModal] = useState<{ bookingId: string; amount: number } | null>(null);
+  const [verifyStatus, setVerifyStatus] = useState<'idle' | 'verifying' | 'paid' | 'failed'>('idle');
 
   useEffect(() => {
     if (!id) return;
@@ -95,6 +101,53 @@ export const BookingDetailPage = () => {
         )}
       </div>
 
+      {/* Payment */}
+      {(() => {
+        const finalStatus = booking.final_payment_status ?? 'unpaid';
+        const finalCost = booking.final_cost ?? booking.estimated_cost ?? 0;
+        const pickupFee = booking.pickup_fee ?? 0;
+        const commitmentFee = booking.commitment_fee ?? 0;
+        const remaining = Math.max(0, finalCost + pickupFee - commitmentFee);
+        const isPaid = finalStatus === 'paid';
+        return (
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2 text-sm text-slate-600">
+            <p className="text-xs font-black text-slate-500 uppercase tracking-wide mb-2">Payment</p>
+            <p className="flex items-center gap-2">
+              <span className="text-slate-400">Commitment fee</span>
+              <span className="font-bold text-slate-800">{formatCurrency(commitmentFee)}</span>
+              <span className={`ml-auto text-xs font-bold capitalize ${booking.commitment_payment_status === 'paid' ? 'text-green-600' : 'text-amber-600'}`}>
+                {booking.commitment_payment_status ?? 'unpaid'}
+              </span>
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="text-slate-400">Final payment</span>
+              <span className="font-bold text-slate-800">{formatCurrency(remaining)}</span>
+              <span className={`ml-auto text-xs font-bold capitalize ${isPaid ? 'text-green-600' : 'text-amber-600'}`}>
+                {finalStatus}
+              </span>
+            </p>
+            {!isPaid && (
+              <button
+                onClick={() => {
+                  if (booking.status !== 'ready') {
+                    toast.error('Final payment opens when your device is ready');
+                    return;
+                  }
+                  setVerifyStatus('idle');
+                  setStkModal({ bookingId: booking.id, amount: remaining });
+                }}
+                className="mt-2 w-full py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition-colors"
+              >
+                Pay Now · {formatCurrency(remaining)}
+              </button>
+            )}
+            {booking.final_receipt && (
+              <p className="text-xs text-slate-400">Receipt: <span className="font-mono font-bold">{booking.final_receipt}</span></p>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Schedule */}
       <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2 text-sm text-slate-600">
         <p className="text-xs font-black text-slate-500 uppercase tracking-wide mb-2">Schedule</p>
@@ -102,6 +155,25 @@ export const BookingDetailPage = () => {
         {booking.preferred_time && <p className="flex items-center gap-2"><Clock className="w-4 h-4 text-slate-400" />{booking.preferred_time}</p>}
         <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" />{booking.phone_number}</p>
       </div>
+      {stkModal && (
+        <StkModal
+          amountKes={stkModal.amount}
+          target={{
+            initiate: () => initiateBookingFinalPayment(stkModal.bookingId),
+            verify: (ref) => verifyBookingFinalPayment(ref),
+          }}
+          label="Final Payment"
+          onSuccess={async () => {
+            setVerifyStatus('paid');
+            try {
+              const fresh = await getBookingById(id!);
+              setBooking(fresh);
+            } catch {}
+            setTimeout(() => setStkModal(null), 800);
+          }}
+          onCancel={() => { setStkModal(null); setVerifyStatus('idle'); }}
+        />
+      )}
     </div>
   );
 };
