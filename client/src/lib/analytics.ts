@@ -121,3 +121,54 @@ export function trackCartEvent(payload: CartEventPayload): void {
     // silently swallow
   }
 }
+
+// ── F4: Callback request tracking ───────────────────────────────────────────
+
+/**
+ * Submit a callback request.
+ * Returns true on success, false on failure.
+ */
+export async function requestCallback(phone: string, note?: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/analytics/callback-request`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: getSessionId(),
+        phone,
+        note,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// ── F3: Service wishlist tracking ────────────────────────────────────────────
+
+export type WishlistEventType = "saved" | "removed";
+
+interface WishlistEventPayload {
+  event_type:    WishlistEventType;
+  service_id:    string;
+  service_name?: string;
+  category?:     string;
+}
+
+/**
+ * Track a service wishlist save or remove.
+ * Completely silent on failure.
+ */
+export function trackWishlistEvent(payload: WishlistEventPayload): void {
+  try {
+    fetch(`${API_BASE}/api/v1/analytics/wishlist-event`, {
+      method:    "POST",
+      headers:   { "Content-Type": "application/json" },
+      body:      JSON.stringify({ session_id: getSessionId(), ...payload }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    // silently swallow
+  }
+}

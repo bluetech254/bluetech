@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { WishlistProvider } from './contexts/WishlistContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import Header from './components/layout/Header';
@@ -10,6 +11,7 @@ import CartDrawer from './components/layout/CartDrawer';
 import BottomTabBar from './components/layout/BottomTabBar';
 import AppRoutes from './router';
 import { trackPageView } from './lib/analytics';
+import CallbackButton from './components/callback/CallbackButton';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -44,6 +46,7 @@ const Layout = () => {
       {!isAuthPage && !isSuccessPage && <Footer />}
       <CartDrawer />
       <BottomTabBar />
+      <CallbackButton />
     </div>
   );
 };
@@ -54,9 +57,11 @@ export default function App() {
         <NotificationProvider>
           <AuthProvider>
             <CartProvider>
-              <ScrollToTop />
-              <PageViewTracker />
-              <Layout />
+              <WishlistProvider>
+                <ScrollToTop />
+                <PageViewTracker />
+                <Layout />
+              </WishlistProvider>
             </CartProvider>
           </AuthProvider>
         </NotificationProvider>

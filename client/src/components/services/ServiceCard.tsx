@@ -1,9 +1,10 @@
 import React from 'react';
-import { Clock, Shield, Smartphone, Laptop, Tablet, Headphones, Gamepad, Watch, Wrench, ArrowRight } from 'lucide-react';
+import { Clock, Shield, Smartphone, Laptop, Tablet, Headphones, Gamepad, Watch, Wrench, ArrowRight, Bookmark } from 'lucide-react';
 import { RepairService } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
+import { useWishlist } from '../../contexts/WishlistContext';
 
 interface ServiceCardProps {
   service: RepairService;
@@ -12,6 +13,7 @@ interface ServiceCardProps {
 
 export const ServiceCard = ({ service }: ServiceCardProps) => {
   const navigate = useNavigate();
+  const { isSaved, toggle } = useWishlist();
   const { id, name, category, estimated_duration, warranty_period } = service;
 
   // Dynamically select an icon based on category keywords
@@ -32,11 +34,23 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
 
   return (
     <Card variant="hover" className="flex flex-col h-full justify-between p-2 md:p-3 lg:p-4 text-center border border-slate-100 bg-white">
-      {/* Icon / Brand Circle */}
-      <div className="flex justify-center mb-1.5 md:mb-2">
+      {/* Icon / Brand Circle — with bookmark in the corner */}
+      <div className="relative flex justify-center mb-1.5 md:mb-2">
         <div className="w-8 md:w-9 lg:w-10 h-8 md:h-9 lg:h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
           {getCategoryIcon(category)}
         </div>
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); toggle(service); }}
+          className={`absolute -top-1 -right-1 p-1 rounded-full transition-colors ${
+            isSaved(id)
+              ? 'text-blue-600'
+              : 'text-slate-300 hover:text-blue-400'
+          }`}
+          title={isSaved(id) ? 'Remove from saved' : 'Save service'}
+        >
+          <Bookmark size={13} fill={isSaved(id) ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       {/* Title & Badge */}

@@ -121,6 +121,97 @@ def record_cart_event(body: CartEvent):
     return {"ok": True}
 
 
+# ── Public: record a service wishlist event ──────────────────────────────────
+
+class WishlistEvent(BaseModel):
+    session_id:   str            = Field(..., min_length=8, max_length=128)
+    event_type:   Literal["saved", "removed"]
+    service_id:   str            = Field(..., max_length=128)
+    service_name: Optional[str]  = Field(None, max_length=300)
+    category:     Optional[str]  = Field(None, max_length=200)
+
+
+@router.post("/wishlist-event", status_code=200)
+def record_wishlist_event(body: WishlistEvent):
+    """
+    Called by the client when a user saves or removes a service from their wishlist.
+    Fire-and-forget — never returns an error.
+    """
+    try:
+        db.table("service_wishlist_events").insert({
+            "session_id":   body.session_id,
+            "event_type":   body.event_type,
+            "service_id":   body.service_id,
+            "service_name": body.service_name,
+            "category":     body.category,
+        }).execute()
+    except Exception as e:
+        logger.warning(f"analytics/wishlist-event write failed: {e}")
+    return {"ok": True}
+
+
+# ── Public: request a callback ────────────────────────────────────────────────
+
+class CallbackRequest(BaseModel):
+    session_id: str           = Field(..., min_length=8, max_length=128)
+    phone:      str           = Field(..., min_length=9, max_length=20)
+    note:       Optional[str] = Field(None, max_length=500)
+
+
+@router.post("/callback-request", status_code=200)
+def request_callback(body: CallbackRequest):
+    """
+    Called when a visitor requests a callback.
+    Stores the request; admin sees it in Daily Ops Leads tab.
+    Fire-and-forget on error.
+    """
+    try:
+        db.table("callback_requests").insert({
+            "session_id": body.session_id,
+            "phone":      body.phone,
+            "note":       body.note,
+        }).execute()
+    except Exception as e:
+        logger.warning(f"analytics/callback-request write failed: {e}")
+    return {"ok": True}
+
+
+@router.get("/callbacks/today")
+def get_today_callbacks(admin: dict = Depends(get_current_admin)):
+    """Today's callback requests for the Daily Ops Leads view."""
+    try:
+        today     = date.today()
+        day_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)
+        day_end   = day_start + timedelta(days=1)
+        resp = (
+            db.table("callback_requests")
+            .select("id, phone, note, status, requested_at")
+            .gte("requested_at", day_start.isoformat())
+            .lt("requested_at",  day_end.isoformat())
+            .order("requested_at", desc=True)
+            .execute()
+        )
+        return {"data": resp.data or []}
+    except Exception as e:
+        logger.error(f"analytics/callbacks/today error: {e}")
+        return {"data": []}
+
+
+@router.patch("/callbacks/{callback_id}")
+def update_callback_status(callback_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    """Mark a callback as called or dismissed."""
+    status = body.get("status")
+    if status not in ("called", "dismissed", "pending"):
+        from fastapi import HTTPException
+        raise HTTPException(400, "Invalid status")
+    try:
+        db.table("callback_requests").update({"status": status}).eq("id", callback_id).execute()
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"analytics/callbacks patch error: {e}")
+        return {"ok": False}
+
+
 # ── Admin: today's visitor summary ───────────────────────────────────────────
 
 @router.get("/today")
@@ -164,6 +255,17 @@ def get_today_summary(admin: dict = Depends(get_current_admin)):
 
         funnel = _funnel_summary(cart_events, len(sessions))
 
+        # Service wishlist events
+        wishlist_resp = (
+            db.table("service_wishlist_events")
+            .select("session_id, event_type, service_id, service_name, category, occurred_at")
+            .gte("occurred_at", day_start.isoformat())
+            .lt("occurred_at",  day_end.isoformat())
+            .execute()
+        )
+        wishlist_events = wishlist_resp.data or []
+        wishlist_summary = _wishlist_summary(wishlist_events)
+
         return {
             "date":            today.isoformat(),
             "unique_sessions": len(sessions),
@@ -179,6 +281,7 @@ def get_today_summary(admin: dict = Depends(get_current_admin)):
             "hourly_sessions":  _hourly_buckets(sessions, day_start),
             "funnel":           funnel,
             "top_cart_products": _top_cart_products(cart_events),
+            "wishlist":         wishlist_summary,
         }
     except Exception as e:
         logger.error(f"analytics/today error: {e}")
@@ -194,6 +297,7 @@ def get_today_summary(admin: dict = Depends(get_current_admin)):
             "hourly_sessions": [],
             "funnel": {"visitors": 0, "cart_adds": 0, "checkouts_started": 0, "checkouts_completed": 0, "cart_sessions": 0, "conversion_rate": 0},
             "top_cart_products": [],
+            "wishlist": {"saves": 0, "removals": 0, "top_saved_services": []},
         }
 
 
@@ -299,3 +403,17 @@ def _top_cart_products(events: list, limit: int = 8) -> list:
         counts[title]["adds"]     += 1
         counts[title]["quantity"] += e.get("quantity") or 1
     return sorted(counts.values(), key=lambda x: -x["adds"])[:limit]
+
+
+def _wishlist_summary(events: list) -> dict:
+    """Summarise service wishlist activity for today."""
+    saves    = sum(1 for e in events if e["event_type"] == "saved")
+    removals = sum(1 for e in events if e["event_type"] == "removed")
+    counts: dict = {}
+    for e in events:
+        if e["event_type"] != "saved":
+            continue
+        name = e.get("service_name") or e.get("service_id") or "Unknown"
+        counts[name] = counts.get(name, 0) + 1
+    top = [{"name": k, "saves": v} for k, v in sorted(counts.items(), key=lambda x: -x[1])[:8]]
+    return {"saves": saves, "removals": removals, "top_saved_services": top}

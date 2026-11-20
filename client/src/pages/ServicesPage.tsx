@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { getRepairServices } from '../api/services';
 import { RepairService } from '../types';
 import ServiceGrid from '../components/services/ServiceGrid';
+import WishlistTray from '../components/wishlist/WishlistTray';
 import { Shield, CheckCircle, Smartphone, Laptop, Tablet, Headphones, Gamepad, Watch, Wrench, ChevronRight, RotateCcw } from 'lucide-react';
 
 const getDeviceIcon = (device: string) => {
@@ -232,6 +233,8 @@ export const ServicesPage = () => {
           ))}
         </ul>
       </div>
+
+      <WishlistTray />
 
     </div>
   );

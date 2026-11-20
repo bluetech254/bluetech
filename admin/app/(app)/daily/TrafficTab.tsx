@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import {
   Globe, Smartphone, Monitor, Tablet, RefreshCw,
-  MousePointerClick, TrendingUp, Eye, Layers, ShoppingCart, CreditCard, CheckCircle2,
+  MousePointerClick, TrendingUp, Eye, Layers, ShoppingCart, CreditCard, CheckCircle2, Bookmark,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
 
@@ -93,6 +93,7 @@ export default function TrafficTab() {
   const totalReferrers = Object.values(referrers).reduce((a, b) => a + b, 0);
   const funnel = data?.funnel ?? { visitors: 0, cart_adds: 0, cart_sessions: 0, checkouts_started: 0, checkouts_completed: 0, conversion_rate: 0 };
   const topCartProducts: any[] = data?.top_cart_products ?? [];
+  const wishlist = data?.wishlist ?? { saves: 0, removals: 0, top_saved_services: [] };
 
   return (
     <div className="space-y-5">
@@ -118,30 +119,10 @@ export default function TrafficTab() {
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          label="Unique Visitors"
-          value={data?.unique_sessions ?? 0}
-          icon={Globe}
-          sub="browser sessions today"
-        />
-        <StatCard
-          label="Page Views"
-          value={data?.total_page_views ?? 0}
-          icon={Eye}
-          sub={`avg ${data?.avg_pages_per_session ?? 0} pages/visit`}
-        />
-        <StatCard
-          label="Social Clicks"
-          value={totalLinkClicks}
-          icon={MousePointerClick}
-          sub="footer link clicks today"
-        />
-        <StatCard
-          label="Top Page"
-          value={topPages[0]?.path ?? "—"}
-          icon={TrendingUp}
-          sub={topPages[0] ? `${topPages[0].views} views` : "no data yet"}
-        />
+        <StatCard label="Unique Visitors" value={data?.unique_sessions ?? 0} icon={Globe} sub="browser sessions today" />
+        <StatCard label="Page Views" value={data?.total_page_views ?? 0} icon={Eye} sub={`avg ${data?.avg_pages_per_session ?? 0} pages/visit`} />
+        <StatCard label="Services Saved" value={wishlist.saves} icon={Bookmark} sub={`${wishlist.removals} removed`} />
+        <StatCard label="Social Clicks" value={totalLinkClicks} icon={MousePointerClick} sub="footer link clicks today" />
       </div>
 
       {/* Purchase funnel */}
@@ -190,6 +171,39 @@ export default function TrafficTab() {
               ))}
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Service wishlist */}
+      <div className="card p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Bookmark size={14} className="text-ink-dim" />
+          <h3 className="font-semibold text-sm text-ink">Service wishlist · today</h3>
+          <span className="ml-auto text-xs text-ink-dim">{wishlist.saves} save{wishlist.saves !== 1 ? "s" : ""}</span>
+        </div>
+        <div className="flex gap-6 mb-4">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-2xl font-black text-blue-400 tabular-nums">{wishlist.saves}</span>
+            <span className="text-xs text-ink-muted">Services saved</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-2xl font-black text-ink-dim tabular-nums">{wishlist.removals}</span>
+            <span className="text-xs text-ink-muted">Removed</span>
+          </div>
+        </div>
+        {wishlist.top_saved_services.length > 0 ? (
+          <div className="border-t border-base-border pt-4 space-y-1.5">
+            <p className="text-xs font-medium text-ink-muted mb-2">Most saved services</p>
+            {wishlist.top_saved_services.map((s: any) => (
+              <div key={s.name} className="flex items-center gap-2 text-sm">
+                <Bookmark size={12} className="text-blue-400 shrink-0" />
+                <span className="text-ink flex-1 truncate">{s.name}</span>
+                <span className="text-ink-dim tabular-nums text-xs">{s.saves}×</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-ink-dim mt-2">No services saved yet today.</p>
         )}
       </div>
 

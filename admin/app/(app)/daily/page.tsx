@@ -42,6 +42,7 @@ export default function DailyOpsPage() {
   const [logistics, setLogistics] = useState<any[]>([]);
   const [expenses, setExpenses]   = useState<any[]>([]);
   const [zones, setZones]         = useState<any[]>([]);
+  const [callbacks, setCallbacks] = useState<any[]>([]);
   const [loading, setLoading]     = useState(true);
   const [locking, setLocking]     = useState(false);
   const [error, setError]         = useState("");
@@ -81,6 +82,15 @@ export default function DailyOpsPage() {
   useEffect(() => {
     if (activeTab === "eod") loadEod(dateStr);
   }, [activeTab, dateStr, loadEod]);
+
+  // Load callbacks when leads tab is active
+  useEffect(() => {
+    if (activeTab === "leads") {
+      adminApi.getCallbacksToday()
+        .then((res: any) => setCallbacks(Array.isArray(res?.data) ? res.data : []))
+        .catch(() => {});
+    }
+  }, [activeTab, dateStr]);
 
   // ── Date nav ──────────────────────────────────────────────────────────
   function changeDate(delta: number) {
@@ -207,7 +217,7 @@ export default function DailyOpsPage() {
               <OperationsTab report={report} eod={eod} leads={leads} logistics={logistics} expenses={expenses} dateStr={dateStr} onViewEod={() => setActiveTab("eod")} loadEod={() => loadEod(dateStr)} />
             )}
             {activeTab === "leads" && (
-              <LeadsTab leads={leads} setLeads={setLeads} dateStr={dateStr} locked={locked} />
+              <LeadsTab leads={leads} setLeads={setLeads} dateStr={dateStr} locked={locked} callbacks={callbacks} setCallbacks={setCallbacks} />
             )}
             {activeTab === "logistics" && (
               <LogisticsTab logistics={logistics} setLogistics={setLogistics} zones={zones} dateStr={dateStr} locked={locked} />
@@ -376,7 +386,7 @@ function OperationsTab({ report, eod, leads, logistics, expenses, dateStr, onVie
 // ═══════════════════════════════════════════════════════════════════════════
 // TAB 2 — Leads
 // ═══════════════════════════════════════════════════════════════════════════
-function LeadsTab({ leads, setLeads, dateStr, locked }: any) {
+function LeadsTab({ leads, setLeads, dateStr, locked, callbacks, setCallbacks }: any) {
   const [channel, setChannel] = useState("whatsapp");
   const [source, setSource]   = useState("unknown");
   const [qty, setQty]         = useState(1);
@@ -532,6 +542,63 @@ function LeadsTab({ leads, setLeads, dateStr, locked }: any) {
           );
         })
       )}
+
+      {/* ── Callback requests (F4) ─────────────────────────────────────── */}
+      <div className="card overflow-hidden mt-5">
+        <div className="px-4 py-3 border-b border-base-border flex items-center gap-2">
+          <Phone size={14} className="text-ink-dim" />
+          <h3 className="font-semibold text-sm text-ink">Callback requests today</h3>
+          <span className="ml-auto text-xs text-ink-dim">{callbacks.length} request{callbacks.length !== 1 ? "s" : ""}</span>
+        </div>
+        {callbacks.length === 0 ? (
+          <p className="px-4 py-6 text-xs text-ink-dim">No callback requests today.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <tbody>
+              {callbacks.map((cb: any) => (
+                <tr key={cb.id} className="border-b border-base-border/50 last:border-0">
+                  <td className="px-4 py-3 font-mono text-ink">{cb.phone}</td>
+                  <td className="px-4 py-3 text-ink-muted text-xs max-w-[200px] truncate">{cb.note || "—"}</td>
+                  <td className="px-4 py-3 text-xs text-ink-dim">{new Date(cb.requested_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      cb.status === "called"    ? "bg-green-900/30 text-green-400" :
+                      cb.status === "dismissed" ? "bg-red-900/30 text-red-400"    :
+                                                  "bg-amber-900/30 text-amber-400"
+                    }`}>{cb.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {cb.status === "pending" && (
+                        <>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await adminApi.updateCallbackStatus(cb.id, "called");
+                                setCallbacks((prev: any[]) => prev.map(c => c.id === cb.id ? { ...c, status: "called" } : c));
+                              } catch (e: any) { alert(e.message); }
+                            }}
+                            className="text-xs text-green-400 hover:underline"
+                          >Called</button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await adminApi.updateCallbackStatus(cb.id, "dismissed");
+                                setCallbacks((prev: any[]) => prev.map(c => c.id === cb.id ? { ...c, status: "dismissed" } : c));
+                              } catch (e: any) { alert(e.message); }
+                            }}
+                            className="text-xs text-red-400 hover:underline"
+                          >Dismiss</button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

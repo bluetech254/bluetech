@@ -209,6 +209,15 @@ export const adminApi = {
     const today = new Date().toISOString().slice(0, 10);
     return request<any>(`/api/v1/daily/report/${today}/clicks`);
   },
+
+  // ── F4: callback requests ─────────────────────────────────────────────────
+  getCallbacksToday: () =>
+    request<any>(`/api/v1/analytics/callbacks/today`),
+  updateCallbackStatus: (id: string, status: string) =>
+    request<any>(`/api/v1/analytics/callbacks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
 };
 
 export const formatKES = (n: number) => `KES ${Math.round(n).toLocaleString("en-KE")}`;
