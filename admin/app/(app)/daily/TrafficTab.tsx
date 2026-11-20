@@ -34,13 +34,17 @@ function StatCard({ label, value, icon: Icon, sub }: any) {
   );
 }
 
+const POLL_SECONDS = 60;
+
 export default function TrafficTab() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [linkClicks, setLinkClicks] = useState<any[]>([]);
+  const [countdown, setCountdown] = useState(POLL_SECONDS);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  async function load() {
-    setLoading(true);
+  async function load(silent = false) {
+    if (!silent) setLoading(true);
     try {
       const [visitor, clicks] = await Promise.allSettled([
         adminApi.getVisitorSummary(),
@@ -48,12 +52,29 @@ export default function TrafficTab() {
       ]);
       if (visitor.status === "fulfilled") setData(visitor.value);
       if (clicks.status  === "fulfilled") setLinkClicks((clicks.value as any)?.data ?? []);
+      setLastUpdated(new Date());
+      setCountdown(POLL_SECONDS);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
+  // Initial load
   useEffect(() => { load(); }, []);
+
+  // 1-minute auto-refresh
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          load(true);   // silent — no spinner, data updates in place
+          return POLL_SECONDS;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
+  }, []);
 
   const totalLinkClicks = linkClicks.reduce((s: number, c: any) => s + (c.clicks ?? 0), 0);
 
@@ -77,10 +98,22 @@ export default function TrafficTab() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-ink-muted">Website traffic · today</p>
-        <button onClick={load} className="btn-ghost px-2.5 py-1.5 text-xs">
-          <RefreshCw size={13} /> Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-ink-muted">Website traffic · today</p>
+          {lastUpdated && (
+            <span className="text-xs text-ink-dim">
+              Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-ink-dim tabular-nums">
+            Refreshing in {countdown}s
+          </span>
+          <button onClick={() => load()} className="btn-ghost px-2.5 py-1.5 text-xs flex items-center gap-1">
+            <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh now
+          </button>
+        </div>
       </div>
 
       {/* KPI cards */}
