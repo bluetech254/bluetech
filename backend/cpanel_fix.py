@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-cpanel_fix.py — BlueTech cPanel all-in-one fixer.
+cpanel_fix.py — Fixit Blue Technology cPanel all-in-one fixer.
 
 Usage:
     python3 cpanel_fix.py SUPABASE_KEY=eyJ...your_anon_key...

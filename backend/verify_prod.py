@@ -20,7 +20,7 @@ def load_env(path):
 load_env(os.path.join(BASE_DIR, ".env"))
 
 print("=" * 55)
-print("  BlueTech Prod Verification")
+print("  Fixit Blue Technology Prod Verification")
 print("=" * 55)
 
 # 1. What does .env say?

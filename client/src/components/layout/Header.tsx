@@ -32,7 +32,7 @@ export const Header = () => {
 
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/logo.png" alt="BlueTech" className="h-8 lg:h-10 w-auto object-contain logo-wobble" />
+          <img src="/logo.png" alt="Fixit Blue Technology" className="h-8 lg:h-10 w-auto object-contain logo-wobble" />
           <span className="text-lg lg:text-2xl font-black tracking-tight text-slate-900">
             Blue<span className="text-blue-600">Tech</span>
           </span>

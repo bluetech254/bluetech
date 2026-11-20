@@ -181,7 +181,7 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                           </div>
                           <div className="ml-3.5 flex-1 min-w-0">
                             <h4 className="text-sm font-semibold text-slate-900 truncate">{product.name}</h4>
-                            <p className="text-xs text-slate-400 capitalize">{product.brand || 'BlueTech'} • {product.category}</p>
+                            <p className="text-xs text-slate-400 capitalize">{product.brand || 'Fixit Blue Technology'} • {product.category}</p>
                           </div>
                           <div className="ml-4 font-bold text-sm text-blue-600 whitespace-nowrap">
                             {formatCurrency(product.price)}

@@ -7,51 +7,51 @@ is consistent and auditable in one place.
 """
 
 
-class BlueTechException(Exception):
-    """Base exception for all BlueTech application errors."""
+class FixitException(Exception):
+    """Base exception for all Fixit Blue Technology application errors."""
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
-class AuthException(BlueTechException):
+class AuthException(FixitException):
     """Invalid credentials, expired token, unverified account, etc."""
 
 
 # ── Products ──────────────────────────────────────────────────────────────────
 
-class ProductNotFoundException(BlueTechException):
+class ProductNotFoundException(FixitException):
     """Product does not exist or has been deactivated."""
 
 
-class InsufficientStockException(BlueTechException):
+class InsufficientStockException(FixitException):
     """Requested quantity exceeds available stock."""
 
 
 # ── Orders ────────────────────────────────────────────────────────────────────
 
-class OrderNotFoundException(BlueTechException):
+class OrderNotFoundException(FixitException):
     """Order does not exist."""
 
 
 # ── Bookings ──────────────────────────────────────────────────────────────────
 
-class BookingNotFoundException(BlueTechException):
+class BookingNotFoundException(FixitException):
     """Repair booking does not exist."""
 
 
 # ── Delivery ─────────────────────────────────────────────────────────────────
 
-class DeliveryZoneNotFoundException(BlueTechException):
+class DeliveryZoneNotFoundException(FixitException):
     """Delivery zone name not found in the database."""
 
 
 # ── Payments ──────────────────────────────────────────────────────────────────
 
-class PaymentException(BlueTechException):
+class PaymentException(FixitException):
     """M-Pesa or payment processing error."""
 
 
 # ── Points ────────────────────────────────────────────────────────────────────
 
-class InsufficientPointsException(BlueTechException):
+class InsufficientPointsException(FixitException):
     """User does not have enough points to redeem."""

@@ -16,7 +16,7 @@ from customers.router import router as customers_router
 from bookings.router import router as bookings_router
 from contact.router import router as contact_router
 from core.config import settings
-from core.exceptions import BlueTechException
+from core.exceptions import FixitException
 from core.logging import get_logger
 from core.middleware import RequestLoggingMiddleware
 from core.startup import validate_startup
@@ -71,14 +71,14 @@ app.add_middleware(RequestLoggingMiddleware)
 
 # ── Exception handlers ────────────────────────────────────────────────────────
 
-@app.exception_handler(BlueTechException)
-async def bluetech_exception_handler(request: Request, exc: BlueTechException):
+@app.exception_handler(FixitException)
+async def fixit_exception_handler(request: Request, exc: FixitException):
     """
     Handles all known application exceptions (AuthException, ProductNotFoundException, etc.)
     Logs as WARNING with endpoint details. Returns clean 400 to the client.
     """
     logger.warning(
-        f"BlueTechException on {request.method} {request.url.path}: {exc}",
+        f"FixitException on {request.method} {request.url.path}: {exc}",
         extra={
             "method":  request.method,
             "path":    request.url.path,
@@ -166,7 +166,7 @@ def structure():
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>System Structure — BlueTech</title>
+  <title>System Structure — Fixit Blue Technology</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -380,7 +380,7 @@ def structure():
 
 <div class="hero">
   <div class="tag">&#x1F5C2;&#xFE0F; Full System Map</div>
-  <h1>BlueTech <span>System Structure</span></h1>
+  <h1>Fixit Blue Technology <span>System Structure</span></h1>
   <p class="hero-sub">Every file and folder in the system with descriptions — backend, frontend client, admin panel, database migrations.</p>
   <div class="search-bar">
     <span class="search-icon">&#x1F50D;</span>
@@ -891,13 +891,13 @@ def structure():
 
 @app.get("/", response_class=HTMLResponse, tags=["Health"])
 def root():
-    """BlueTech API — dynamic branded landing page (routes fetched from /openapi.json)"""
+    """Fixit Blue Technology API — dynamic branded landing page (routes fetched from /openapi.json)"""
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BlueTech API — Blue Technology Ltd</title>
+  <title>Fixit Blue Technology API</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1183,7 +1183,7 @@ def root():
     <div class="version-tag">&#x26A1; v2.0.0 &middot; FastAPI &middot; Supabase</div>
     <h1>Blue Technology<br /><span>Backend API</span></h1>
     <p class="hero-desc">
-      Production-grade REST API powering the BlueTech e-commerce platform and electronics repair booking system. Built for speed, security, and scale.
+      Production-grade REST API powering the Fixit Blue Technology e-commerce platform and electronics repair booking system. Built for speed, security, and scale.
     </p>
     <div class="hero-actions">
       <a href="/docs" class="btn-primary">&#x1F4D6; Interactive Docs (Swagger)</a>

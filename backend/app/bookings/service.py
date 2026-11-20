@@ -36,7 +36,7 @@ _STATUS_SMS = {
     "in_diagnosis":    "Your device (#{sid}) is being diagnosed. We'll contact you soon.",
     "in_repair":       "Good news! Your device #{sid} is being repaired.",
     "ready":           "Your device #{sid} is ready for collection! We'll share the final cost after diagnosis.",
-    "completed":       "Repair #{sid} complete. Thank you for choosing BlueTech!",
+    "completed":       "Repair #{sid} complete. Thank you for choosing Fixit Blue Technology!",
     "cancelled":       "Your booking #{sid} has been cancelled. Contact us if this was a mistake.",
 }
 
@@ -66,7 +66,7 @@ def create_booking(data: BookingCreate, user_id: str | None = None) -> dict:
 
     send_sms(
         data.phone_number,
-        f"BlueTech Repair Booking Confirmed!\n"
+        f"Fixit Blue Technology Repair Booking Confirmed!\n"
         f"Booking #{sid}\n"
         f"Device: {device}\n"
         f"Issue: {data.issue_description[:60]}\n"

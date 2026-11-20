@@ -45,8 +45,8 @@ export default function ReceiptPage() {
         {/* Header */}
         <div className="px-8 pt-7 pb-5 flex items-start justify-between border-b border-gray-100">
           <div>
-            <Image src="/logo.png" alt="Bluetech" width={110} height={36} className="object-contain mb-2" />
-            <p className="text-xs text-gray-400">{process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Blue Technology"}</p>
+            <Image src="/logo.png" alt="Fixit Blue Technology" width={110} height={36} className="object-contain mb-2" />
+            <p className="text-xs text-gray-400">{process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Fixit Blue Technology"}</p>
             <p className="text-xs text-gray-400">{process.env.NEXT_PUBLIC_BUSINESS_ADDRESS ?? "Nairobi, Kenya"}</p>
           </div>
           <div className="text-right">
@@ -152,7 +152,7 @@ export default function ReceiptPage() {
 
         {/* Footer */}
         <div className="px-8 py-5 bg-gray-50 border-t border-gray-100 text-center">
-          <p className="text-xs font-semibold text-gray-600">Thank you for choosing {process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Blue Technology"}! 🙏</p>
+          <p className="text-xs font-semibold text-gray-600">Thank you for choosing {process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Fixit Blue Technology"}! 🙏</p>
           <p className="text-xs text-gray-400 mt-1">{process.env.NEXT_PUBLIC_BUSINESS_TAGLINE ?? "For support, WhatsApp us or visit our shop."}</p>
           <div className="flex items-center justify-center gap-1 mt-3">
             {Array.from({ length: 32 }).map((_, i) => (

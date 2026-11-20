@@ -1,5 +1,5 @@
 """
-app/main.py — FastAPI entrypoint for the Bluetech payments microservice.
+app/main.py — FastAPI entrypoint for the Fixit Blue Technology payments microservice.
 """
 import logging
 
@@ -19,7 +19,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 
-app = FastAPI(title="Bluetech Payments API", version="1.0.0", docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="Fixit Blue Technology Payments API", version="1.0.0", docs_url=None, redoc_url=None, openapi_url=None)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -50,7 +50,7 @@ def root():
     databases = db.healthcheck()
     healthy = all(value == "up" for value in databases.values())
     color = "#808080" if healthy else "#ef4444"
-    name = "Bluetech Payments"
+    name = "Fixit Blue Technology Payments"
     html = (
         "<!doctype html><html><body style=\""
         "background:#000;color:%s;display:flex;align-items:center;justify-content:center;"

@@ -37,7 +37,7 @@ def initiate_order_payment(order_id: str, user_id: str | None) -> dict:
         phone       = order["phone_number"],
         amount      = int(order["total_amount"]),
         reference   = f"ORD-{order_id[:10].upper()}",
-        description = "BlueTech Order",
+        description = "Fixit Blue Technology Order",
     )
     checkout_id = result.get("CheckoutRequestID")
     db.table("orders").update({

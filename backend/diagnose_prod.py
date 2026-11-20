@@ -14,7 +14,7 @@ sys.path.insert(0, APP_DIR)
 os.chdir(BASE_DIR)
 
 print("=" * 60)
-print("  BlueTech Prod Diagnostics")
+print("  Fixit Blue Technology Prod Diagnostics")
 print("=" * 60)
 
 # 1. Python version

@@ -50,7 +50,7 @@ export const Hero = () => {
     <div className="relative overflow-hidden animate-fade-in w-full h-[220px] sm:h-[367px] md:h-[467px] lg:h-[400px] bg-slate-100 -mt-8">
       <img
         src={imageUrl}
-        alt="BlueTech Hero"
+        alt="Fixit Blue Technology Hero"
         className={`w-full h-full object-cover transition-all duration-1000 ${
           isTransitioning ? (
             transition === 'swipeLeft' ? 'animate-swipe-left' :

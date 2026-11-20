@@ -391,7 +391,7 @@ export const ProfilePage = () => {
           <div className="md:col-span-2 bg-red-50 border border-red-100 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h3 className="font-black text-red-700 text-sm">Sign Out</h3>
-              <p className="text-xs text-red-500 mt-0.5">You will be logged out of your BlueTech account on this device.</p>
+              <p className="text-xs text-red-500 mt-0.5">You will be logged out of your Fixit Blue Technology account on this device.</p>
             </div>
             <button onClick={logout} className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-colors flex-shrink-0">
               <LogOut className="w-3.5 h-3.5" /> Sign Out

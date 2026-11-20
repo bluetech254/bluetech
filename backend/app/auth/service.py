@@ -99,7 +99,7 @@ def signup_user(data: UserSignup) -> dict:
             logger.warning(f"Referral signup points failed: {e}")
 
     # Send OTP via SMS
-    send_sms(data.phone_number, f"Your BlueTech verification code is: {otp_plain}. Valid for {_VERIFY_OTP_EXPIRE_MINUTES} minutes.")
+    send_sms(data.phone_number, f"Your Fixit Blue Technology verification code is: {otp_plain}. Valid for {_VERIFY_OTP_EXPIRE_MINUTES} minutes.")
 
     # Strip sensitive fields before returning
     user = _sanitize_user(user)
@@ -234,7 +234,7 @@ def resend_verification_code(phone_number: str) -> dict:
         "otp_expires_at":    otp_expiry,
     }).eq("id", user["id"]).execute()
 
-    send_sms(phone_number, f"Your BlueTech verification code is: {otp_plain}. Valid for {_VERIFY_OTP_EXPIRE_MINUTES} minutes.")
+    send_sms(phone_number, f"Your Fixit Blue Technology verification code is: {otp_plain}. Valid for {_VERIFY_OTP_EXPIRE_MINUTES} minutes.")
     return {"message": "Verification code sent"}
 
 
@@ -270,7 +270,7 @@ def forgot_password(data: ForgotPassword) -> dict:
         f"update_error={update_resp.error!r}"
     )
 
-    send_sms(data.phone_number, f"Your BlueTech password reset code is: {otp_plain}. Valid for {_RESET_OTP_EXPIRE_MINUTES} minutes.")
+    send_sms(data.phone_number, f"Your Fixit Blue Technology password reset code is: {otp_plain}. Valid for {_RESET_OTP_EXPIRE_MINUTES} minutes.")
     return {"message": _GENERIC}
 
 

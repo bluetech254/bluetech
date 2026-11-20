@@ -2,7 +2,7 @@
 app/config.py — environment configuration for the payments microservice.
 
 Two databases:
-  - Bluetech main DB (DB_*)          -> authoritative order/booking status
+  - Fixit Blue Technology main DB (DB_*)          -> authoritative order/booking status
   - Payments DB (PAYMENTS_DB_*)      -> isolated transaction history / audit
 """
 from pathlib import Path
@@ -14,7 +14,7 @@ _ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 
 
 class Settings(BaseSettings):
-    # ── Bluetech main database ────────────────────────────────────────────────
+    # ── Fixit Blue Technology main database ────────────────────────────────────────────────
     DB_HOST: str = "db"
     DB_PORT: int = 5432
     DB_NAME: str = "bluetech"

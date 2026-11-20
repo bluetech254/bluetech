@@ -57,7 +57,7 @@ export const CookiePolicyPage = () => {
         </Section>
 
         <Section title="8. Changes to This Policy">
-          <p>BlueTech may update this Cookie Policy at any time. Changes will be effective immediately upon posting. Your continued use of the website constitutes acceptance of the updated policy.</p>
+          <p>Fixit Blue Technology may update this Cookie Policy at any time. Changes will be effective immediately upon posting. Your continued use of the website constitutes acceptance of the updated policy.</p>
         </Section>
 
         <Section title="9. Contact Us">

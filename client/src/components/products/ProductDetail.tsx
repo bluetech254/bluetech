@@ -100,7 +100,7 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
             {/* Category / Brand / Stock */}
             <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold">
               <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                {brand || 'BlueTech'}
+                {brand || 'Fixit Blue Technology'}
               </span>
               <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md uppercase tracking-wider capitalize">
                 {category}

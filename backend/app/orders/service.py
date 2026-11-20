@@ -210,7 +210,7 @@ def create_order(order_data: OrderCreate, user_id: str | None = None) -> dict:
         items_text   = ", ".join(f"{li['product_title']} x{li['quantity']}" for li in line_items)
         send_sms(
             order_data.phone_number,
-            f"BlueTech Order Confirmed!\n"
+            f"Fixit Blue Technology Order Confirmed!\n"
             f"Order #{short_id}\n"
             f"Items: {items_text}\n"
             f"Subtotal: KES {float(subtotal):,.0f}\n"

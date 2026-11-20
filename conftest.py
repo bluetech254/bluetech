@@ -1,5 +1,5 @@
 """
-conftest.py — pytest configuration for BlueTech endpoint tests.
+conftest.py — pytest configuration for Fixit Blue Technology endpoint tests.
 Prints a state summary at the end of the session.
 """
 import pytest
@@ -8,7 +8,7 @@ from tests.test_endpoints import state, BASE_URL
 
 def pytest_sessionstart(session):
     print(f"\n{'='*60}")
-    print(f"  BlueTech Backend Test Suite")
+    print(f"  Fixit Blue Technology Backend Test Suite")
     print(f"  Target: {BASE_URL}")
     print(f"  Phone:  254704291657")
     print(f"{'='*60}")

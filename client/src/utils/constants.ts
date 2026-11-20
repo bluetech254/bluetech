@@ -4,7 +4,7 @@
 const _apiBase = import.meta.env.VITE_API_BASE_URL;
 if (!_apiBase) {
   throw new Error(
-    '[BlueTech] VITE_API_BASE_URL is not set.\n' +
+    '[Fixit Blue Technology] VITE_API_BASE_URL is not set.\n' +
     'Add it to your .env file (dev) or Vercel environment variables (prod).\n' +
     'Example: VITE_API_BASE_URL=https://bluetechnology-y1f8.onrender.com/api/v1'
   );
@@ -12,7 +12,7 @@ if (!_apiBase) {
 export const API_BASE_URL: string = _apiBase;
 
 export const MPESA_PAYBILL: string = import.meta.env.VITE_MPESA_PAYBILL ?? '';
-export const APP_NAME: string      = import.meta.env.VITE_APP_NAME      ?? 'BlueTech';
+export const APP_NAME: string      = import.meta.env.VITE_APP_NAME      ?? 'Fixit Blue Technology';
 
 export const PAYMENTS_API_URL: string = import.meta.env.VITE_PAYMENTS_API_URL ?? '';
 export const PAYMENTS_API_KEY: string = import.meta.env.VITE_PAYMENTS_API_KEY ?? '';

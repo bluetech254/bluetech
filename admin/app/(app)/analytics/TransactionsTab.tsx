@@ -226,7 +226,7 @@ export default function TransactionsTab() {
               </div>
 
               <p className="text-center text-[10px] text-ink-dim border-t border-dashed border-base-border pt-3">
-                Thank you for choosing {process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Blue Technology"}.<br />
+                Thank you for choosing {process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Fixit Blue Technology"}.<br />
                 {process.env.NEXT_PUBLIC_BUSINESS_TAGLINE ?? ""}
               </p>
             </div>

@@ -214,7 +214,7 @@ export const ServicesPage = () => {
           <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
             <Shield className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">The BlueTech Certified Repair Guarantee</h3>
+          <h3 className="text-lg font-bold text-slate-900">The Fixit Blue Technology Certified Repair Guarantee</h3>
           <p className="text-sm text-slate-600 leading-relaxed">
             Clean workshop with anti-static safeguards. OEM-grade spare components on every job.
           </p>

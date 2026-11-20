@@ -1,6 +1,6 @@
 {
-  "name": "BlueTech Retail & Repair",
-  "description": "E-commerce and repair booking platform for BlueTech technology products and repair services.",
+  "name": "Fixit Blue Technology Retail & Repair",
+  "description": "E-commerce and repair booking platform for Fixit Blue Technology technology products and repair services.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

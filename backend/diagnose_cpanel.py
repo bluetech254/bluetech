@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-diagnose_cpanel.py — BlueTech cPanel diagnostic script.
+diagnose_cpanel.py — Fixit Blue Technology cPanel diagnostic script.
 
 Upload to /home2/fixitblu/backend/ and run:
     python3 diagnose_cpanel.py
@@ -184,7 +184,7 @@ except Exception as e:
 
 # ── Print results ─────────────────────────────────────────────────────────────
 print("\n" + "="*60)
-print("  BlueTech cPanel Diagnostic Report")
+print("  Fixit Blue Technology cPanel Diagnostic Report")
 print("="*60)
 for line in RESULTS:
     print(line)

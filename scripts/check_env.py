@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-check_env.py — BlueTech production .env validator & updater for cPanel.
+check_env.py — Fixit Blue Technology production .env validator & updater for cPanel.
 
 Run on the cPanel server:
     cd /home2/fixitblu/backend && python3 scripts/check_env.py
@@ -523,7 +523,7 @@ def run_checks(env):
 def print_report():
     """Print the validation report."""
     print("\n" + "=" * 60)
-    print("  BlueTech Production Environment Validation Report")
+    print("  Fixit Blue Technology Production Environment Validation Report")
     print("=" * 60)
 
     for status, label, detail in results:
@@ -575,7 +575,7 @@ def main():
         PROD_ENV_PATH = os.path.join(BASE_DIR, ".env.production")
 
     print("=" * 60)
-    print("  BlueTech Production .env Validator")
+    print("  Fixit Blue Technology Production .env Validator")
     print(f"  Target: {ENV_PATH}")
     print(f"  Mode:   {'FIX' if fix_mode else 'CHECK'}{' (dry run)' if dry_run else ''}")
     print("=" * 60)

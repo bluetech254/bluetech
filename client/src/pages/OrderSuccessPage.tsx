@@ -72,7 +72,7 @@ export const OrderSuccessPage = () => {
             Purchase Placed Successfully!
           </h1>
           <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-            Thank you for shopping at BlueTech. Your order has been registered and is being prepared for dispatch.
+            Thank you for shopping at Fixit Blue Technology. Your order has been registered and is being prepared for dispatch.
           </p>
         </div>
 

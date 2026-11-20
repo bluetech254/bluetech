@@ -3,8 +3,8 @@ import "./globals.css";
 import SuppressWarnings from "@/components/SuppressWarnings";
 
 export const metadata: Metadata = {
-  title: "BlueTech — Admin",
-  description: "Admin panel for BlueTech e-commerce & repair booking platform",
+  title: "Fixit Blue Technology — Admin",
+  description: "Admin panel for Fixit Blue Technology e-commerce & repair booking platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

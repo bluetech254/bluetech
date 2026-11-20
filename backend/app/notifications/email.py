@@ -108,7 +108,7 @@ def send_password_reset_email(recipient_email: str, code: str) -> bool:
             Message={
                 "Subject": {"Data": "Blue Technology — Password Reset"},
                 "Body": {
-                    "Text": {"Data": f"Your BlueTech password reset code: {code}\nExpires in 1 hour."},
+                    "Text": {"Data": f"Your Fixit Blue Technology password reset code: {code}\nExpires in 1 hour."},
                     "Html": {"Data": html_body},
                 },
             },

@@ -429,7 +429,7 @@ export const BookRepairPage = () => {
                   <textarea id="pickup_address" rows={2}
                     value={pickupAddress}
                     onChange={e => setPickupAddress(e.target.value)}
-                    placeholder="E.g. Nairobi CBD, Kimathi Street, BlueTech Building, Floor 2..."
+                    placeholder="E.g. Nairobi CBD, Kimathi Street, Fixit Blue Technology Building, Floor 2..."
                     className="w-full py-3 px-4 border-2 border-slate-200 focus:border-blue-500 rounded-lg outline-none text-sm bg-white"
                   />
                   {fulfillmentError && <p className="text-red-600 text-xs mt-1">{fulfillmentError}</p>}
@@ -492,7 +492,7 @@ export const BookRepairPage = () => {
                   {...register('terms_accepted')}
                 />
                 <label htmlFor="terms_accepted" className="text-xs text-slate-600 select-none leading-relaxed">
-                  I agree to the BlueTech terms of service and authorize technicians to inspect and handle my device.
+                  I agree to the Fixit Blue Technology terms of service and authorize technicians to inspect and handle my device.
                 </label>
               </div>
               {errors.terms_accepted && (

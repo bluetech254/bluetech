@@ -55,8 +55,8 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
   return (
     <aside className="w-[260px] shrink-0 h-screen flex flex-col p-4 border-r border-base-border bg-base-panel">
       <div className="flex items-center gap-2.5 px-2 py-3 mb-4">
-        <Image src="/logo.png" alt="BlueTech" width={36} height={36} className="rounded-lg" />
-        <span className="font-display font-bold text-[15px] tracking-tight text-ink">BlueTech</span>
+        <Image src="/logo.png" alt="Fixit Blue Technology" width={36} height={36} className="rounded-lg" />
+        <span className="font-display font-bold text-[15px] tracking-tight text-ink">Fixit Blue Technology</span>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto">

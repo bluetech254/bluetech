@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_prod.py — BlueTech cPanel production activation script.
+setup_prod.py — Fixit Blue Technology cPanel production activation script.
 
 Run ONCE after GitHub Actions deploys to cPanel:
 
@@ -259,7 +259,7 @@ except ImportError:
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = prod_env.get("ADMIN_PASSWORD", "BlueTech@2026!")
 ADMIN_EMAIL    = "admin@fixit-bluetechnology.co.ke"
-ADMIN_FULLNAME = "BlueTech Admin"
+ADMIN_FULLNAME = "Fixit Blue Technology Admin"
 
 cur.execute("SELECT id FROM admins WHERE username = %s", (ADMIN_USERNAME,))
 if cur.fetchone():

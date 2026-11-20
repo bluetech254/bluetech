@@ -5,14 +5,14 @@ export const CareersPage = () => (
   <div className="space-y-8 animate-fade-in">
     <div>
 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-        <Briefcase className="w-7 h-7 text-blue-600" /> Careers at BlueTech
+        <Briefcase className="w-7 h-7 text-blue-600" /> Careers at Fixit Blue Technology
       </h1>
       <p className="text-sm text-slate-500 mt-1">Join our team and help shape the future of tech repair and retail in Kenya.</p>
     </div>
 
     {/* Culture blurb */}
     <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
-      <h2 className="font-bold text-slate-900 mb-2">Why BlueTech?</h2>
+      <h2 className="font-bold text-slate-900 mb-2">Why Fixit Blue Technology?</h2>
       <p className="text-sm text-slate-600 leading-relaxed">
         We're a fast-growing Kenyan tech company with a passion for quality and customer service. We offer competitive salaries, continuous learning opportunities, and a collaborative work environment where your ideas matter.
       </p>

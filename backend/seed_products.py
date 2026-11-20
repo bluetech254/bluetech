@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-seed_products.py — Seed 20 products into the BlueTech database.
+seed_products.py — Seed 20 products into the Fixit Blue Technology database.
 
 Run in the cPanel "Setup Python App" terminal:
 
@@ -38,7 +38,7 @@ def info(msg):            print(f"  →  {msg}")
 
 # ── Load .env ──────────────────────────────────────────────────────────────────
 
-print(f"\n{SEP}\n  BlueTech Product Seeder\n{SEP}")
+print(f"\n{SEP}\n  Fixit Blue Technology Product Seeder\n{SEP}")
 
 try:
     from dotenv import load_dotenv

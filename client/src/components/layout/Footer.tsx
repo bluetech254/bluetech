@@ -85,7 +85,7 @@ export const Footer = () => {
           {/* Brand + Socials */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="BlueTech" className="h-10 w-auto object-contain" />
+              <img src="/logo.png" alt="Fixit Blue Technology" className="h-10 w-auto object-contain" />
               <span className="text-xl font-black tracking-tight text-white">
                 Blue<span className="text-blue-500">Tech</span>
               </span>
@@ -141,7 +141,7 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 space-y-3 sm:space-y-0">
-          <p>© {new Date().getFullYear()} BlueTech Electronics. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Fixit Blue Technology. All rights reserved.</p>
           <div className="flex space-x-6">
             <Link to="/privacy-policy" className="hover:text-slate-300">Privacy Policy</Link>
             <Link to="/terms-of-service" className="hover:text-slate-300">Terms of Service</Link>

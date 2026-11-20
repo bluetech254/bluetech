@@ -57,8 +57,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 justify-center mb-8">
-          <Image src="/logo.png" alt="BlueTech" width={40} height={40} className="rounded-lg" />
-          <span className="font-display font-bold text-xl tracking-tight">BlueTech</span>
+          <Image src="/logo.png" alt="Fixit Blue Technology" width={40} height={40} className="rounded-lg" />
+          <span className="font-display font-bold text-xl tracking-tight">Fixit Blue Technology</span>
         </div>
 
         <form onSubmit={handleSubmit} className="card p-7 space-y-5">
@@ -114,7 +114,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-xs text-ink-dim mt-6">
-          BlueTech Kenya internal admin panel · Not for public access
+          Fixit Blue Technology internal admin panel · Not for public access
         </p>
       </div>
     </div>
