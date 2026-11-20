@@ -199,6 +199,16 @@ export const adminApi = {
     request<any>(`/api/v1/customers${qs({ search, page })}`),
   customerDetail:   (id: string) =>
     request<any>(`/api/v1/customers/${id}`),
+
+  // ── F1: visitor analytics ─────────────────────────────────────────────────
+  getVisitorSummary: () =>
+    request<any>(`/api/v1/analytics/today`),
+
+  // Link clicks for today (reuses existing daily endpoint with today's date)
+  getLinkClicksToday: () => {
+    const today = new Date().toISOString().slice(0, 10);
+    return request<any>(`/api/v1/daily/report/${today}/clicks`);
+  },
 };
 
 export const formatKES = (n: number) => `KES ${Math.round(n).toLocaleString("en-KE")}`;

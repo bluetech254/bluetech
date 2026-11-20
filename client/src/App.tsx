@@ -9,11 +9,21 @@ import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
 import BottomTabBar from './components/layout/BottomTabBar';
 import AppRoutes from './router';
+import { trackPageView } from './lib/analytics';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as any });
+  }, [pathname]);
+  return null;
+};
+
+/** Fires a page-view tracking ping on every route change */
+const PageViewTracker = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    trackPageView(pathname);
   }, [pathname]);
   return null;
 };
@@ -45,6 +55,7 @@ export default function App() {
           <AuthProvider>
             <CartProvider>
               <ScrollToTop />
+              <PageViewTracker />
               <Layout />
             </CartProvider>
           </AuthProvider>

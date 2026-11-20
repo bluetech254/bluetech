@@ -4,6 +4,7 @@ configures middleware. Zero business logic here.
 """
 import traceback
 
+from analytics.router import router as analytics_router
 from admin_auth.router import router as admin_auth_router
 from admin_ops.router import router as admin_ops_router
 
@@ -136,6 +137,7 @@ app.include_router(places_router)
 app.include_router(daily_router, prefix="/api/v1")
 app.include_router(link_tracking_router, prefix="/api/v1")
 app.include_router(customers_router, prefix="/api/v1")
+app.include_router(analytics_router)
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 @app.on_event("startup")

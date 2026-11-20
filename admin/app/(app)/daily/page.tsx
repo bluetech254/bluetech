@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   ChevronLeft, ChevronRight, Lock, Unlock, Loader2, AlertTriangle,
-  ClipboardList, Users, Truck, Wallet, FileText,
+  ClipboardList, Users, Truck, Wallet, FileText, BarChart2,
   TrendingUp, ShoppingBag, CreditCard, Smartphone, Banknote,
   CheckCircle2, XCircle, Clock, Ban, Plus, Trash2, RefreshCw,
   Phone, MessageCircle, User, Globe, Instagram, Search,
@@ -11,9 +11,10 @@ import {
   Receipt, Download, Share2, MousePointerClick,
 } from "lucide-react";
 import { adminApi, formatKES, getSession } from "@/lib/api";
+import TrafficTab from "./TrafficTab";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type Tab = "operations" | "leads" | "logistics" | "cash" | "eod";
+type Tab = "operations" | "leads" | "logistics" | "cash" | "eod" | "traffic";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "operations", label: "Operations",  icon: ClipboardList },
@@ -21,6 +22,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "logistics",  label: "Logistics",   icon: Truck },
   { id: "cash",       label: "Cash",        icon: Wallet },
   { id: "eod",        label: "EOD Report",  icon: FileText },
+  { id: "traffic",    label: "Traffic",     icon: BarChart2 },
 ];
 
 const toDateStr = (d: Date) => d.toISOString().slice(0, 10);
@@ -215,6 +217,9 @@ export default function DailyOpsPage() {
             )}
             {activeTab === "eod" && (
               <EodTab eod={eod} dateStr={dateStr} loading={!eod} onLoad={() => loadEod(dateStr)} session={session} />
+            )}
+            {activeTab === "traffic" && (
+              <TrafficTab />
             )}
           </>
         )}
