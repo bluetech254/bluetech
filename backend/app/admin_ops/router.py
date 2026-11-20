@@ -10,7 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from admin_auth.dependencies import get_current_admin
+from admin_auth.dependencies import get_current_admin, require_superadmin
 from core.audit import log_action
 from core.db import db
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -383,7 +383,7 @@ def global_search(q: str = Query(..., min_length=1), admin: dict = Depends(get_c
 def get_audit_log(
     limit:    int = Query(50, le=200),
     admin_id: str | None = None,
-    admin: dict = Depends(get_current_admin),
+    admin: dict = Depends(require_superadmin),
 ):
     q = db.table("admin_audit_log").select("*")
     if admin_id:

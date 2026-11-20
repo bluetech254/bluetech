@@ -61,6 +61,10 @@ def admin_login(data: AdminLoginRequest) -> dict:
 
     logger.info(f"Admin login: {admin['username']} ({admin['id']})")
 
+    # Audit: build a minimal admin dict manually (token not yet issued)
+    _audit_admin = {"admin_id": admin["id"], "username": admin["username"]}
+    log_action(_audit_admin, "admin.login", f"admin:{admin['id']}")
+
     token = create_admin_token(admin["id"], admin["username"], admin["role"])
 
     return {

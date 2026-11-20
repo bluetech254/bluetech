@@ -14,6 +14,7 @@ from admin_auth.models import (
     AdminCreateRequest,
     AdminLoginRequest,
 )
+from core.audit import log_action
 from core.exceptions import AuthException
 from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
@@ -63,6 +64,7 @@ def logout(admin: dict = Depends(get_current_admin)):
     Logs the event server-side for audit purposes.
     """
     logger.info(f"Admin logout: {admin.get('username')} ({admin.get('admin_id')})")
+    log_action(admin, "admin.logout", f"admin:{admin.get('admin_id')}")
     return {"message": "Logged out successfully"}
 
 
