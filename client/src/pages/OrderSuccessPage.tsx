@@ -10,6 +10,7 @@ import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import { CheckCircle, Truck, Clipboard, ShieldCheck, CreditCard, ArrowRight, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { trackCartEvent } from '../lib/analytics';
 
 export const OrderSuccessPage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,11 @@ export const OrderSuccessPage = () => {
       try {
         const data = await getOrderById(orderId);
         setOrder(data);
+        // F2: checkout_completed — fired once when order is confirmed
+        trackCartEvent({
+          event_type: "checkout_completed",
+          value_kes:  Number(data?.total_amount) || undefined,
+        });
       } catch (err) {
         console.error('Failed to load completed order:', err);
         toast.error('Failed to load completed order parameters.');

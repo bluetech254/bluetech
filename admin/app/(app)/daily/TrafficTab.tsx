@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import {
   Globe, Smartphone, Monitor, Tablet, RefreshCw,
-  MousePointerClick, TrendingUp, Eye, Layers,
+  MousePointerClick, TrendingUp, Eye, Layers, ShoppingCart, CreditCard, CheckCircle2,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
 
@@ -70,6 +70,8 @@ export default function TrafficTab() {
   const referrers: Record<string, number> = data?.referrer_breakdown ?? {};
   const devices: Record<string, number> = data?.device_breakdown ?? {};
   const totalReferrers = Object.values(referrers).reduce((a, b) => a + b, 0);
+  const funnel = data?.funnel ?? { visitors: 0, cart_adds: 0, cart_sessions: 0, checkouts_started: 0, checkouts_completed: 0, conversion_rate: 0 };
+  const topCartProducts: any[] = data?.top_cart_products ?? [];
 
   return (
     <div className="space-y-5">
@@ -107,6 +109,55 @@ export default function TrafficTab() {
           icon={TrendingUp}
           sub={topPages[0] ? `${topPages[0].views} views` : "no data yet"}
         />
+      </div>
+
+      {/* Purchase funnel */}
+      <div className="card p-5">
+        <h3 className="font-semibold text-sm text-ink mb-4">Purchase funnel · today</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Visitors",           value: funnel.visitors,             icon: Globe,          color: "text-sky-400" },
+            { label: "Added to cart",       value: funnel.cart_sessions,        icon: ShoppingCart,   color: "text-amber-400" },
+            { label: "Checkout started",    value: funnel.checkouts_started,    icon: CreditCard,     color: "text-violet-400" },
+            { label: "Orders placed",       value: funnel.checkouts_completed,  icon: CheckCircle2,   color: "text-volt" },
+          ].map(({ label, value, icon: Icon, color }, i, arr) => {
+            const prev = i === 0 ? null : arr[i - 1].value;
+            const dropPct = prev != null && prev > 0 ? Math.round(((prev - value) / prev) * 100) : null;
+            return (
+              <div key={label} className="relative bg-base-hover rounded-xl p-3 flex flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <Icon size={13} className={color} />
+                  <span className="text-xs text-ink-muted">{label}</span>
+                </div>
+                <span className={`text-2xl font-black tabular-nums ${color}`}>{value}</span>
+                {dropPct !== null && (
+                  <span className="text-xs text-ink-dim">
+                    {dropPct > 0 ? `↓ ${dropPct}% drop` : "→ all converted"}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-3 flex items-center gap-2 text-xs text-ink-muted">
+          <span>Conversion rate:</span>
+          <span className="font-bold text-volt tabular-nums">{funnel.conversion_rate.toFixed(1)}%</span>
+          <span className="text-ink-dim">(orders / visitors)</span>
+        </div>
+        {topCartProducts.length > 0 && (
+          <div className="mt-4 border-t border-base-border pt-4">
+            <p className="text-xs font-medium text-ink-muted mb-2">Most added to cart</p>
+            <div className="space-y-1.5">
+              {topCartProducts.map((p: any) => (
+                <div key={p.title} className="flex items-center gap-2 text-sm">
+                  <ShoppingCart size={12} className="text-ink-dim shrink-0" />
+                  <span className="text-ink flex-1 truncate">{p.title}</span>
+                  <span className="text-ink-dim tabular-nums text-xs">{p.adds}×</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Hourly chart */}

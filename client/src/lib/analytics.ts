@@ -1,8 +1,9 @@
 /**
- * analytics.ts — Lightweight visitor tracking for Daily Ops F1.
+ * analytics.ts — Lightweight visitor tracking for Daily Ops F1 + F2.
  *
  * - session_id: anonymous UUID, stored in sessionStorage (clears on tab close)
- * - Fires POST /api/v1/analytics/page-view on every page navigation
+ * - Fires POST /api/v1/analytics/page-view on every page navigation (F1)
+ * - Fires POST /api/v1/analytics/cart-event on cart/funnel actions (F2)
  * - Never throws — a failed tracking call must never break a page load
  * - No cookies, no PII unless the user explicitly provides a phone (F4)
  */
@@ -81,6 +82,41 @@ export async function trackPageView(path: string): Promise<void> {
     }).catch(() => {
       // silently swallow — analytics must never surface errors to users
     });
+  } catch {
+    // silently swallow
+  }
+}
+
+export type CartEventType =
+  | "add_to_cart"
+  | "remove_from_cart"
+  | "checkout_started"
+  | "checkout_completed";
+
+interface CartEventPayload {
+  event_type:    CartEventType;
+  product_id?:   string;
+  product_title?: string;
+  quantity?:     number;
+  value_kes?:    number;
+}
+
+/**
+ * Track a cart or funnel event. Call this from CartPage, CheckoutPage,
+ * OrderSuccessPage. Completely silent on failure.
+ */
+export function trackCartEvent(payload: CartEventPayload): void {
+  try {
+    const body = {
+      session_id: getSessionId(),
+      ...payload,
+    };
+    fetch(`${API_BASE}/api/v1/analytics/cart-event`, {
+      method:    "POST",
+      headers:   { "Content-Type": "application/json" },
+      body:      JSON.stringify(body),
+      keepalive: true,
+    }).catch(() => {});
   } catch {
     // silently swallow
   }

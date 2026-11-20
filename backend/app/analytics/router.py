@@ -3,9 +3,10 @@ analytics/router.py — Visitor & funnel tracking endpoints.
 
 Public endpoints (no auth):
   POST /api/v1/analytics/page-view   — called on every client page navigation
+  POST /api/v1/analytics/cart-event  — called on cart/funnel actions
 
 Admin endpoints (JWT required):
-  GET  /api/v1/analytics/today       — today's visitor summary for Daily Ops
+  GET  /api/v1/analytics/today       — today's visitor + funnel summary for Daily Ops
 
 All public endpoints are fire-and-forget: they always return 200 and swallow
 errors silently so a tracking failure can never break a user's page load.
@@ -14,7 +15,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from typing import Literal, Optional
 
 from admin_auth.dependencies import get_current_admin
 from core.db import db
@@ -89,6 +90,37 @@ def _insert_page_view(body: PageViewEvent) -> None:
     }).execute()
 
 
+# ── Public: record a cart / funnel event ─────────────────────────────────────
+
+class CartEvent(BaseModel):
+    session_id:    str     = Field(..., min_length=8, max_length=128)
+    event_type:    Literal["add_to_cart", "remove_from_cart", "checkout_started", "checkout_completed"]
+    product_id:    Optional[str]   = Field(None, max_length=128)
+    product_title: Optional[str]   = Field(None, max_length=300)
+    quantity:      Optional[int]   = Field(None, ge=1)
+    value_kes:     Optional[float] = Field(None, ge=0)
+
+
+@router.post("/cart-event", status_code=200)
+def record_cart_event(body: CartEvent):
+    """
+    Called by the client on cart and checkout funnel actions.
+    Never returns an error — analytics must not break user flows.
+    """
+    try:
+        db.table("cart_events").insert({
+            "session_id":    body.session_id,
+            "event_type":    body.event_type,
+            "product_id":    body.product_id,
+            "product_title": body.product_title,
+            "quantity":      body.quantity,
+            "value_kes":     body.value_kes,
+        }).execute()
+    except Exception as e:
+        logger.warning(f"analytics/cart-event write failed: {e}")
+    return {"ok": True}
+
+
 # ── Admin: today's visitor summary ───────────────────────────────────────────
 
 @router.get("/today")
@@ -120,6 +152,18 @@ def get_today_summary(admin: dict = Depends(get_current_admin)):
         )
         views = views_resp.data or []
 
+        # Cart / funnel events
+        cart_resp = (
+            db.table("cart_events")
+            .select("session_id, event_type, product_id, product_title, quantity, value_kes, occurred_at")
+            .gte("occurred_at", day_start.isoformat())
+            .lt("occurred_at",  day_end.isoformat())
+            .execute()
+        )
+        cart_events = cart_resp.data or []
+
+        funnel = _funnel_summary(cart_events, len(sessions))
+
         return {
             "date":            today.isoformat(),
             "unique_sessions": len(sessions),
@@ -133,6 +177,8 @@ def get_today_summary(admin: dict = Depends(get_current_admin)):
             "referrer_breakdown": _referrer_groups(sessions),
             "utm_sources":      _count_field(sessions, "utm_source"),
             "hourly_sessions":  _hourly_buckets(sessions, day_start),
+            "funnel":           funnel,
+            "top_cart_products": _top_cart_products(cart_events),
         }
     except Exception as e:
         logger.error(f"analytics/today error: {e}")
@@ -146,6 +192,8 @@ def get_today_summary(admin: dict = Depends(get_current_admin)):
             "referrer_breakdown": {},
             "utm_sources": {},
             "hourly_sessions": [],
+            "funnel": {"visitors": 0, "cart_adds": 0, "checkouts_started": 0, "checkouts_completed": 0, "cart_sessions": 0, "conversion_rate": 0},
+            "top_cart_products": [],
         }
 
 
@@ -212,3 +260,42 @@ def _hourly_buckets(sessions: list, day_start: datetime) -> list:
         except Exception:
             pass
     return [{"hour": h, "sessions": buckets[h]} for h in range(24)]
+
+
+def _funnel_summary(events: list, total_visitors: int) -> dict:
+    """
+    Compute funnel counts from cart_events rows.
+    cart_adds            — total add_to_cart events
+    cart_sessions        — unique sessions that added anything
+    checkouts_started    — unique sessions that reached checkout
+    checkouts_completed  — unique sessions with a completed order
+    conversion_rate      — checkouts_completed / total_visitors * 100
+    """
+    cart_adds    = sum(1 for e in events if e["event_type"] == "add_to_cart")
+    cart_sess    = len({e["session_id"] for e in events if e["event_type"] == "add_to_cart"})
+    started      = len({e["session_id"] for e in events if e["event_type"] == "checkout_started"})
+    completed    = len({e["session_id"] for e in events if e["event_type"] == "checkout_completed"})
+    conv         = round((completed / total_visitors * 100), 1) if total_visitors else 0
+
+    return {
+        "visitors":             total_visitors,
+        "cart_adds":            cart_adds,
+        "cart_sessions":        cart_sess,
+        "checkouts_started":    started,
+        "checkouts_completed":  completed,
+        "conversion_rate":      conv,
+    }
+
+
+def _top_cart_products(events: list, limit: int = 8) -> list:
+    """Products most frequently added to cart today."""
+    counts: dict = {}
+    for e in events:
+        if e["event_type"] != "add_to_cart":
+            continue
+        title = e.get("product_title") or e.get("product_id") or "Unknown"
+        if title not in counts:
+            counts[title] = {"title": title, "adds": 0, "quantity": 0}
+        counts[title]["adds"]     += 1
+        counts[title]["quantity"] += e.get("quantity") or 1
+    return sorted(counts.values(), key=lambda x: -x["adds"])[:limit]

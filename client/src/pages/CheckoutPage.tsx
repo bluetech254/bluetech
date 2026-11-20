@@ -13,6 +13,7 @@ import { formatCurrency } from '../utils/formatters';
 import { MPESA_PAYBILL } from '../utils/constants';
 import Loading from '../components/common/Loading';
 import Input from '../components/common/Input';
+import { trackCartEvent } from '../lib/analytics';
 import Select from '../components/common/Select';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -79,6 +80,8 @@ export const CheckoutPage = () => {
       }
     };
     fetchZones();
+    // F2: checkout_started — fired once when this page mounts
+    trackCartEvent({ event_type: "checkout_started" });
   }, []);
 
   // Load points balance for authenticated users

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext, useMemo } from 'react';
 import { Product, CartItem } from '../types';
 import toast from 'react-hot-toast';
+import { trackCartEvent } from '../lib/analytics';
 
 interface CartContextType {
   items: CartItem[];
@@ -62,11 +63,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     saveCart(newItems);
+    // F2: track add_to_cart
+    trackCartEvent({
+      event_type:    "add_to_cart",
+      product_id:    product.id,
+      product_title: product.title,
+      quantity,
+      value_kes:     product.price * quantity,
+    });
   };
 
   const removeItem = (productId: string) => {
+    const removed = items.find(item => item.product.id === productId);
     const newItems = items.filter(item => item.product.id !== productId);
     saveCart(newItems);
+    // F2: track remove_from_cart
+    if (removed) {
+      trackCartEvent({
+        event_type:    "remove_from_cart",
+        product_id:    removed.product.id,
+        product_title: removed.product.title,
+        quantity:      removed.quantity,
+        value_kes:     removed.product.price * removed.quantity,
+      });
+    }
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
