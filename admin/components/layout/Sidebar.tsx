@@ -6,9 +6,9 @@ import { useState, useEffect } from "react";
 import clsx from "clsx";
 import Image from "next/image";
 import {
-  LayoutGrid, ShoppingBag, Wrench, Package, MapPin, ListChecks,
-  Users, Gift, BarChart3, ShieldCheck, LogOut, Sparkles, Bell,
-  DollarSign, Receipt, Cpu, Sun, Moon, ScrollText, ClipboardList, Contact,
+  LayoutGrid, ShoppingBag, Wrench, Package, MapPin,
+  Users, Gift, BarChart3, ShieldCheck, LogOut,
+  Cpu, Sun, Moon, ScrollText, ClipboardList, Contact,
 } from "lucide-react";
 
 const NAV = [
@@ -17,16 +17,12 @@ const NAV = [
   { href: "/customers", label: "Customers", icon: Contact },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/repairs", label: "Repair Bookings", icon: Wrench },
-  { href: "/transactions", label: "Transactions", icon: Receipt },
-  { href: "/products", label: "Products", icon: Package },
+  { href: "/catalogue", label: "Catalogue", icon: Package },
   { href: "/devices", label: "Devices & Pricing", icon: Cpu },
   { href: "/zones", label: "Delivery Zones", icon: MapPin },
-  { href: "/services", label: "Repair Services", icon: ListChecks },
-  { href: "/users", label: "Users", icon: Users },
+  { href: "/users", label: "User Accounts", icon: Users },
   { href: "/loyalty", label: "Loyalty & Referrals", icon: Gift },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/revenue", label: "Revenue", icon: DollarSign },
-  { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
@@ -65,7 +61,13 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
 
       <nav className="flex-1 space-y-1 overflow-y-auto">
         {NAV.map((item) => {
-          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          // /catalogue is also active when on the old /products or /services paths (redirects)
+          const active =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(item.href) ||
+                (item.href === "/catalogue" && (pathname.startsWith("/products") || pathname.startsWith("/services"))) ||
+                (item.href === "/analytics" && (pathname.startsWith("/revenue") || pathname.startsWith("/transactions")));
           const Icon = item.icon;
           return (
             <Link
@@ -98,18 +100,6 @@ export default function Sidebar({ role }: { role?: "admin" | "superadmin" }) {
           </>
         )}
       </nav>
-
-      <div className="card-gradient p-4 mt-3 mb-3">
-        <Sparkles size={18} className="mb-2 opacity-90" />
-        <p className="text-sm font-semibold leading-snug">Track stock &amp; repairs in real time</p>
-        <p className="text-xs text-white/75 mt-1">Low-stock alerts keep your shelves stocked automatically.</p>
-        <Link
-          href="/products"
-          className="inline-block mt-3 bg-white text-volt-dark text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-white/90 transition-colors"
-        >
-          View products
-        </Link>
-      </div>
 
       <button onClick={toggleTheme} className="nav-item w-full mb-1">
         {light ? <Moon size={17} strokeWidth={2} /> : <Sun size={17} strokeWidth={2} />}
